@@ -48,6 +48,7 @@ type insDecode struct {
 	mask      uint32     // mask of the fixed bits in the instruction
 	val       uint32     // value of the fixed bits in the instruction
 	decode    decodeType // decode type for the instruction
+	blah      string
 }
 
 //-----------------------------------------------------------------------------

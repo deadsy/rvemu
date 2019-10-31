@@ -8,7 +8,12 @@ RISC-V Disassembler/Emulator Code Generation
 
 package main
 
-import "github.com/deadsy/riscv/cpu"
+import (
+	"fmt"
+	"os"
+
+	"github.com/deadsy/riscv/cpu"
+)
 
 //-----------------------------------------------------------------------------
 // RV32 instructions
@@ -210,8 +215,16 @@ var rv64d = []string{
 func main() {
 
 	is := cpu.NewInsSet("rv32i")
-	is.Add(rv32i)
-	is.GenerateDisassembler()
+
+	err := is.Add(rv32i)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		os.Exit(1)
+	}
+
+	s := is.GenerateDisassembler()
+	fmt.Printf("%s\n", s)
+	os.Exit(0)
 
 }
 
