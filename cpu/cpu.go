@@ -10,21 +10,18 @@ package cpu
 
 //-----------------------------------------------------------------------------
 
-type isaSet int
+type ISASet uint32
 
-const (
-	isaNone isaSet = iota
-	isaRV32I
-	isaRV64I
-	isaRV32M
-	isaRV64M
-	isaRV32A
-	isaRV64A
-	isaRV32F
-	isaRV64F
-	isaRV32D
-	isaRV64D
-)
+const ISArv32i = ISASet(1 << 0)
+const ISArv32m = ISASet(1 << 1)
+const ISArv32a = ISASet(1 << 2)
+const ISArv32f = ISASet(1 << 3)
+const ISArv32d = ISASet(1 << 4)
+const ISArv64i = ISASet(1 << 5)
+const ISArv64m = ISASet(1 << 6)
+const ISArv64a = ISASet(1 << 7)
+const ISArv64f = ISASet(1 << 8)
+const ISArv64d = ISASet(1 << 9)
 
 type decodeType int
 
@@ -44,11 +41,11 @@ const (
 //-----------------------------------------------------------------------------
 
 type insDecode struct {
+	set       ISASet     // isa set to which this instruction belongs
 	mneumonic string     // instruction mneumonic
-	mask      uint32     // mask of the fixed bits in the instruction
 	val       uint32     // value of the fixed bits in the instruction
-	decode    decodeType // decode type for the instruction
-	blah      string
+	mask      uint32     // mask of the fixed bits in the instruction
+	decode    decodeType // instruction decode type
 }
 
 //-----------------------------------------------------------------------------

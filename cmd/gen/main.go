@@ -43,9 +43,9 @@ var rv32i = []string{
 	"imm[11:0] rs1 100 rd 0010011 XORI",
 	"imm[11:0] rs1 110 rd 0010011 ORI",
 	"imm[11:0] rs1 111 rd 0010011 ANDI",
-	"0000000 shamt rs1 001 rd 0010011 SLLI",
-	"0000000 shamt rs1 101 rd 0010011 SRLI",
-	"0100000 shamt rs1 101 rd 0010011 SRAI",
+	"0000000 shamt5 rs1 001 rd 0010011 SLLI",
+	"0000000 shamt5 rs1 101 rd 0010011 SRLI",
+	"0100000 shamt5 rs1 101 rd 0010011 SRAI",
 	"0000000 rs2 rs1 000 rd 0110011 ADD",
 	"0100000 rs2 rs1 000 rd 0110011 SUB",
 	"0000000 rs2 rs1 001 rd 0110011 SLL",
@@ -158,13 +158,13 @@ var rv64i = []string{
 	"imm[11:0] rs1 110 rd 0000011 LWU",
 	"imm[11:0] rs1 011 rd 0000011 LD",
 	"imm[11:5] rs2 rs1 011 imm[4:0] 0100011 SD",
-	"000000 shamt rs1 001 rd 0010011 SLLI",
-	"000000 shamt rs1 101 rd 0010011 SRLI",
-	"010000 shamt rs1 101 rd 0010011 SRAI",
+	"000000 shamt6 rs1 001 rd 0010011 SLLI",
+	"000000 shamt6 rs1 101 rd 0010011 SRLI",
+	"010000 shamt6 rs1 101 rd 0010011 SRAI",
 	"imm[11:0] rs1 000 rd 0011011 ADDIW",
-	"0000000 shamt rs1 001 rd 0011011 SLLIW",
-	"0000000 shamt rs1 101 rd 0011011 SRLIW",
-	"0100000 shamt rs1 101 rd 0011011 SRAIW",
+	"0000000 shamt5 rs1 001 rd 0011011 SLLIW",
+	"0000000 shamt5 rs1 101 rd 0011011 SRLIW",
+	"0100000 shamt5 rs1 101 rd 0011011 SRAIW",
 	"0000000 rs2 rs1 000 rd 0111011 ADDW",
 	"0100000 rs2 rs1 000 rd 0111011 SUBW",
 	"0000000 rs2 rs1 001 rd 0111011 SLLW",
@@ -216,13 +216,31 @@ func main() {
 
 	is := cpu.NewInsSet("rv32i")
 
-	err := is.Add(rv32i)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(1)
+	sets := []struct {
+		ins []string
+		set cpu.ISASet
+	}{
+		{rv32i, cpu.ISArv32i},
+		{rv32m, cpu.ISArv32m},
+		{rv32a, cpu.ISArv32a},
+		{rv32f, cpu.ISArv32f},
+		{rv32d, cpu.ISArv32d},
+		{rv64i, cpu.ISArv64i},
+		{rv64m, cpu.ISArv64m},
+		{rv64a, cpu.ISArv64a},
+		{rv64f, cpu.ISArv64f},
+		{rv64d, cpu.ISArv64d},
 	}
 
-	s := is.GenerateDisassembler()
+	for i := range sets {
+		err := is.Add(sets[i].ins, sets[i].set)
+		if err != nil {
+			fmt.Printf("%s\n", err)
+			os.Exit(1)
+		}
+	}
+
+	s := is.GenDecoder()
 	fmt.Printf("%s\n", s)
 	os.Exit(0)
 
