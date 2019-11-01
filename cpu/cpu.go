@@ -10,18 +10,20 @@ package cpu
 
 //-----------------------------------------------------------------------------
 
-type ISASet uint32
+type ISAModule uint32
 
-const ISArv32i = ISASet(1 << 0) // Integer
-const ISArv32m = ISASet(1 << 1) // Integer Multiplication and Division
-const ISArv32a = ISASet(1 << 2) // Atomics
-const ISArv32f = ISASet(1 << 3) // Single-Precision Floating-Point
-const ISArv32d = ISASet(1 << 4) // Double-Precision Floating-Point
-const ISArv64i = ISASet(1 << 5) // Integer
-const ISArv64m = ISASet(1 << 6) // Integer Multiplication and Division
-const ISArv64a = ISASet(1 << 7) // Atomics
-const ISArv64f = ISASet(1 << 8) // Single-Precision Floating-Point
-const ISArv64d = ISASet(1 << 9) // Double-Precision Floating-Point
+const (
+	ISArv32i ISAModule = (1 << iota) // Integer
+	ISArv32m                         // Integer Multiplication and Division
+	ISArv32a                         // Atomics
+	ISArv32f                         // Single-Precision Floating-Point
+	ISArv32d                         // Double-Precision Floating-Point
+	ISArv64i                         // Integer
+	ISArv64m                         // Integer Multiplication and Division
+	ISArv64a                         // Atomics
+	ISArv64f                         // Single-Precision Floating-Point
+	ISArv64d                         // Double-Precision Floating-Point
+)
 
 type decodeType int
 
@@ -41,7 +43,7 @@ const (
 //-----------------------------------------------------------------------------
 
 type insInfo struct {
-	set       ISASet     // isa set to which this instruction belongs
+	module    ISAModule  // isa module to which this instruction belongs
 	mneumonic string     // instruction mneumonic
 	val       uint32     // value of the fixed bits in the instruction
 	mask      uint32     // mask of the fixed bits in the instruction

@@ -139,7 +139,7 @@ func getDecode(s string) (decodeType, error) {
 //-----------------------------------------------------------------------------
 
 // getInfo converts an instruction description string into an instruction information structure.
-func getInfo(ins string, set ISASet) (*insInfo, error) {
+func getInfo(ins string, module ISAModule) (*insInfo, error) {
 	parts := strings.Split(ins, " ")
 	n := len(parts)
 	if n <= 0 {
@@ -148,7 +148,7 @@ func getInfo(ins string, set ISASet) (*insInfo, error) {
 
 	d := insInfo{
 		mneumonic: strings.ToLower(parts[n-1]),
-		set:       set,
+		module:    module,
 	}
 
 	// remove the mneumonic from the end
@@ -191,29 +191,27 @@ func getInfo(ins string, set ISASet) (*insInfo, error) {
 
 //-----------------------------------------------------------------------------
 
-// InsSet is an set of instructions.
-type InsSet struct {
+// ISA is an instruction set
+type ISA struct {
 	name string
 	ins  []*insInfo
 }
 
-// NewInstSet creates an empty instruction set.
-func NewInsSet(name string) *InsSet {
-	return &InsSet{
+// NewISA creates an empty instruction set.
+func NewISA(name string) *ISA {
+	return &ISA{
 		name: name,
 		ins:  make([]*insInfo, 0),
 	}
 }
 
-// Add adds a set of instructions to the instruction set.
-func (is *InsSet) Add(ins []string, set ISASet) error {
-	for i := range ins {
-		d, err := getInfo(ins[i], set)
-		if err != nil {
-			return err
-		}
-		is.ins = append(is.ins, d)
+// Add adds an instruction to the instruction set.
+func (isa *ISA) Add(defn string, module ISAModule) error {
+	d, err := getInfo(defn, module)
+	if err != nil {
+		return err
 	}
+	is.ins = append(is.ins, d)
 	return nil
 }
 
