@@ -52,28 +52,13 @@ type insInfo struct {
 	decode    decodeType // instruction decode type
 }
 
-type daFunc32 func(m *RV32, ins uint32) string
-type daFunc64 func(m *RV64, ins uint32) string
-
-type decoder struct {
-	mask  uint32
-	table map[uint32]*decoder
-	da32  daFunc32
-	da64  daFunc64
-}
-
 //-----------------------------------------------------------------------------
 
 // RV32 is a 32-bit RISC-V CPU
 type RV32 struct {
-	PC uint32
-	X  [32]uint32
-}
-
-// RV64 is a 64-bit RISC-V CPU
-type RV64 struct {
-	PC uint64
-	X  [32]uint64
+	daDecode []linearDecode
+	PC       uint32
+	X        [32]uint32
 }
 
 //-----------------------------------------------------------------------------
