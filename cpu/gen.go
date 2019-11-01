@@ -138,8 +138,8 @@ func getDecode(s string) (decodeType, error) {
 
 //-----------------------------------------------------------------------------
 
-// getInfo converts an instruction description string into an instruction information structure.
-func getInfo(ins string, module ISAModule) (*insInfo, error) {
+// parseDefn parses an instruction description string.
+func parseDefn(ins string, mod ISAModule) (*insInfo, error) {
 	parts := strings.Split(ins, " ")
 	n := len(parts)
 	if n <= 0 {
@@ -148,7 +148,7 @@ func getInfo(ins string, module ISAModule) (*insInfo, error) {
 
 	d := insInfo{
 		mneumonic: strings.ToLower(parts[n-1]),
-		module:    module,
+		module:    mod,
 	}
 
 	// remove the mneumonic from the end
@@ -206,38 +206,38 @@ func NewISA(name string) *ISA {
 }
 
 // Add adds an instruction to the instruction set.
-func (isa *ISA) Add(defn string, module ISAModule) error {
-	d, err := getInfo(defn, module)
+func (isa *ISA) Add(ins string, mod ISAModule) error {
+	d, err := parseDefn(ins, mod)
 	if err != nil {
 		return err
 	}
-	is.ins = append(is.ins, d)
+	isa.ins = append(isa.ins, d)
 	return nil
 }
 
 //-----------------------------------------------------------------------------
 
 // GenDecoder generates a decoder for a set of instructions.
-func (is *InsSet) GenDecoder(name string) string {
+func (isa *ISA) GenDecoder(name string) string {
 
 	mask := uint32(0xffffffff)
-	for i := range is.ins {
-		mask &= is.ins[i].mask
+	for i := range isa.ins {
+		mask &= isa.ins[i].mask
 	}
 
 	sets := make(map[uint32][]*insInfo)
 
-	for i := range is.ins {
-		val := mask & is.ins[i].val
-		sets[val] = append(sets[val], is.ins[i])
+	for i := range isa.ins {
+		val := mask & isa.ins[i].val
+		sets[val] = append(sets[val], isa.ins[i])
 	}
 
 	for k, v := range sets {
 		fmt.Printf("%08x: %d\n", k, len(v))
 	}
 
-	s := make([]string, len(is.ins))
-	for i, d := range is.ins {
+	s := make([]string, len(isa.ins))
+	for i, d := range isa.ins {
 		s[i] = fmt.Sprintf("%s %08x %08x %s", vm2bits(d.val, d.mask), d.val, d.mask, d.mneumonic)
 	}
 	return strings.Join(s, "\n")

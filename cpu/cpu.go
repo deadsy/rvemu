@@ -10,8 +10,10 @@ package cpu
 
 //-----------------------------------------------------------------------------
 
+// ISAModule is the numeric identifier of an ISA sub-module.
 type ISAModule uint32
 
+// Identifiers for ISA sub-modules.
 const (
 	ISArv32i ISAModule = (1 << iota) // Integer
 	ISArv32m                         // Integer Multiplication and Division
