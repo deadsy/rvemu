@@ -15,8 +15,8 @@ import (
 
 //-----------------------------------------------------------------------------
 
-// bitsToValMask converts a bit pattern to a value and mask.
-func bitsToValMask(s string) (uint32, uint32) {
+// bits2vm converts a bit pattern to a value and mask.
+func bits2vm(s string) (uint32, uint32) {
 	var v uint32
 	var m uint32
 	for _, c := range s {
@@ -30,6 +30,25 @@ func bitsToValMask(s string) (uint32, uint32) {
 		}
 	}
 	return v, m
+}
+
+// vm2bits converts a value and mask into a bit pattern.
+func vm2bits(v, m uint32) string {
+	s := make([]rune, 32)
+	mask := uint32(1 << 31)
+	for i := range s {
+		if m&mask == 0 {
+			s[i] = '.'
+		} else {
+			if v&mask != 0 {
+				s[i] = '1'
+			} else {
+				s[i] = '0'
+			}
+		}
+		mask >>= 1
+	}
+	return string(s)
 }
 
 // dontCare returns n don't care characters.
@@ -119,14 +138,15 @@ func getDecode(s string) (decodeType, error) {
 
 //-----------------------------------------------------------------------------
 
-func genDecode(ins string, set ISASet) (*insDecode, error) {
+// getInfo converts an instruction description string into an instruction information structure.
+func getInfo(ins string, set ISASet) (*insInfo, error) {
 	parts := strings.Split(ins, " ")
 	n := len(parts)
 	if n <= 0 {
-		return nil, fmt.Errorf("bad instruction string \"%s\"\n", ins)
+		return nil, fmt.Errorf("bad instruction string \"%s\"", ins)
 	}
 
-	d := insDecode{
+	d := insInfo{
 		mneumonic: strings.ToLower(parts[n-1]),
 		set:       set,
 	}
@@ -155,9 +175,9 @@ func genDecode(ins string, set ISASet) (*insDecode, error) {
 	// instruction value and mask
 	bits := strings.Join(s0, "")
 	if len(bits) != 32 {
-		return nil, fmt.Errorf("bit length != 32 \"%s\"\n", ins)
+		return nil, fmt.Errorf("bit length != 32 \"%s\"", ins)
 	}
-	d.val, d.mask = bitsToValMask(bits)
+	d.val, d.mask = bits2vm(bits)
 
 	// instruction decode
 	t, err := getDecode(strings.Join(s1, "_"))
@@ -173,37 +193,57 @@ func genDecode(ins string, set ISASet) (*insDecode, error) {
 
 // InsSet is an set of instructions.
 type InsSet struct {
-	name   string
-	decode []*insDecode
+	name string
+	ins  []*insInfo
 }
 
 // NewInstSet creates an empty instruction set.
 func NewInsSet(name string) *InsSet {
 	return &InsSet{
-		name:   name,
-		decode: make([]*insDecode, 0),
+		name: name,
+		ins:  make([]*insInfo, 0),
 	}
 }
 
 // Add adds a set of instructions to the instruction set.
 func (is *InsSet) Add(ins []string, set ISASet) error {
 	for i := range ins {
-		d, err := genDecode(ins[i], set)
+		d, err := getInfo(ins[i], set)
 		if err != nil {
 			return err
 		}
-		is.decode = append(is.decode, d)
+		is.ins = append(is.ins, d)
 	}
 	return nil
 }
 
-// GenDecoder generates a decoder for an instruction set.
-func (is *InsSet) GenDecoder() string {
-	s := make([]string, len(is.decode))
-	for i, d := range is.decode {
-		s[i] = fmt.Sprintf("%08x %08x %s", d.val, d.mask, d.mneumonic)
+//-----------------------------------------------------------------------------
+
+// GenDecoder generates a decoder for a set of instructions.
+func (is *InsSet) GenDecoder(name string) string {
+
+	mask := uint32(0xffffffff)
+	for i := range is.ins {
+		mask &= is.ins[i].mask
+	}
+
+	sets := make(map[uint32][]*insInfo)
+
+	for i := range is.ins {
+		val := mask & is.ins[i].val
+		sets[val] = append(sets[val], is.ins[i])
+	}
+
+	for k, v := range sets {
+		fmt.Printf("%08x: %d\n", k, len(v))
+	}
+
+	s := make([]string, len(is.ins))
+	for i, d := range is.ins {
+		s[i] = fmt.Sprintf("%s %08x %08x %s", vm2bits(d.val, d.mask), d.val, d.mask, d.mneumonic)
 	}
 	return strings.Join(s, "\n")
+
 }
 
 //-----------------------------------------------------------------------------

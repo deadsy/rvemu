@@ -240,7 +240,7 @@ func main() {
 		}
 	}
 
-	s := is.GenDecoder()
+	s := is.GenDecoder("topDecode")
 	fmt.Printf("%s\n", s)
 	os.Exit(0)
 

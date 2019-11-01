@@ -9,7 +9,6 @@ X_OBJCOPY = $(XTOOLS)objcopy
 SRC = main.c
 
 OBJ = $(patsubst %.c, %.o, $(SRC))
-OBJ += start.o
 
 # include paths
 INCLUDE =
