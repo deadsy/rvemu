@@ -232,7 +232,7 @@ func main() {
 	addModule(isa, rv32f, cpu.ISArv32f)
 	addModule(isa, rv32d, cpu.ISArv32d)
 
-	s := isa.GenDecoder("topDecode")
+	s := isa.GenLinearDecoder()
 	fmt.Printf("%s\n", s)
 	os.Exit(0)
 }

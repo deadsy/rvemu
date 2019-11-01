@@ -245,3 +245,16 @@ func (isa *ISA) GenDecoder(name string) string {
 }
 
 //-----------------------------------------------------------------------------
+
+func (isa *ISA) GenLinearDecoder() string {
+	s := make([]string, 0)
+	s = append(s, fmt.Sprintf("var decoder = []decode{"))
+	for _, d := range isa.ins {
+		s = append(s, fmt.Sprintf("{0x%08x, 0x%08x, daX(\"%s\"),},", d.mask, d.val, d.mneumonic))
+	}
+	s = append(s, fmt.Sprintf("}"))
+	return strings.Join(s, "\n")
+
+}
+
+//-----------------------------------------------------------------------------
