@@ -8,24 +8,9 @@ RISC-V CPU Definitions
 
 package cpu
 
+import "fmt"
+
 //-----------------------------------------------------------------------------
-
-// ISAModule is the numeric identifier of an ISA sub-module.
-type ISAModule uint32
-
-// Identifiers for ISA sub-modules.
-const (
-	ISArv32i ISAModule = (1 << iota) // Integer
-	ISArv32m                         // Integer Multiplication and Division
-	ISArv32a                         // Atomics
-	ISArv32f                         // Single-Precision Floating-Point
-	ISArv32d                         // Double-Precision Floating-Point
-	ISArv64i                         // Integer
-	ISArv64m                         // Integer Multiplication and Division
-	ISArv64a                         // Atomics
-	ISArv64f                         // Single-Precision Floating-Point
-	ISArv64d                         // Double-Precision Floating-Point
-)
 
 type decodeType int
 
@@ -44,21 +29,60 @@ const (
 
 //-----------------------------------------------------------------------------
 
-type insInfo struct {
-	module    ISAModule  // isa module to which this instruction belongs
-	mneumonic string     // instruction mneumonic
-	val       uint32     // value of the fixed bits in the instruction
-	mask      uint32     // mask of the fixed bits in the instruction
-	decode    decodeType // instruction decode type
+// Memory is an interface to the memory of the target system.
+type Memory interface {
+	Read32(adr uint32) uint32
+	Write32(adr uint32, val uint32)
 }
 
 //-----------------------------------------------------------------------------
 
-// RV32 is a 32-bit RISC-V CPU
+type Variant int
+
+const (
+	VariantRV32e Variant = iota
+	VariantRV32
+	VariantRV64
+	VariantRV128
+)
+
+type RV32e struct {
+	PC uint32
+	X  [16]uint32
+}
+
 type RV32 struct {
+	PC uint32
+	X  [32]uint32
+}
+
+type RV64 struct {
+	PC uint64
+	X  [32]uint64
+}
+
+// NewRV returns a RISC-V CPU
+func NewRV(variant Variant, isa *ISA, mem Memory) (*RV, error) {
+	cpu := RV{}
+	switch variant {
+	case VariantRV32e:
+		cpu.regs = &RV32e{}
+	case VariantRV32:
+		cpu.regs = &RV32{}
+	case VariantRV64:
+		cpu.regs = &RV64{}
+	default:
+		return nil, fmt.Errorf("unsupported cpu variant %d", variant)
+	}
+	cpu.Mem = mem
+	return &cpu, nil
+}
+
+// RV is a RISC-V CPU
+type RV struct {
+	Mem      Memory      // memory of the target system
+	regs     interface{} // cpu registers
 	daDecode []linearDecode
-	PC       uint32
-	X        [32]uint32
 }
 
 //-----------------------------------------------------------------------------

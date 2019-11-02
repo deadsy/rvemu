@@ -1,5 +1,6 @@
 
 DIRS = gen \
+       da \
 
 all:
 	for dir in $(DIRS); do \

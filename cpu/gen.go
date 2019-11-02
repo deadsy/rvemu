@@ -15,6 +15,29 @@ import (
 
 //-----------------------------------------------------------------------------
 
+/*
+
+// ISAModule is the numeric identifier of an ISA sub-module.
+type ISAModuleID uint32
+
+// Identifiers for ISA sub-modules.
+const (
+	IDv32i ISAModule = (1 << iota) // Integer
+	IDrv32m                         // Integer Multiplication and Division
+	IDrv32a                         // Atomics
+	IDrv32f                         // Single-Precision Floating-Point
+	IDrv32d                         // Double-Precision Floating-Point
+	IDrv64i                         // Integer
+	IDrv64m                         // Integer Multiplication and Division
+	IDrv64a                         // Atomics
+	IDrv64f                         // Single-Precision Floating-Point
+	IDrv64d                         // Double-Precision Floating-Point
+)
+
+*/
+
+//-----------------------------------------------------------------------------
+
 // bits2vm converts a bit pattern to a value and mask.
 func bits2vm(s string) (uint32, uint32) {
 	var v uint32
@@ -139,7 +162,7 @@ func getDecode(s string) (decodeType, error) {
 //-----------------------------------------------------------------------------
 
 // parseDefn parses an instruction description string.
-func parseDefn(ins string, mod ISAModule) (*insInfo, error) {
+func parseDefn(ins string, module string) (*insInfo, error) {
 	parts := strings.Split(ins, " ")
 	n := len(parts)
 	if n <= 0 {
@@ -148,7 +171,7 @@ func parseDefn(ins string, mod ISAModule) (*insInfo, error) {
 
 	d := insInfo{
 		mneumonic: strings.ToLower(parts[n-1]),
-		module:    mod,
+		module:    module,
 	}
 
 	// remove the mneumonic from the end
@@ -187,32 +210,6 @@ func parseDefn(ins string, mod ISAModule) (*insInfo, error) {
 	d.decode = t
 
 	return &d, nil
-}
-
-//-----------------------------------------------------------------------------
-
-// ISA is an instruction set
-type ISA struct {
-	name string
-	ins  []*insInfo
-}
-
-// NewISA creates an empty instruction set.
-func NewISA(name string) *ISA {
-	return &ISA{
-		name: name,
-		ins:  make([]*insInfo, 0),
-	}
-}
-
-// Add adds an instruction to the instruction set.
-func (isa *ISA) Add(ins string, mod ISAModule) error {
-	d, err := parseDefn(ins, mod)
-	if err != nil {
-		return err
-	}
-	isa.ins = append(isa.ins, d)
-	return nil
 }
 
 //-----------------------------------------------------------------------------
