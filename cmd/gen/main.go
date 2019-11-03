@@ -27,8 +27,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	s := isa.GenLinearDecoder()
-	fmt.Printf("%s\n", s)
 	os.Exit(0)
 }
 

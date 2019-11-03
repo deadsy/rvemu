@@ -46,43 +46,38 @@ const (
 	VariantRV128
 )
 
-type RV32e struct {
-	PC uint32
-	X  [16]uint32
-}
-
-type RV32 struct {
-	PC uint32
-	X  [32]uint32
-}
-
-type RV64 struct {
-	PC uint64
-	X  [32]uint64
+// RV is a RISC-V CPU
+type RV struct {
+	Mem   Memory // memory of the target system
+	X     [32]uint64
+	PC    uint64
+	xlen  uint // register bit length
+	nregs uint // number of registers
+	isa   *ISA // ISA implemented for the CPU
 }
 
 // NewRV returns a RISC-V CPU
 func NewRV(variant Variant, isa *ISA, mem Memory) (*RV, error) {
-	cpu := RV{}
+	cpu := RV{
+		Mem: mem,
+		isa: isa,
+	}
+
 	switch variant {
 	case VariantRV32e:
-		cpu.regs = &RV32e{}
+		cpu.nregs = 16
+		cpu.xlen = 32
 	case VariantRV32:
-		cpu.regs = &RV32{}
+		cpu.nregs = 32
+		cpu.xlen = 32
 	case VariantRV64:
-		cpu.regs = &RV64{}
+		cpu.nregs = 32
+		cpu.xlen = 64
 	default:
 		return nil, fmt.Errorf("unsupported cpu variant %d", variant)
 	}
-	cpu.Mem = mem
-	return &cpu, nil
-}
 
-// RV is a RISC-V CPU
-type RV struct {
-	Mem      Memory      // memory of the target system
-	regs     interface{} // cpu registers
-	daDecode []linearDecode
+	return &cpu, nil
 }
 
 //-----------------------------------------------------------------------------

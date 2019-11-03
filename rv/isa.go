@@ -242,38 +242,38 @@ var ISArv64d = ISAModule{
 
 //-----------------------------------------------------------------------------
 
-type insInfo struct {
-	module    string     // ISA module to which the instruction belongs
-	mneumonic string     // instruction mneumonic
-	val       uint32     // value of the fixed bits in the instruction
-	mask      uint32     // mask of the fixed bits in the instruction
-	decode    decodeType // instruction decode type
+type instructionInfo struct {
+	module    string    // ISA module to which the instruction belongs
+	mneumonic string    // instruction mneumonic
+	val, mask uint32    // value and mask of fixed bits in the instruction
+	decode    *decoders // instruction decoders
 }
 
 // ISA is an instruction set
 type ISA struct {
-	name string
-	ins  []*insInfo
+	name        string
+	instruction []instructionInfo
 }
 
 // NewISA creates an empty instruction set.
 func NewISA(name string) *ISA {
 	return &ISA{
-		name: name,
-		ins:  make([]*insInfo, 0),
+		name:        name,
+		instruction: make([]instructionInfo, 0),
 	}
 }
 
 // addInstruction adds an instruction to the ISA.
-func (isa *ISA) addInstruction(ins string, module string) error {
-	d, err := parseDefn(ins, module)
+func (isa *ISA) addInstruction(defn string, module string) error {
+	ii, err := parseDefn(defn, module)
 	if err != nil {
 		return err
 	}
-	isa.ins = append(isa.ins, d)
+	isa.instruction = append(isa.instruction, *ii)
 	return nil
 }
 
+// Add a ISA sub-module to the ISA.
 func (isa *ISA) Add(module ...ISAModule) error {
 	for i := range module {
 		for _, defn := range module[i].defn {
@@ -283,6 +283,14 @@ func (isa *ISA) Add(module ...ISAModule) error {
 			}
 		}
 	}
+	return nil
+}
+
+// GenDecoders generates the decoder tables for the ISA.
+func (isa *ISA) GenDecoders() error {
+
+	// ...
+
 	return nil
 }
 

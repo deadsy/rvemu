@@ -364,6 +364,11 @@ func main() {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	}
+	err = isa.GenDecoders()
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		os.Exit(1)
+	}
 
 	// create the memory
 	adr := uint32(0)

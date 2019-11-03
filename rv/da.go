@@ -16,6 +16,12 @@ import (
 
 //-----------------------------------------------------------------------------
 
+func daNone(mneumonic string, adr, ins uint32) (string, string) {
+	return mneumonic, "TODO"
+}
+
+//-----------------------------------------------------------------------------
+
 // SymbolTable maps an address to a symbol.
 type SymbolTable map[uint32]string
 
@@ -56,22 +62,19 @@ func daInstruction(adr, ins uint32) (string, string) {
 
 //-----------------------------------------------------------------------------
 
-type daFunc func(m *RV, ins uint32) (*Disassembly, error)
-
-type linearDecode struct {
-	val  uint32
-	mask uint32
-	fn   daFunc
-}
-
-//-----------------------------------------------------------------------------
-
 // Disassemble a RISC-V instruction at the address.
 func (m *RV) Disassemble(adr uint32, st SymbolTable) *Disassembly {
 
 	ins := m.Mem.Read32(adr)
 
-	instruction, comment := daInstruction(adr, ins)
+	var instruction, comment string
+
+	for _, ii := range m.isa.instruction {
+		if ins&ii.mask == ii.val {
+			instruction, comment = ii.decode.da(ii.mneumonic, adr, ins)
+			break
+		}
+	}
 
 	return &Disassembly{
 		Dump:        daDump(adr, ins),
