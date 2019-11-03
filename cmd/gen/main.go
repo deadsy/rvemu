@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/deadsy/riscv/cpu"
+	"github.com/deadsy/riscv/rv"
 )
 
 //-----------------------------------------------------------------------------
@@ -20,8 +20,8 @@ import (
 func main() {
 
 	// create the ISA
-	isa := cpu.NewISA("rv32g")
-	err := isa.Add(cpu.ISArv32i, cpu.ISArv32m, cpu.ISArv32a, cpu.ISArv32f, cpu.ISArv32d)
+	isa := rv.NewISA("rv32g")
+	err := isa.Add(rv.ISArv32i, rv.ISArv32m, rv.ISArv32a, rv.ISArv32f, rv.ISArv32d)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)

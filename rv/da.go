@@ -6,7 +6,7 @@ RISC-V Disassembler
 */
 //-----------------------------------------------------------------------------
 
-package cpu
+package rv
 
 import (
 	"fmt"

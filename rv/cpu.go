@@ -6,7 +6,7 @@ RISC-V CPU Definitions
 */
 //-----------------------------------------------------------------------------
 
-package cpu
+package rv
 
 import "fmt"
 

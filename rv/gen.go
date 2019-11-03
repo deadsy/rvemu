@@ -6,7 +6,7 @@ RISC-V Disassembler/Emulator Code Generation
 */
 //-----------------------------------------------------------------------------
 
-package cpu
+package rv
 
 import (
 	"fmt"

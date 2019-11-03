@@ -13,12 +13,12 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/deadsy/riscv/cpu"
+	"github.com/deadsy/riscv/rv"
 )
 
 //-----------------------------------------------------------------------------
 
-var symtab = cpu.SymbolTable{
+var symtab = rv.SymbolTable{
 	0x00000000: "nybble",
 	0x00000048: ".L2",
 	0x00000054: ".L3",
@@ -358,8 +358,8 @@ func (m *memory) Write32(adr uint32, val uint32) {
 func main() {
 
 	// create the ISA
-	isa := cpu.NewISA("rv32g")
-	err := isa.Add(cpu.ISArv32i, cpu.ISArv32m, cpu.ISArv32a, cpu.ISArv32f, cpu.ISArv32d)
+	isa := rv.NewISA("rv32g")
+	err := isa.Add(rv.ISArv32i, rv.ISArv32m, rv.ISArv32a, rv.ISArv32f, rv.ISArv32d)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
@@ -373,7 +373,7 @@ func main() {
 	}
 
 	// create the CPU
-	rv, err := cpu.NewRV(cpu.VariantRV32, isa, m)
+	cpu, err := rv.NewRV(rv.VariantRV32, isa, m)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
@@ -382,7 +382,7 @@ func main() {
 	// Disassemble
 	size := len(code) * int(unsafe.Sizeof(code[0]))
 	for size > 0 {
-		da := rv.Disassemble(adr, symtab)
+		da := cpu.Disassemble(adr, symtab)
 		fmt.Printf("%s\n", da.String())
 		size -= da.N
 		adr += uint32(da.N)
