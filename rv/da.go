@@ -64,8 +64,8 @@ func daTypeI(mneumonic string, adr, ins uint32) (string, string) {
 		return fmt.Sprintf("mv %s,%s", rd, rs1), ""
 	}
 
-	if mneumonic == "lbu" {
-		return fmt.Sprintf("lbu %s,%d(%s)", rd, imm, rs1), ""
+	if mneumonic == "lbu" || mneumonic == "lw" {
+		return fmt.Sprintf("%s %s,%d(%s)", mneumonic, rd, imm, rs1), ""
 	}
 
 	return fmt.Sprintf("%s %s,%s,%d", mneumonic, rd, rs1, imm), ""
@@ -107,8 +107,13 @@ func daSymbol(adr uint32, st SymbolTable) string {
 	return ""
 }
 
-func daInstruction(adr, ins uint32) (string, string) {
-	return "", ""
+// daInstruction returns the disassembly and comment for the instruction.
+func (isa *ISA) daInstruction(adr, ins uint32) (string, string) {
+	ii := isa.lookup(ins)
+	if ii != nil {
+		return ii.decode.da(ii.mneumonic, adr, ins)
+	}
+	return "?", "unknown"
 }
 
 //-----------------------------------------------------------------------------
@@ -118,11 +123,7 @@ func (m *RV) Disassemble(adr uint32, st SymbolTable) *Disassembly {
 
 	ins := m.Mem.Read32(adr)
 
-	var instruction, comment string
-	ii := m.isa.lookup(ins)
-	if ii != nil {
-		instruction, comment = ii.decode.da(ii.mneumonic, adr, ins)
-	}
+	instruction, comment := m.isa.daInstruction(adr, ins)
 
 	return &Disassembly{
 		Dump:        daDump(adr, ins),
