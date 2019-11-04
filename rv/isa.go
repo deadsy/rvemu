@@ -242,7 +242,8 @@ var ISArv64d = ISAModule{
 
 //-----------------------------------------------------------------------------
 
-type instructionInfo struct {
+// insInfo is instruction information.
+type insInfo struct {
 	module    string    // ISA module to which the instruction belongs
 	mneumonic string    // instruction mneumonic
 	val, mask uint32    // value and mask of fixed bits in the instruction
@@ -251,15 +252,15 @@ type instructionInfo struct {
 
 // ISA is an instruction set
 type ISA struct {
-	name        string
-	instruction []instructionInfo
+	name        string     // the name of the ISA
+	instruction []*insInfo // the set of instruction in the ISA
 }
 
 // NewISA creates an empty instruction set.
 func NewISA(name string) *ISA {
 	return &ISA{
 		name:        name,
-		instruction: make([]instructionInfo, 0),
+		instruction: make([]*insInfo, 0),
 	}
 }
 
@@ -269,7 +270,7 @@ func (isa *ISA) addInstruction(defn string, module string) error {
 	if err != nil {
 		return err
 	}
-	isa.instruction = append(isa.instruction, *ii)
+	isa.instruction = append(isa.instruction, ii)
 	return nil
 }
 
@@ -286,11 +287,13 @@ func (isa *ISA) Add(module ...ISAModule) error {
 	return nil
 }
 
-// GenDecoders generates the decoder tables for the ISA.
-func (isa *ISA) GenDecoders() error {
-
-	// ...
-
+// lookup returns the instruction information for a given instruction.
+func (isa *ISA) lookup(ins uint32) *insInfo {
+	for _, ii := range isa.instruction {
+		if ins&ii.mask == ii.val {
+			return ii
+		}
+	}
 	return nil
 }
 

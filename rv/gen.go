@@ -140,7 +140,7 @@ type decoders struct {
 var knownDecodes = map[string]decoders{
 	"imm[31:12]_rd_7b":                       decoders{daNone},
 	"imm[20|10:1|11|19:12]_rd_7b":            decoders{daNone},
-	"imm[11:0]_rs1_3b_rd_7b":                 decoders{daNone},
+	"imm[11:0]_rs1_3b_rd_7b":                 decoders{daTypeI},
 	"imm[12|10:5]_rs2_rs1_3b_imm[4:1|11]_7b": decoders{daNone},
 	"imm[11:5]_rs2_rs1_3b_imm[4:0]_7b":       decoders{daNone},
 	"7b_shamt5_rs1_3b_rd_7b":                 decoders{daNone},
@@ -170,14 +170,14 @@ func getDecode(s string) (*decoders, error) {
 //-----------------------------------------------------------------------------
 
 // parseDefn parses an instruction definition string.
-func parseDefn(defn string, module string) (*instructionInfo, error) {
+func parseDefn(defn string, module string) (*insInfo, error) {
 	parts := strings.Split(defn, " ")
 	n := len(parts)
 	if n <= 0 {
 		return nil, fmt.Errorf("bad instruction definition string \"%s\"", defn)
 	}
 
-	ii := instructionInfo{
+	ii := insInfo{
 		mneumonic: strings.ToLower(parts[n-1]),
 		module:    module,
 	}
@@ -230,11 +230,11 @@ func (isa *ISA) GenDecoder(name string) string {
 		mask &= ii.mask
 	}
 
-	sets := make(map[uint32][]*instructionInfo)
+	sets := make(map[uint32][]*insInfo)
 
 	for _, ii := range isa.instruction {
 		val := mask & ii.val
-		sets[val] = append(sets[val], &ii)
+		sets[val] = append(sets[val], ii)
 	}
 
 	for k, v := range sets {
