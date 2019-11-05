@@ -32,43 +32,96 @@ var abiFName = [32]string{
 
 //-----------------------------------------------------------------------------
 
-func bfUnsigned(val uint32, n, shift uint) uint {
-	return uint((val >> shift) & ((1 << n) - 1))
+func bfUnsigned(val uint32, msb, lsb uint) uint {
+	mask := uint((1 << (msb - lsb + 1)) - 1)
+	return uint(val>>lsb) & mask
 }
 
-func bfSigned(val uint32, n, shift uint) int {
-	x := int(bfUnsigned(val, n, shift))
-	if x&(1<<(n-1)) != 0 {
-		x -= 1 << n
+// sign-extend on the posn bit
+func sex(x int, posn uint) int {
+	mask := 1 << posn
+	if x&mask != 0 {
+		x -= mask << 1
 	}
 	return x
 }
 
-//-----------------------------------------------------------------------------
-
-func daNone(mneumonic string, adr, ins uint32) (string, string) {
-	return mneumonic, "TODO"
+func bfSigned(val uint32, msb, lsb uint) int {
+	x := int(bfUnsigned(val, msb, lsb))
+	return sex(x, msb-lsb)
 }
 
-func daTypeI(mneumonic string, adr, ins uint32) (string, string) {
+//-----------------------------------------------------------------------------
+// default decode
 
-	imm := bfSigned(ins, 12, 20)
-	rs1 := abiXName[bfUnsigned(ins, 5, 15)]
-	rd := abiXName[bfUnsigned(ins, 5, 7)]
+func daNone(name string, adr, ins uint32) (string, string) {
+	return name, "TODO"
+}
 
-	if mneumonic == "addi" && rs1 == "zero" {
+//-----------------------------------------------------------------------------
+// Type I Decodes
+
+func daTypeI(ins uint32) (int, string, string) {
+	imm := bfSigned(ins, 31, 20)
+	rs1 := abiXName[bfUnsigned(ins, 19, 15)]
+	rd := abiXName[bfUnsigned(ins, 11, 7)]
+	return imm, rs1, rd
+}
+
+// default
+func daTypeIa(name string, adr, ins uint32) (string, string) {
+	imm, rs1, rd := daTypeI(ins)
+	return fmt.Sprintf("%s %s,%s,%d", name, rd, rs1, imm), ""
+}
+
+// addi
+func daTypeIb(name string, adr, ins uint32) (string, string) {
+	imm, rs1, rd := daTypeI(ins)
+	if rs1 == "zero" {
 		return fmt.Sprintf("li %s,%d", rd, imm), ""
 	}
-
-	if mneumonic == "addi" && imm == 0 {
+	if imm == 0 {
 		return fmt.Sprintf("mv %s,%s", rd, rs1), ""
 	}
+	return fmt.Sprintf("%s %s,%s,%d", name, rd, rs1, imm), ""
+}
 
-	if mneumonic == "lbu" || mneumonic == "lw" {
-		return fmt.Sprintf("%s %s,%d(%s)", mneumonic, rd, imm, rs1), ""
-	}
+// lb, lh, lw, lbu
+func daTypeIc(name string, adr, ins uint32) (string, string) {
+	imm, rs1, rd := daTypeI(ins)
+	return fmt.Sprintf("%s %s,%d(%s)", name, rd, imm, rs1), ""
+}
 
-	return fmt.Sprintf("%s %s,%s,%d", mneumonic, rd, rs1, imm), ""
+//-----------------------------------------------------------------------------
+// Type U Decodes
+
+func daTypeU(ins uint32) (uint, string) {
+	imm := bfUnsigned(ins, 31, 12)
+	rd := abiXName[bfUnsigned(ins, 11, 7)]
+	return imm, rd
+}
+
+// default
+func daTypeUa(name string, adr, ins uint32) (string, string) {
+	imm, rd := daTypeU(ins)
+	return fmt.Sprintf("%s %s,0x%x", name, rd, imm), ""
+}
+
+//-----------------------------------------------------------------------------
+// Type S Decodes
+
+func daTypeS(ins uint32) (int, string, string) {
+	x := (bfUnsigned(ins, 31, 25) << 5) + bfUnsigned(ins, 11, 7)
+	imm := sex(int(x), 11)
+	rs2 := abiXName[bfUnsigned(ins, 24, 20)]
+	rs1 := abiXName[bfUnsigned(ins, 19, 15)]
+	return imm, rs2, rs1
+}
+
+// default
+func daTypeSa(name string, adr, ins uint32) (string, string) {
+	imm, rs2, rs1 := daTypeS(ins)
+	return fmt.Sprintf("%s %s,%d(%s)", name, rs2, imm, rs1), ""
 }
 
 //-----------------------------------------------------------------------------
@@ -111,7 +164,7 @@ func daSymbol(adr uint32, st SymbolTable) string {
 func (isa *ISA) daInstruction(adr, ins uint32) (string, string) {
 	ii := isa.lookup(ins)
 	if ii != nil {
-		return ii.decode.da(ii.mneumonic, adr, ins)
+		return ii.da(ii.name, adr, ins)
 	}
 	return "?", "unknown"
 }

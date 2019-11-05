@@ -12,23 +12,6 @@ import "fmt"
 
 //-----------------------------------------------------------------------------
 
-type decodeType int
-
-const (
-	decodeNone decodeType = iota
-	decodeR
-	decodeI
-	decodeS
-	decodeB
-	decodeU
-	decodeJ
-	decodeSB
-	decodeUJ
-	decodeFence
-)
-
-//-----------------------------------------------------------------------------
-
 // Memory is an interface to the memory of the target system.
 type Memory interface {
 	Read32(adr uint32) uint32

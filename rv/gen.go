@@ -131,56 +131,65 @@ func isField(s string) (int, error) {
 
 //-----------------------------------------------------------------------------
 
-type daFunc func(mneumonic string, adr, ins uint32) (string, string)
+type decodeType int
 
-type decoders struct {
-	da daFunc
-}
+const (
+	decodeTypeNone = iota // unknown
+	decodeTypeI
+	decodeTypeU
+	decodeTypeS
+	//decodeR
+	//decodeB
+	//decodeJ
+	//decodeSB
+	//decodeUJ
+	//decodeFence
+)
 
-var knownDecodes = map[string]decoders{
-	"imm[31:12]_rd_7b":                       decoders{daNone},
-	"imm[20|10:1|11|19:12]_rd_7b":            decoders{daNone},
-	"imm[11:0]_rs1_3b_rd_7b":                 decoders{daTypeI},
-	"imm[12|10:5]_rs2_rs1_3b_imm[4:1|11]_7b": decoders{daNone},
-	"imm[11:5]_rs2_rs1_3b_imm[4:0]_7b":       decoders{daNone},
-	"7b_shamt5_rs1_3b_rd_7b":                 decoders{daNone},
-	"7b_rs2_rs1_3b_rd_7b":                    decoders{daNone},
-	"4b_pred_succ_5b_3b_5b_7b":               decoders{daNone},
-	"4b_4b_4b_5b_3b_5b_7b":                   decoders{daNone},
-	"12b_5b_3b_5b_7b":                        decoders{daNone},
-	"csr_rs1_3b_rd_7b":                       decoders{daNone},
-	"csr_zimm_3b_rd_7b":                      decoders{daNone},
-	"5b_aq_rl_5b_rs1_3b_rd_7b":               decoders{daNone},
-	"5b_aq_rl_rs2_rs1_3b_rd_7b":              decoders{daNone},
-	"rs3_2b_rs2_rs1_rm_rd_7b":                decoders{daNone},
-	"7b_rs2_rs1_rm_rd_7b":                    decoders{daNone},
-	"7b_5b_rs1_rm_rd_7b":                     decoders{daNone},
-	"7b_5b_rs1_3b_rd_7b":                     decoders{daNone},
-	"6b_shamt6_rs1_3b_rd_7b":                 decoders{daNone},
+var knownDecodes = map[string]decodeType{
+	"imm[31:12]_rd_7b":                       decodeTypeU,
+	"imm[20|10:1|11|19:12]_rd_7b":            decodeTypeNone,
+	"imm[11:0]_rs1_3b_rd_7b":                 decodeTypeI,
+	"imm[12|10:5]_rs2_rs1_3b_imm[4:1|11]_7b": decodeTypeNone,
+	"imm[11:5]_rs2_rs1_3b_imm[4:0]_7b":       decodeTypeS,
+	"7b_shamt5_rs1_3b_rd_7b":                 decodeTypeNone,
+	"7b_rs2_rs1_3b_rd_7b":                    decodeTypeNone,
+	"4b_pred_succ_5b_3b_5b_7b":               decodeTypeNone,
+	"4b_4b_4b_5b_3b_5b_7b":                   decodeTypeNone,
+	"12b_5b_3b_5b_7b":                        decodeTypeNone,
+	"csr_rs1_3b_rd_7b":                       decodeTypeNone,
+	"csr_zimm_3b_rd_7b":                      decodeTypeNone,
+	"5b_aq_rl_5b_rs1_3b_rd_7b":               decodeTypeNone,
+	"5b_aq_rl_rs2_rs1_3b_rd_7b":              decodeTypeNone,
+	"rs3_2b_rs2_rs1_rm_rd_7b":                decodeTypeNone,
+	"7b_rs2_rs1_rm_rd_7b":                    decodeTypeNone,
+	"7b_5b_rs1_rm_rd_7b":                     decodeTypeNone,
+	"7b_5b_rs1_3b_rd_7b":                     decodeTypeNone,
+	"6b_shamt6_rs1_3b_rd_7b":                 decodeTypeNone,
 }
 
 // getDecode returns the decode type for the instruction.
-func getDecode(s string) (*decoders, error) {
-	if decode, ok := knownDecodes[s]; ok {
-		return &decode, nil
+func getDecode(s string) (decodeType, error) {
+	if t, ok := knownDecodes[s]; ok {
+		return t, nil
 	}
-	return nil, fmt.Errorf("decode signature not recognised \"%s\"", s)
+	return decodeTypeNone, fmt.Errorf("decode signature not recognised \"%s\"", s)
 }
 
 //-----------------------------------------------------------------------------
 
 // parseDefn parses an instruction definition string.
-func parseDefn(defn string, module string) (*insInfo, error) {
-	parts := strings.Split(defn, " ")
+func parseDefn(id *insDefn) (*insInfo, error) {
+	parts := strings.Split(id.defn, " ")
 	n := len(parts)
 	if n <= 0 {
-		return nil, fmt.Errorf("bad instruction definition string \"%s\"", defn)
+		return nil, fmt.Errorf("bad instruction definition string \"%s\"", id.defn)
 	}
 
-	ii := insInfo{
-		mneumonic: strings.ToLower(parts[n-1]),
-		module:    module,
-	}
+	ii := insInfo{}
+
+	// mneumonic
+	ii.name = strings.ToLower(parts[n-1])
 
 	// remove the mneumonic from the end
 	parts = parts[0 : n-1]
@@ -206,21 +215,19 @@ func parseDefn(defn string, module string) (*insInfo, error) {
 	// instruction value and mask
 	bits := strings.Join(s0, "")
 	if len(bits) != 32 {
-		return nil, fmt.Errorf("bit length != 32 \"%s\"", defn)
+		return nil, fmt.Errorf("bit length != 32 \"%s\"", id.defn)
 	}
 	ii.val, ii.mask = bits2vm(bits)
 
-	// instruction decode
-	decode, err := getDecode(strings.Join(s1, "_"))
-	if err != nil {
-		return nil, err
-	}
-	ii.decode = decode
+	// disassembler
+	ii.da = id.da
 
 	return &ii, nil
 }
 
 //-----------------------------------------------------------------------------
+
+/*
 
 // GenDecoder generates a decoder for a set of instructions.
 func (isa *ISA) GenDecoder(name string) string {
@@ -247,5 +254,7 @@ func (isa *ISA) GenDecoder(name string) string {
 	}
 	return strings.Join(s, "\n")
 }
+
+*/
 
 //-----------------------------------------------------------------------------
