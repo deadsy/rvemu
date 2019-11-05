@@ -31,24 +31,33 @@ var abiFName = [32]string{
 }
 
 //-----------------------------------------------------------------------------
+// Bitfield Operations
 
-func bfUnsigned(val uint32, msb, lsb uint) uint {
-	mask := uint((1 << (msb - lsb + 1)) - 1)
-	return uint(val>>lsb) & mask
+// bitMask returns a bit mask from the msb to lsb bits.
+func bitMask(msb, lsb uint) uint {
+	n := msb - lsb + 1
+	return ((1 << n) - 1) << lsb
 }
 
-// sign-extend on the posn bit
-func sex(x int, posn uint) int {
-	mask := 1 << posn
-	if x&mask != 0 {
-		x -= mask << 1
-	}
-	return x
+// bitExtract extracts a bit field from a value (no shifting).
+func bitExtract(x uint32, msb, lsb uint) uint {
+	return uint(x) & bitMask(msb, lsb)
 }
 
-func bfSigned(val uint32, msb, lsb uint) int {
-	x := int(bfUnsigned(val, msb, lsb))
-	return sex(x, msb-lsb)
+// bitSex sign extends the value using the n-th bit as the sign.
+func bitSex(x int, n uint) int {
+	mask := 1 << n
+	return (x ^ mask) - mask
+}
+
+// bitUnsigned extracts an unsigned bit field.
+func bitUnsigned(x uint32, msb, lsb uint) uint {
+	return bitExtract(x, msb, lsb) >> lsb
+}
+
+// bitSigned extracts an signed bit field.
+func bitSigned(x uint32, msb, lsb uint) int {
+	return bitSex(int(bitUnsigned(x, msb, lsb)), msb-lsb)
 }
 
 //-----------------------------------------------------------------------------
@@ -62,9 +71,9 @@ func daNone(name string, adr, ins uint32) (string, string) {
 // Type I Decodes
 
 func daTypeI(ins uint32) (int, string, string) {
-	imm := bfSigned(ins, 31, 20)
-	rs1 := abiXName[bfUnsigned(ins, 19, 15)]
-	rd := abiXName[bfUnsigned(ins, 11, 7)]
+	imm := bitSigned(ins, 31, 20)
+	rs1 := abiXName[bitUnsigned(ins, 19, 15)]
+	rd := abiXName[bitUnsigned(ins, 11, 7)]
 	return imm, rs1, rd
 }
 
@@ -96,8 +105,8 @@ func daTypeIc(name string, adr, ins uint32) (string, string) {
 // Type U Decodes
 
 func daTypeU(ins uint32) (uint, string) {
-	imm := bfUnsigned(ins, 31, 12)
-	rd := abiXName[bfUnsigned(ins, 11, 7)]
+	imm := bitUnsigned(ins, 31, 12)
+	rd := abiXName[bitUnsigned(ins, 11, 7)]
 	return imm, rd
 }
 
@@ -111,10 +120,10 @@ func daTypeUa(name string, adr, ins uint32) (string, string) {
 // Type S Decodes
 
 func daTypeS(ins uint32) (int, string, string) {
-	x := (bfUnsigned(ins, 31, 25) << 5) + bfUnsigned(ins, 11, 7)
-	imm := sex(int(x), 11)
-	rs2 := abiXName[bfUnsigned(ins, 24, 20)]
-	rs1 := abiXName[bfUnsigned(ins, 19, 15)]
+	x := (bitUnsigned(ins, 31, 25) << 5) + bitUnsigned(ins, 11, 7)
+	imm := bitSex(int(x), 11)
+	rs2 := abiXName[bitUnsigned(ins, 24, 20)]
+	rs1 := abiXName[bitUnsigned(ins, 19, 15)]
 	return imm, rs2, rs1
 }
 
@@ -122,6 +131,22 @@ func daTypeS(ins uint32) (int, string, string) {
 func daTypeSa(name string, adr, ins uint32) (string, string) {
 	imm, rs2, rs1 := daTypeS(ins)
 	return fmt.Sprintf("%s %s,%d(%s)", name, rs2, imm, rs1), ""
+}
+
+//-----------------------------------------------------------------------------
+// Type R Decodes
+
+func daTypeR(ins uint32) (string, string, string) {
+	rs2 := abiXName[bitUnsigned(ins, 24, 20)]
+	rs1 := abiXName[bitUnsigned(ins, 19, 15)]
+	rd := abiXName[bitUnsigned(ins, 11, 7)]
+	return rs2, rs1, rd
+}
+
+// default
+func daTypeRa(name string, adr, ins uint32) (string, string) {
+	rs2, rs1, rd := daTypeR(ins)
+	return fmt.Sprintf("%s %s,%s,%s", name, rd, rs1, rs2), ""
 }
 
 //-----------------------------------------------------------------------------

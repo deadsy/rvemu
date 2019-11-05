@@ -138,7 +138,7 @@ const (
 	decodeTypeI
 	decodeTypeU
 	decodeTypeS
-	//decodeR
+	decodeTypeR
 	//decodeB
 	//decodeJ
 	//decodeSB
@@ -153,7 +153,10 @@ var knownDecodes = map[string]decodeType{
 	"imm[12|10:5]_rs2_rs1_3b_imm[4:1|11]_7b": decodeTypeNone,
 	"imm[11:5]_rs2_rs1_3b_imm[4:0]_7b":       decodeTypeS,
 	"7b_shamt5_rs1_3b_rd_7b":                 decodeTypeNone,
-	"7b_rs2_rs1_3b_rd_7b":                    decodeTypeNone,
+	"7b_rs2_rs1_3b_rd_7b":                    decodeTypeR,
+	"7b_rs2_rs1_rm_rd_7b":                    decodeTypeNone,
+	"7b_5b_rs1_rm_rd_7b":                     decodeTypeNone,
+	"7b_5b_rs1_3b_rd_7b":                     decodeTypeNone,
 	"4b_pred_succ_5b_3b_5b_7b":               decodeTypeNone,
 	"4b_4b_4b_5b_3b_5b_7b":                   decodeTypeNone,
 	"12b_5b_3b_5b_7b":                        decodeTypeNone,
@@ -162,9 +165,6 @@ var knownDecodes = map[string]decodeType{
 	"5b_aq_rl_5b_rs1_3b_rd_7b":               decodeTypeNone,
 	"5b_aq_rl_rs2_rs1_3b_rd_7b":              decodeTypeNone,
 	"rs3_2b_rs2_rs1_rm_rd_7b":                decodeTypeNone,
-	"7b_rs2_rs1_rm_rd_7b":                    decodeTypeNone,
-	"7b_5b_rs1_rm_rd_7b":                     decodeTypeNone,
-	"7b_5b_rs1_3b_rd_7b":                     decodeTypeNone,
 	"6b_shamt6_rs1_3b_rd_7b":                 decodeTypeNone,
 }
 
