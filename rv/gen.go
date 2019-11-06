@@ -135,37 +135,35 @@ type decodeType int
 
 const (
 	decodeTypeNone = iota // unknown
-	decodeTypeI
-	decodeTypeU
-	decodeTypeS
 	decodeTypeR
-	//decodeB
-	//decodeJ
-	//decodeSB
-	//decodeUJ
-	//decodeFence
+	decodeTypeI
+	decodeTypeS
+	decodeTypeB
+	decodeTypeU
+	decodeTypeJ
+	decodeTypeR4
 )
 
 var knownDecodes = map[string]decodeType{
 	"imm[31:12]_rd_7b":                       decodeTypeU,
-	"imm[20|10:1|11|19:12]_rd_7b":            decodeTypeNone,
-	"imm[11:0]_rs1_3b_rd_7b":                 decodeTypeI,
-	"imm[12|10:5]_rs2_rs1_3b_imm[4:1|11]_7b": decodeTypeNone,
+	"imm[20|10:1|11|19:12]_rd_7b":            decodeTypeJ, // aka UJ
 	"imm[11:5]_rs2_rs1_3b_imm[4:0]_7b":       decodeTypeS,
-	"7b_shamt5_rs1_3b_rd_7b":                 decodeTypeNone,
+	"imm[12|10:5]_rs2_rs1_3b_imm[4:1|11]_7b": decodeTypeB, // aka SB
+	"7b_shamt5_rs1_3b_rd_7b":                 decodeTypeI,
+	"6b_shamt6_rs1_3b_rd_7b":                 decodeTypeI,
+	"imm[11:0]_rs1_3b_rd_7b":                 decodeTypeI,
+	"csr_rs1_3b_rd_7b":                       decodeTypeI,
+	"csr_zimm_3b_rd_7b":                      decodeTypeI,
+	"4b_pred_succ_5b_3b_5b_7b":               decodeTypeI,
+	"12b_5b_3b_5b_7b":                        decodeTypeI,
+	"4b_4b_4b_5b_3b_5b_7b":                   decodeTypeI,
 	"7b_rs2_rs1_3b_rd_7b":                    decodeTypeR,
-	"7b_rs2_rs1_rm_rd_7b":                    decodeTypeNone,
-	"7b_5b_rs1_rm_rd_7b":                     decodeTypeNone,
-	"7b_5b_rs1_3b_rd_7b":                     decodeTypeNone,
-	"4b_pred_succ_5b_3b_5b_7b":               decodeTypeNone,
-	"4b_4b_4b_5b_3b_5b_7b":                   decodeTypeNone,
-	"12b_5b_3b_5b_7b":                        decodeTypeNone,
-	"csr_rs1_3b_rd_7b":                       decodeTypeNone,
-	"csr_zimm_3b_rd_7b":                      decodeTypeNone,
-	"5b_aq_rl_5b_rs1_3b_rd_7b":               decodeTypeNone,
-	"5b_aq_rl_rs2_rs1_3b_rd_7b":              decodeTypeNone,
-	"rs3_2b_rs2_rs1_rm_rd_7b":                decodeTypeNone,
-	"6b_shamt6_rs1_3b_rd_7b":                 decodeTypeNone,
+	"7b_rs2_rs1_rm_rd_7b":                    decodeTypeR,
+	"7b_5b_rs1_rm_rd_7b":                     decodeTypeR,
+	"5b_aq_rl_5b_rs1_3b_rd_7b":               decodeTypeR,
+	"5b_aq_rl_rs2_rs1_3b_rd_7b":              decodeTypeR,
+	"7b_5b_rs1_3b_rd_7b":                     decodeTypeR,
+	"rs3_2b_rs2_rs1_rm_rd_7b":                decodeTypeR4,
 }
 
 // getDecode returns the decode type for the instruction.
@@ -219,42 +217,19 @@ func parseDefn(id *insDefn) (*insInfo, error) {
 	}
 	ii.val, ii.mask = bits2vm(bits)
 
+	// check the decode type
+	dt, err := getDecode(strings.Join(s1, "_"))
+	if err != nil {
+		return nil, err
+	}
+	if id.dt != dt {
+		return nil, fmt.Errorf("decode type mismatch \"%s\"", id.defn)
+	}
+
 	// disassembler
 	ii.da = id.da
 
 	return &ii, nil
 }
-
-//-----------------------------------------------------------------------------
-
-/*
-
-// GenDecoder generates a decoder for a set of instructions.
-func (isa *ISA) GenDecoder(name string) string {
-
-	mask := uint32(0xffffffff)
-	for _, ii := range isa.instruction {
-		mask &= ii.mask
-	}
-
-	sets := make(map[uint32][]*insInfo)
-
-	for _, ii := range isa.instruction {
-		val := mask & ii.val
-		sets[val] = append(sets[val], ii)
-	}
-
-	for k, v := range sets {
-		fmt.Printf("%08x: %d\n", k, len(v))
-	}
-
-	s := make([]string, len(isa.instruction))
-	for i, ii := range isa.instruction {
-		s[i] = fmt.Sprintf("%s %08x %08x %s", vm2bits(ii.val, ii.mask), ii.val, ii.mask, ii.mneumonic)
-	}
-	return strings.Join(s, "\n")
-}
-
-*/
 
 //-----------------------------------------------------------------------------
