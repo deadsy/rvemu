@@ -112,6 +112,20 @@ func daTypeRa(name string, adr, ins uint32) (string, string) {
 }
 
 //-----------------------------------------------------------------------------
+// Type B Decodes
+
+func daTypeB(ins uint32) (int, string, string) {
+	imm, rs2, rs1 := decodeB(ins)
+	return imm, abiXName[rs2], abiXName[rs1]
+}
+
+// default
+func daTypeBa(name string, pc, ins uint32) (string, string) {
+	imm, rs2, rs1 := daTypeB(ins)
+	return fmt.Sprintf("%s %s,%s,%x", name, rs1, rs2, int(pc)+imm), ""
+}
+
+//-----------------------------------------------------------------------------
 
 // SymbolTable maps an address to a symbol.
 type SymbolTable map[uint32]string
