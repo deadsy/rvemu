@@ -50,6 +50,15 @@ func decodeR(ins uint32) (uint, uint, uint) {
 	return rs2, rs1, rd
 }
 
+func decodeR4(ins uint32) (uint, uint, uint, uint, uint) {
+	rs3 := bitUnsigned(ins, 31, 27)
+	rs2 := bitUnsigned(ins, 24, 20)
+	rs1 := bitUnsigned(ins, 19, 15)
+	rm := bitUnsigned(ins, 14, 12)
+	rd := bitUnsigned(ins, 11, 7)
+	return rs3, rs2, rs1, rm, rd
+}
+
 func decodeI(ins uint32) (int, uint, uint) {
 	imm := bitSigned(ins, 31, 20) // imm[11:0]
 	rs1 := bitUnsigned(ins, 19, 15)
