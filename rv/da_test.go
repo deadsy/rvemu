@@ -25,9 +25,9 @@ func Test_RV32G(t *testing.T) {
 	}
 
 	daTest := []struct {
-		adr uint32
-		ins uint32
-		da  string
+		adr uint32 // program counter
+		ins uint32 // instruction code
+		da  string // expected disassembly
 	}{
 		{0, 0, "?"},
 		{0, 0xffffffff, "?"},

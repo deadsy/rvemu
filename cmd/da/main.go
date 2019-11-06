@@ -373,11 +373,7 @@ func main() {
 	}
 
 	// create the CPU
-	cpu, err := rv.NewRV(rv.VariantRV32, isa, m)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(1)
-	}
+	cpu := rv.NewRV32(isa, m)
 
 	// Disassemble
 	size := len(code) * int(unsafe.Sizeof(code[0]))

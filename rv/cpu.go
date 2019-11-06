@@ -8,8 +8,6 @@ RISC-V CPU Definitions
 
 package rv
 
-import "fmt"
-
 //-----------------------------------------------------------------------------
 // Bitfield Operations
 
@@ -115,15 +113,6 @@ type Memory interface {
 
 //-----------------------------------------------------------------------------
 
-type Variant int
-
-const (
-	VariantRV32e Variant = iota
-	VariantRV32
-	VariantRV64
-	VariantRV128
-)
-
 // RV is a RISC-V CPU
 type RV struct {
 	Mem   Memory // memory of the target system
@@ -134,28 +123,29 @@ type RV struct {
 	isa   *ISA // ISA implemented for the CPU
 }
 
-// NewRV returns a RISC-V CPU
-func NewRV(variant Variant, isa *ISA, mem Memory) (*RV, error) {
-	cpu := RV{
-		Mem: mem,
-		isa: isa,
+// newRV returns a RISC-V CPU
+func newRV(isa *ISA, mem Memory, xlen, nregs uint) *RV {
+	return &RV{
+		Mem:   mem,
+		xlen:  xlen,
+		nregs: nregs,
+		isa:   isa,
 	}
+}
 
-	switch variant {
-	case VariantRV32e:
-		cpu.nregs = 16
-		cpu.xlen = 32
-	case VariantRV32:
-		cpu.nregs = 32
-		cpu.xlen = 32
-	case VariantRV64:
-		cpu.nregs = 32
-		cpu.xlen = 64
-	default:
-		return nil, fmt.Errorf("unsupported cpu variant %d", variant)
-	}
+// NewRV32 returns a 32-bit RISC-V CPU
+func NewRV32(isa *ISA, mem Memory) *RV {
+	return newRV(isa, mem, 32, 32)
+}
 
-	return &cpu, nil
+// NewRV32e returns a 32-bit embedded RISC-V CPU
+func NewRV32e(isa *ISA, mem Memory) *RV {
+	return newRV(isa, mem, 32, 16)
+}
+
+// NewRV64 returns a 64-bit RISC-V CPU
+func NewRV64(isa *ISA, mem Memory) *RV {
+	return newRV(isa, mem, 64, 32)
 }
 
 //-----------------------------------------------------------------------------

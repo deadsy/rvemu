@@ -74,9 +74,8 @@ func daTypeIe(name string, adr, ins uint32) (string, string) {
 	if rd == 1 {
 		if imm == 0 {
 			return fmt.Sprintf("%s %s", name, abiXName[rs1]), ""
-		} else {
-			return fmt.Sprintf("%s %s,%d", name, abiXName[rs1], imm), ""
 		}
+		return fmt.Sprintf("%s %s,%d", name, abiXName[rs1], imm), ""
 	}
 	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], abiXName[rs1], imm), ""
 }

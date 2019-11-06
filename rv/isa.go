@@ -19,6 +19,7 @@ type insDefn struct {
 	da   daFunc
 }
 
+// ISAModule is a set of RISC-V instructions as described in the specification.
 type ISAModule struct {
 	name string    // name of module
 	defn []insDefn // instruction definitions
@@ -27,6 +28,7 @@ type ISAModule struct {
 //-----------------------------------------------------------------------------
 // RV32 instructions
 
+// ISArv32i Integer
 var ISArv32i = ISAModule{
 	name: "rv32i",
 	defn: []insDefn{
@@ -80,6 +82,7 @@ var ISArv32i = ISAModule{
 	},
 }
 
+// ISArv32m Integer Multiplication and Division
 var ISArv32m = ISAModule{
 	name: "rv32m",
 	defn: []insDefn{
@@ -94,6 +97,7 @@ var ISArv32m = ISAModule{
 	},
 }
 
+// ISArv32a Atomics
 var ISArv32a = ISAModule{
 	name: "rv32a",
 	defn: []insDefn{
@@ -111,6 +115,7 @@ var ISArv32a = ISAModule{
 	},
 }
 
+// ISArv32f Single-Precision Floating-Point
 var ISArv32f = ISAModule{
 	name: "rv32f",
 	defn: []insDefn{
@@ -143,6 +148,7 @@ var ISArv32f = ISAModule{
 	},
 }
 
+// ISArv32d Double-Precision Floating-Point
 var ISArv32d = ISAModule{
 	name: "rv32d",
 	defn: []insDefn{
@@ -175,9 +181,56 @@ var ISArv32d = ISAModule{
 	},
 }
 
+// ISArv32c Compressed
+var ISArv32c = ISAModule{
+	name: "rv32c",
+	defn: []insDefn{
+		// Quadrant 0
+		{"000 nzuimm[5:4|9:6|2|3] rd0 00 C.ADDI4SPN", decodeTypeCIW, daNone},
+		{"001 uimm[5:3] rs10 uimm[7:6] rd0 00 C.FLD", decodeTypeCL, daNone},
+		{"010 uimm[5:3] rs10 uimm[2|6] rd0 00 C.LW", decodeTypeCL, daNone},
+		{"011 uimm[5:3] rs10 uimm[2|6] rd0 00 C.FLW", decodeTypeCL, daNone},
+		{"101 uimm[5:3] rs10 uimm[7:6] rs20 00 C.FSD", decodeTypeCS, daNone},
+		{"110 uimm[5:3] rs10 uimm[2|6] rs20 00 C.SW", decodeTypeCS, daNone},
+		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", decodeTypeCS, daNone},
+		// Quadrant 1
+		{"000 0 0 0 01 C.NOP", decodeTypeCI, daNone},
+		{"000 nzimm[5] rs1/rd6=0 nzimm[4:0] 01 C.ADDI", decodeTypeCI, daNone},
+		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", decodeTypeCJ, daNone},
+		{"010 imm[5] rd6=0 imm[4:0] 01 C.LI", decodeTypeCI, daNone},
+		{"011 nzimm[9] 2 nzimm[4|6|8:7|5] 01 C.ADDI16SP", decodeTypeCI, daNone},
+		{"011 nzimm[17] rd6={0, 2} nzimm[16:12] 01 C.LUI", decodeTypeCI, daNone},
+		{"100 nzuimm[5] 00 rs10 /rd0 nzuimm[4:0] 01 C.SRLI", decodeTypeCI, daNone},
+		{"100 nzuimm[5] 01 rs10 /rd0 nzuimm[4:0] 01 C.SRAI", decodeTypeCI, daNone},
+		{"100 imm[5] 10 rs10 /rd0 imm[4:0] 01 C.ANDI", decodeTypeCI, daNone},
+		{"100 0 11 rs10 /rd0 00 rs20 01 C.SUB", decodeTypeCR, daNone},
+		{"100 0 11 rs10 /rd0 01 rs20 01 C.XOR", decodeTypeCR, daNone},
+		{"100 0 11 rs10 /rd0 10 rs20 01 C.OR", decodeTypeCR, daNone},
+		{"100 0 11 rs10 /rd0 11 rs20 01 C.AND", decodeTypeCR, daNone},
+		{"101 imm[11|4|9:8|10|6|7|3:1|5] 01 C.J", decodeTypeCJ, daNone},
+		{"110 imm[8|4:3] rs10 imm[7:6|2:1|5] 01 C.BEQZ", decodeTypeCB, daNone},
+		{"111 imm[8|4:3] rs10 imm[7:6|2:1|5] 01 C.BNEZ", decodeTypeCB, daNone},
+		// Quadrant 2
+		{"000 nzuimm[5] rs1/rd6=0 nzuimm[4:0] 10 C.SLLI", decodeTypeCI, daNone},
+		{"000 0 rs1/rd6=0 0 10 C.SLLI64", decodeTypeCI, daNone},
+		{"001 uimm[5] rd uimm[4:3|8:6] 10 C.FLDSP", decodeTypeCSS, daNone},
+		{"010 uimm[5] rd6=0 uimm[4:2|7:6] 10 C.LWSP", decodeTypeCSS, daNone},
+		{"011 uimm[5] rd uimm[4:2|7:6] 10 C.FLWSP", decodeTypeCSS, daNone},
+		{"100 0 rs16=0 0 10 C.JR", decodeTypeCJ, daNone},
+		{"100 0 rd6=0 rs26=0 10 C.MV", decodeTypeCR, daNone},
+		{"100 1 0 0 10 C.EBREAK", decodeTypeCI, daNone},
+		{"100 1 rs16=0 0 10 C.JALR", decodeTypeCJ, daNone},
+		{"100 1 rs1/rd6=0 rs26=0 10 C.ADD", decodeTypeCR, daNone},
+		{"101 uimm[5:3|8:6] rs2 10 C.FSDSP", decodeTypeCSS, daNone},
+		{"110 uimm[5:2|7:6] rs2 10 C.SWSP", decodeTypeCSS, daNone},
+		{"111 uimm[5:2|7:6] rs2 10 C.FSWSP", decodeTypeCSS, daNone},
+	},
+}
+
 //-----------------------------------------------------------------------------
 // RV64 instructions (+ RV32)
 
+// ISArv64i Integer
 var ISArv64i = ISAModule{
 	name: "rv64i",
 	defn: []insDefn{
@@ -199,6 +252,7 @@ var ISArv64i = ISAModule{
 	},
 }
 
+// ISArv64m Integer Multiplication and Division
 var ISArv64m = ISAModule{
 	name: "rv64m",
 	defn: []insDefn{
@@ -210,6 +264,7 @@ var ISArv64m = ISAModule{
 	},
 }
 
+// ISArv64a Atomics
 var ISArv64a = ISAModule{
 	name: "rv64a",
 	defn: []insDefn{
@@ -227,6 +282,7 @@ var ISArv64a = ISAModule{
 	},
 }
 
+// ISArv64f Single-Precision Floating-Point
 var ISArv64f = ISAModule{
 	name: "rv64f",
 	defn: []insDefn{
@@ -237,6 +293,7 @@ var ISArv64f = ISAModule{
 	},
 }
 
+// ISArv64d Double-Precision Floating-Point
 var ISArv64d = ISAModule{
 	name: "rv64d",
 	defn: []insDefn{

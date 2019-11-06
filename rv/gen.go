@@ -15,29 +15,6 @@ import (
 
 //-----------------------------------------------------------------------------
 
-/*
-
-// ISAModule is the numeric identifier of an ISA sub-module.
-type ISAModuleID uint32
-
-// Identifiers for ISA sub-modules.
-const (
-	IDv32i ISAModule = (1 << iota) // Integer
-	IDrv32m                         // Integer Multiplication and Division
-	IDrv32a                         // Atomics
-	IDrv32f                         // Single-Precision Floating-Point
-	IDrv32d                         // Double-Precision Floating-Point
-	IDrv64i                         // Integer
-	IDrv64m                         // Integer Multiplication and Division
-	IDrv64a                         // Atomics
-	IDrv64f                         // Single-Precision Floating-Point
-	IDrv64d                         // Double-Precision Floating-Point
-)
-
-*/
-
-//-----------------------------------------------------------------------------
-
 // bits2vm converts a bit pattern to a value and mask.
 func bits2vm(s string) (uint32, uint32) {
 	var v uint32
@@ -135,13 +112,21 @@ type decodeType int
 
 const (
 	decodeTypeNone = iota // unknown
-	decodeTypeR
-	decodeTypeI
-	decodeTypeS
-	decodeTypeB
-	decodeTypeU
-	decodeTypeJ
-	decodeTypeR4
+	decodeTypeR           // Register
+	decodeTypeI           // Immediate
+	decodeTypeS           // Store
+	decodeTypeB           // Branch
+	decodeTypeU           // Upper Immediate
+	decodeTypeJ           // Jump
+	decodeTypeR4          // Register(4)
+	decodeTypeCR          // Compressed Register
+	decodeTypeCI          // Compressed Immediate
+	decodeTypeCSS         // Compressed Stack-relative Store
+	decodeTypeCIW         // Compressed Wide Immediate
+	decodeTypeCL          // Compressed Load
+	decodeTypeCS          // Compressed Store
+	decodeTypeCB          // Compressed Branch
+	decodeTypeCJ          // Compressed Jump
 )
 
 var knownDecodes = map[string]decodeType{
