@@ -10,8 +10,11 @@ package main
 
 import (
 	"encoding/binary"
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
 	"unsafe"
 
 	"github.com/deadsy/riscv/rv"
@@ -338,44 +341,78 @@ var code = []uint32{
 //-----------------------------------------------------------------------------
 
 type memory struct {
-	base uint32
-	mem  []uint8
+	base uint32            // base memory address
+	mem  []uint8           // memory array
+	st   map[uint32]string // symbol table
 }
 
 func newMemory(base uint32, size int) *memory {
 	return &memory{
 		base: base,
 		mem:  make([]uint8, size),
+		st:   make(map[uint32]string),
 	}
 }
 
+// Rd32 reads a 32-bit value from memory.
 func (m *memory) Rd32(adr uint32) uint32 {
 	return binary.LittleEndian.Uint32(m.mem[adr-m.base:])
 }
 
+// Wr32 writes a 32-bit value to memory.
 func (m *memory) Wr32(adr uint32, val uint32) {
 	binary.LittleEndian.PutUint32(m.mem[adr-m.base:], val)
 }
 
+// Rd16 reads a 16-bit value from memory.
 func (m *memory) Rd16(adr uint32) uint16 {
 	return binary.LittleEndian.Uint16(m.mem[adr-m.base:])
 }
 
+// Wr16 writes a 16-bit value to memory.
 func (m *memory) Wr16(adr uint32, val uint16) {
 	binary.LittleEndian.PutUint16(m.mem[adr-m.base:], val)
 }
 
+// Rd8 reads an 8-bit value from memory.
 func (m *memory) Rd8(adr uint32) uint8 {
 	return m.mem[adr-m.base]
 }
 
+// Wr8 writes an 8-bit value to memory.
 func (m *memory) Wr8(adr uint32, val uint8) {
 	m.mem[adr-m.base] = val
+}
+
+// Symbol returns a symbol for the memory address (if there is one).
+func (m *memory) Symbol(adr uint32) string {
+	return m.st[adr]
+}
+
+// loadDump loads an objdump output file to memory.
+func (m *memory) loadDump(filename string) error {
+
+	// get the file contents
+	x, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	lines := strings.Split(string(x), "\n")
+	for i := range lines {
+		fmt.Printf("%s\n", lines[i])
+	}
+
+	return nil
 }
 
 //-----------------------------------------------------------------------------
 
 func main() {
+
+	// command line flags
+	fname := flag.String("f", "dump.txt", "dump file to load")
+	flag.Parse()
 
 	// create the ISA
 	isa := rv.NewISA("rv32g")
@@ -388,6 +425,15 @@ func main() {
 	// create the memory
 	adr := uint32(0)
 	m := newMemory(adr, 1<<20)
+
+	// load the memory
+	err = m.loadDump(*fname)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		os.Exit(1)
+	}
+
+	os.Exit(0)
 
 	// add the code
 	for i, v := range code {
