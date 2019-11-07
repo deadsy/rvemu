@@ -17,7 +17,8 @@ INCLUDE =
 DEFINE =
 
 # compiler flags
-X_CFLAGS = -march=rv32i -mabi=ilp32
+#X_CFLAGS = -march=rv32i -mabi=ilp32
+X_CFLAGS = -march=rv32im -mabi=ilp32
 X_CFLAGS += -Wall -Wstrict-prototypes -Werror
 
 # linker flags

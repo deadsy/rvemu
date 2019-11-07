@@ -9,6 +9,7 @@ RISC-V Disassembler
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"os"
 	"unsafe"
@@ -338,49 +339,38 @@ var code = []uint32{
 
 type memory struct {
 	base uint32
-	mem  []uint32
+	mem  []uint8
+}
+
+func newMemory(base uint32, size int) *memory {
+	return &memory{
+		base: base,
+		mem:  make([]uint8, size),
+	}
 }
 
 func (m *memory) Rd32(adr uint32) uint32 {
-	adr -= m.base
-	if adr&3 != 0 {
-		panic(fmt.Sprintf("misaligned 32 bit read @ %08x", adr))
-	}
-	return m.mem[adr>>2]
+	return binary.LittleEndian.Uint32(m.mem[adr-m.base:])
 }
 
 func (m *memory) Wr32(adr uint32, val uint32) {
-	adr -= m.base
-	if adr&3 != 0 {
-		panic(fmt.Sprintf("misaligned 32 bit write @ %08x", adr))
-	}
-	m.mem[adr>>2] = val
+	binary.LittleEndian.PutUint32(m.mem[adr-m.base:], val)
 }
 
 func (m *memory) Rd16(adr uint32) uint16 {
-	adr -= m.base
-	if adr&1 != 0 {
-		panic(fmt.Sprintf("misaligned 16 bit read @ %08x", adr))
-	}
-	s := 8 * (adr & 2)
-	return uint16(m.mem[adr>>2] >> s)
+	return binary.LittleEndian.Uint16(m.mem[adr-m.base:])
 }
 
 func (m *memory) Wr16(adr uint32, val uint16) {
-	adr -= m.base
-	if adr&1 != 0 {
-		panic(fmt.Sprintf("misaligned 16 bit write @ %08x", adr))
-	}
-	// TODO
+	binary.LittleEndian.PutUint16(m.mem[adr-m.base:], val)
 }
 
 func (m *memory) Rd8(adr uint32) uint8 {
-	s := 8 * (adr & 3)
-	return uint8(m.mem[adr>>2] >> s)
+	return m.mem[adr-m.base]
 }
 
 func (m *memory) Wr8(adr uint32, val uint8) {
-	// TODO
+	m.mem[adr-m.base] = val
 }
 
 //-----------------------------------------------------------------------------
@@ -397,9 +387,11 @@ func main() {
 
 	// create the memory
 	adr := uint32(0)
-	m := &memory{
-		base: adr,
-		mem:  code,
+	m := newMemory(adr, 1<<20)
+
+	// add the code
+	for i, v := range code {
+		m.Wr32(uint32(i*4), v)
 	}
 
 	// create the CPU
