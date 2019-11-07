@@ -122,6 +122,14 @@ func daTypeRa(name string, adr, ins uint32) (string, string) {
 	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiXName[rs1], abiXName[rs2]), ""
 }
 
+func daTypeRb(name string, adr, ins uint32) (string, string) {
+	rs2, rs1, rd := decodeR(ins)
+	if rs2 == 0 {
+		return fmt.Sprintf("%s %s,(%s)", name, abiXName[rd], abiXName[rs1]), ""
+	}
+	return fmt.Sprintf("%s %s,%s,(%s)", name, abiXName[rd], abiXName[rs2], abiXName[rs1]), ""
+}
+
 //-----------------------------------------------------------------------------
 // Type R4 Decodes
 
@@ -136,12 +144,14 @@ func daTypeR4a(name string, adr, ins uint32) (string, string) {
 func daTypeBa(name string, pc, ins uint32) (string, string) {
 	imm, rs2, rs1 := decodeB(ins)
 	adr := int(pc) + imm
-	if name == "bge" && rs2 == 0 {
-		return fmt.Sprintf("bgez %s,%x", abiXName[rs1], adr), ""
+
+	if rs2 == 0 {
+		switch name {
+		case "bge", "beq", "bne", "blt":
+			return fmt.Sprintf("%sz %s,%x", name, abiXName[rs1], adr), ""
+		}
 	}
-	if name == "beq" && rs2 == 0 {
-		return fmt.Sprintf("beqz %s,%x", abiXName[rs1], adr), ""
-	}
+
 	return fmt.Sprintf("%s %s,%s,%x", name, abiXName[rs1], abiXName[rs2], adr), ""
 }
 
@@ -206,7 +216,7 @@ func (isa *ISA) daInstruction(adr, ins uint32) (string, string) {
 // Disassemble a RISC-V instruction at the address.
 func (m *RV) Disassemble(adr uint32, st SymbolTable) *Disassembly {
 
-	ins := m.Mem.Read32(adr)
+	ins := m.Mem.Rd32(adr)
 
 	instruction, comment := m.isa.daInstruction(adr, ins)
 

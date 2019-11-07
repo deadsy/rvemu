@@ -107,8 +107,12 @@ func decodeJ(ins uint32) (int, uint) {
 
 // Memory is an interface to the memory of the target system.
 type Memory interface {
-	Read32(adr uint32) uint32
-	Write32(adr uint32, val uint32)
+	Rd32(adr uint32) uint32
+	Wr32(adr uint32, val uint32)
+	Rd16(adr uint32) uint16
+	Wr16(adr uint32, val uint16)
+	Rd8(adr uint32) uint8
+	Wr8(adr uint32, val uint8)
 }
 
 //-----------------------------------------------------------------------------

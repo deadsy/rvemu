@@ -341,16 +341,46 @@ type memory struct {
 	mem  []uint32
 }
 
-func (m *memory) Read32(adr uint32) uint32 {
+func (m *memory) Rd32(adr uint32) uint32 {
 	adr -= m.base
 	if adr&3 != 0 {
-		panic(fmt.Sprintf("mis-aligned 32 bit read @ %08x", adr))
+		panic(fmt.Sprintf("misaligned 32 bit read @ %08x", adr))
 	}
 	return m.mem[adr>>2]
 }
 
-func (m *memory) Write32(adr uint32, val uint32) {
-	// nop
+func (m *memory) Wr32(adr uint32, val uint32) {
+	adr -= m.base
+	if adr&3 != 0 {
+		panic(fmt.Sprintf("misaligned 32 bit write @ %08x", adr))
+	}
+	m.mem[adr>>2] = val
+}
+
+func (m *memory) Rd16(adr uint32) uint16 {
+	adr -= m.base
+	if adr&1 != 0 {
+		panic(fmt.Sprintf("misaligned 16 bit read @ %08x", adr))
+	}
+	s := 8 * (adr & 2)
+	return uint16(m.mem[adr>>2] >> s)
+}
+
+func (m *memory) Wr16(adr uint32, val uint16) {
+	adr -= m.base
+	if adr&1 != 0 {
+		panic(fmt.Sprintf("misaligned 16 bit write @ %08x", adr))
+	}
+	// TODO
+}
+
+func (m *memory) Rd8(adr uint32) uint8 {
+	s := 8 * (adr & 3)
+	return uint8(m.mem[adr>>2] >> s)
+}
+
+func (m *memory) Wr8(adr uint32, val uint8) {
+	// TODO
 }
 
 //-----------------------------------------------------------------------------
@@ -360,6 +390,8 @@ func main() {
 	// create the ISA
 	isa := rv.NewISA("rv32g")
 	err := isa.Add(rv.ISArv32i, rv.ISArv32m, rv.ISArv32a, rv.ISArv32f, rv.ISArv32d)
+	err = isa.Add(rv.ISArv32c)
+
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)

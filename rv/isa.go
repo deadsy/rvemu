@@ -22,6 +22,7 @@ type insDefn struct {
 // ISAModule is a set of RISC-V instructions as described in the specification.
 type ISAModule struct {
 	name string    // name of module
+	ilen int       // instruction length
 	defn []insDefn // instruction definitions
 }
 
@@ -31,6 +32,7 @@ type ISAModule struct {
 // ISArv32i Integer
 var ISArv32i = ISAModule{
 	name: "rv32i",
+	ilen: 32,
 	defn: []insDefn{
 		{"imm[31:12] rd 0110111 LUI", decodeTypeU, daTypeUa},
 		{"imm[31:12] rd 0010111 AUIPC", decodeTypeU, daTypeUa},
@@ -85,6 +87,7 @@ var ISArv32i = ISAModule{
 // ISArv32m Integer Multiplication and Division
 var ISArv32m = ISAModule{
 	name: "rv32m",
+	ilen: 32,
 	defn: []insDefn{
 		{"0000001 rs2 rs1 000 rd 0110011 MUL", decodeTypeR, daTypeRa},
 		{"0000001 rs2 rs1 001 rd 0110011 MULH", decodeTypeR, daTypeRa},
@@ -100,24 +103,26 @@ var ISArv32m = ISAModule{
 // ISArv32a Atomics
 var ISArv32a = ISAModule{
 	name: "rv32a",
+	ilen: 32,
 	defn: []insDefn{
-		{"00010 aq rl 00000 rs1 010 rd 0101111 LR.W", decodeTypeR, daNone},
-		{"00011 aq rl rs2 rs1 010 rd 0101111 SC.W", decodeTypeR, daNone},
-		{"00001 aq rl rs2 rs1 010 rd 0101111 AMOSWAP.W", decodeTypeR, daNone},
-		{"00000 aq rl rs2 rs1 010 rd 0101111 AMOADD.W", decodeTypeR, daNone},
-		{"00100 aq rl rs2 rs1 010 rd 0101111 AMOXOR.W", decodeTypeR, daNone},
-		{"01100 aq rl rs2 rs1 010 rd 0101111 AMOAND.W", decodeTypeR, daNone},
-		{"01000 aq rl rs2 rs1 010 rd 0101111 AMOOR.W", decodeTypeR, daNone},
-		{"10000 aq rl rs2 rs1 010 rd 0101111 AMOMIN.W", decodeTypeR, daNone},
-		{"10100 aq rl rs2 rs1 010 rd 0101111 AMOMAX.W", decodeTypeR, daNone},
-		{"11000 aq rl rs2 rs1 010 rd 0101111 AMOMINU.W", decodeTypeR, daNone},
-		{"11100 aq rl rs2 rs1 010 rd 0101111 AMOMAXU.W", decodeTypeR, daNone},
+		{"00010 aq rl 00000 rs1 010 rd 0101111 LR.W", decodeTypeR, daTypeRb},
+		{"00011 aq rl rs2 rs1 010 rd 0101111 SC.W", decodeTypeR, daTypeRb},
+		{"00001 aq rl rs2 rs1 010 rd 0101111 AMOSWAP.W", decodeTypeR, daTypeRb},
+		{"00000 aq rl rs2 rs1 010 rd 0101111 AMOADD.W", decodeTypeR, daTypeRb},
+		{"00100 aq rl rs2 rs1 010 rd 0101111 AMOXOR.W", decodeTypeR, daTypeRb},
+		{"01100 aq rl rs2 rs1 010 rd 0101111 AMOAND.W", decodeTypeR, daTypeRb},
+		{"01000 aq rl rs2 rs1 010 rd 0101111 AMOOR.W", decodeTypeR, daTypeRb},
+		{"10000 aq rl rs2 rs1 010 rd 0101111 AMOMIN.W", decodeTypeR, daTypeRb},
+		{"10100 aq rl rs2 rs1 010 rd 0101111 AMOMAX.W", decodeTypeR, daTypeRb},
+		{"11000 aq rl rs2 rs1 010 rd 0101111 AMOMINU.W", decodeTypeR, daTypeRb},
+		{"11100 aq rl rs2 rs1 010 rd 0101111 AMOMAXU.W", decodeTypeR, daTypeRb},
 	},
 }
 
 // ISArv32f Single-Precision Floating-Point
 var ISArv32f = ISAModule{
 	name: "rv32f",
+	ilen: 32,
 	defn: []insDefn{
 		{"imm[11:0] rs1 010 rd 0000111 FLW", decodeTypeI, daTypeIa},
 		{"imm[11:5] rs2 rs1 010 imm[4:0] 0100111 FSW", decodeTypeS, daTypeSb},
@@ -151,6 +156,7 @@ var ISArv32f = ISAModule{
 // ISArv32d Double-Precision Floating-Point
 var ISArv32d = ISAModule{
 	name: "rv32d",
+	ilen: 32,
 	defn: []insDefn{
 		{"imm[11:0] rs1 011 rd 0000111 FLD", decodeTypeI, daTypeIg},
 		{"imm[11:5] rs2 rs1 011 imm[4:0] 0100111 FSD", decodeTypeS, daTypeSb},
@@ -184,6 +190,7 @@ var ISArv32d = ISAModule{
 // ISArv32c Compressed
 var ISArv32c = ISAModule{
 	name: "rv32c",
+	ilen: 16,
 	defn: []insDefn{
 		// Quadrant 0
 		{"000 nzuimm[5:4|9:6|2|3] rd0 00 C.ADDI4SPN", decodeTypeCIW, daNone},
@@ -194,33 +201,33 @@ var ISArv32c = ISAModule{
 		{"110 uimm[5:3] rs10 uimm[2|6] rs20 00 C.SW", decodeTypeCS, daNone},
 		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", decodeTypeCS, daNone},
 		// Quadrant 1
-		{"000 0 0 0 01 C.NOP", decodeTypeCI, daNone},
-		{"000 nzimm[5] rs1/rd6=0 nzimm[4:0] 01 C.ADDI", decodeTypeCI, daNone},
+		{"000 nzimm[5] 00000 nzimm[4:0] 01 C.NOP", decodeTypeCI, daNone},
+		{"000 nzimm[5] rs1/rd!=0 nzimm[4:0] 01 C.ADDI", decodeTypeCI, daNone},
 		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", decodeTypeCJ, daNone},
-		{"010 imm[5] rd6=0 imm[4:0] 01 C.LI", decodeTypeCI, daNone},
-		{"011 nzimm[9] 2 nzimm[4|6|8:7|5] 01 C.ADDI16SP", decodeTypeCI, daNone},
-		{"011 nzimm[17] rd6={0, 2} nzimm[16:12] 01 C.LUI", decodeTypeCI, daNone},
-		{"100 nzuimm[5] 00 rs10 /rd0 nzuimm[4:0] 01 C.SRLI", decodeTypeCI, daNone},
-		{"100 nzuimm[5] 01 rs10 /rd0 nzuimm[4:0] 01 C.SRAI", decodeTypeCI, daNone},
-		{"100 imm[5] 10 rs10 /rd0 imm[4:0] 01 C.ANDI", decodeTypeCI, daNone},
-		{"100 0 11 rs10 /rd0 00 rs20 01 C.SUB", decodeTypeCR, daNone},
-		{"100 0 11 rs10 /rd0 01 rs20 01 C.XOR", decodeTypeCR, daNone},
-		{"100 0 11 rs10 /rd0 10 rs20 01 C.OR", decodeTypeCR, daNone},
-		{"100 0 11 rs10 /rd0 11 rs20 01 C.AND", decodeTypeCR, daNone},
+		{"010 imm[5] rd!=0 imm[4:0] 01 C.LI", decodeTypeCI, daNone},
+		{"011 nzimm[9] 00010 nzimm[4|6|8:7|5] 01 C.ADDI16SP", decodeTypeCI, daNone},
+		{"011 nzimm[17] rd!={0,2} nzimm[16:12] 01 C.LUI", decodeTypeCI, daNone},
+		{"100 nzuimm[5] 00 rs10/rd0 nzuimm[4:0] 01 C.SRLI", decodeTypeCI, daNone},
+		{"100 nzuimm[5] 01 rs10/rd0 nzuimm[4:0] 01 C.SRAI", decodeTypeCI, daNone},
+		{"100 imm[5] 10 rs10/rd0 imm[4:0] 01 C.ANDI", decodeTypeCI, daNone},
+		{"100 0 11 rs10/rd0 00 rs20 01 C.SUB", decodeTypeCR, daNone},
+		{"100 0 11 rs10/rd0 01 rs20 01 C.XOR", decodeTypeCR, daNone},
+		{"100 0 11 rs10/rd0 10 rs20 01 C.OR", decodeTypeCR, daNone},
+		{"100 0 11 rs10/rd0 11 rs20 01 C.AND", decodeTypeCR, daNone},
 		{"101 imm[11|4|9:8|10|6|7|3:1|5] 01 C.J", decodeTypeCJ, daNone},
 		{"110 imm[8|4:3] rs10 imm[7:6|2:1|5] 01 C.BEQZ", decodeTypeCB, daNone},
 		{"111 imm[8|4:3] rs10 imm[7:6|2:1|5] 01 C.BNEZ", decodeTypeCB, daNone},
 		// Quadrant 2
-		{"000 nzuimm[5] rs1/rd6=0 nzuimm[4:0] 10 C.SLLI", decodeTypeCI, daNone},
-		{"000 0 rs1/rd6=0 0 10 C.SLLI64", decodeTypeCI, daNone},
+		{"000 nzuimm[5] rs1/rd!=0 nzuimm[4:0] 10 C.SLLI", decodeTypeCI, daNone},
+		{"000 0 rs1/rd!=0 00000 10 C.SLLI64", decodeTypeCI, daNone},
 		{"001 uimm[5] rd uimm[4:3|8:6] 10 C.FLDSP", decodeTypeCSS, daNone},
-		{"010 uimm[5] rd6=0 uimm[4:2|7:6] 10 C.LWSP", decodeTypeCSS, daNone},
+		{"010 uimm[5] rd!=0 uimm[4:2|7:6] 10 C.LWSP", decodeTypeCSS, daNone},
 		{"011 uimm[5] rd uimm[4:2|7:6] 10 C.FLWSP", decodeTypeCSS, daNone},
-		{"100 0 rs16=0 0 10 C.JR", decodeTypeCJ, daNone},
-		{"100 0 rd6=0 rs26=0 10 C.MV", decodeTypeCR, daNone},
-		{"100 1 0 0 10 C.EBREAK", decodeTypeCI, daNone},
-		{"100 1 rs16=0 0 10 C.JALR", decodeTypeCJ, daNone},
-		{"100 1 rs1/rd6=0 rs26=0 10 C.ADD", decodeTypeCR, daNone},
+		{"100 0 rs1!=0 00000 10 C.JR", decodeTypeCJ, daNone},
+		{"100 0 rd!=0 rs2!=0 10 C.MV", decodeTypeCR, daNone},
+		{"100 1 00000 00000 10 C.EBREAK", decodeTypeCI, daNone},
+		{"100 1 rs1!=0 00000 10 C.JALR", decodeTypeCJ, daNone},
+		{"100 1 rs1/rd!=0 rs2!=0 10 C.ADD", decodeTypeCR, daNone},
 		{"101 uimm[5:3|8:6] rs2 10 C.FSDSP", decodeTypeCSS, daNone},
 		{"110 uimm[5:2|7:6] rs2 10 C.SWSP", decodeTypeCSS, daNone},
 		{"111 uimm[5:2|7:6] rs2 10 C.FSWSP", decodeTypeCSS, daNone},
@@ -233,6 +240,7 @@ var ISArv32c = ISAModule{
 // ISArv64i Integer
 var ISArv64i = ISAModule{
 	name: "rv64i",
+	ilen: 32,
 	defn: []insDefn{
 		{"imm[11:0] rs1 110 rd 0000011 LWU", decodeTypeI, daTypeIa},
 		{"imm[11:0] rs1 011 rd 0000011 LD", decodeTypeI, daTypeIa},
@@ -255,6 +263,7 @@ var ISArv64i = ISAModule{
 // ISArv64m Integer Multiplication and Division
 var ISArv64m = ISAModule{
 	name: "rv64m",
+	ilen: 32,
 	defn: []insDefn{
 		{"0000001 rs2 rs1 000 rd 0111011 MULW", decodeTypeR, daNone},
 		{"0000001 rs2 rs1 100 rd 0111011 DIVW", decodeTypeR, daNone},
@@ -267,6 +276,7 @@ var ISArv64m = ISAModule{
 // ISArv64a Atomics
 var ISArv64a = ISAModule{
 	name: "rv64a",
+	ilen: 32,
 	defn: []insDefn{
 		{"00010 aq rl 00000 rs1 011 rd 0101111 LR.D", decodeTypeR, daNone},
 		{"00011 aq rl rs2 rs1 011 rd 0101111 SC.D", decodeTypeR, daNone},
@@ -285,6 +295,7 @@ var ISArv64a = ISAModule{
 // ISArv64f Single-Precision Floating-Point
 var ISArv64f = ISAModule{
 	name: "rv64f",
+	ilen: 32,
 	defn: []insDefn{
 		{"1100000 00010 rs1 rm rd 1010011 FCVT.L.S", decodeTypeR, daNone},
 		{"1100000 00011 rs1 rm rd 1010011 FCVT.LU.S", decodeTypeR, daNone},
@@ -296,6 +307,7 @@ var ISArv64f = ISAModule{
 // ISArv64d Double-Precision Floating-Point
 var ISArv64d = ISAModule{
 	name: "rv64d",
+	ilen: 32,
 	defn: []insDefn{
 		{"1100001 00010 rs1 rm rd 1010011 FCVT.L.D", decodeTypeR, daNone},
 		{"1100001 00011 rs1 rm rd 1010011 FCVT.LU.D", decodeTypeR, daNone},
@@ -329,24 +341,15 @@ func NewISA(name string) *ISA {
 	}
 }
 
-// addInstruction adds an instruction to the ISA.
-func (isa *ISA) addInstruction(id *insDefn) error {
-	ii, err := parseDefn(id)
-	if err != nil {
-		return err
-	}
-	isa.instruction = append(isa.instruction, ii)
-	return nil
-}
-
 // Add a ISA sub-module to the ISA.
 func (isa *ISA) Add(module ...ISAModule) error {
 	for i := range module {
 		for _, id := range module[i].defn {
-			err := isa.addInstruction(&id)
+			ii, err := parseDefn(&id, module[i].ilen)
 			if err != nil {
 				return err
 			}
+			isa.instruction = append(isa.instruction, ii)
 		}
 	}
 	return nil
