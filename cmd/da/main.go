@@ -390,8 +390,6 @@ func main() {
 	// create the ISA
 	isa := rv.NewISA("rv32g")
 	err := isa.Add(rv.ISArv32i, rv.ISArv32m, rv.ISArv32a, rv.ISArv32f, rv.ISArv32d)
-	err = isa.Add(rv.ISArv32c)
-
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
@@ -412,8 +410,8 @@ func main() {
 	for size > 0 {
 		da := cpu.Disassemble(adr, symtab)
 		fmt.Printf("%s\n", da.String())
-		size -= da.N
-		adr += uint32(da.N)
+		size -= da.Length
+		adr += uint32(da.Length)
 	}
 
 	os.Exit(0)

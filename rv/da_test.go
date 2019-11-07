@@ -26,7 +26,7 @@ func Test_RV32G(t *testing.T) {
 
 	daTest := []struct {
 		adr uint32 // program counter
-		ins uint32 // instruction code
+		ins uint   // instruction code
 		da  string // expected disassembly
 	}{
 		{0, 0, "?"},
@@ -71,7 +71,6 @@ func Test_RV32G(t *testing.T) {
 		{0, 0x100526af, "lr.w a3,(a0)"},
 		{0, 0x18c526af, "sc.w a3,a2,(a0)"},
 		{0, 0x0c55232f, "amoswap.w t1,t0,(a0)"},
-
 		// rv32d
 		{0, 0x0005b787, "fld fa5,0(a1)"},
 		{0, 0x72a7f7c3, "fmadd.d fa5,fa5,fa0,fa4"},
@@ -79,9 +78,40 @@ func Test_RV32G(t *testing.T) {
 	}
 
 	for _, v := range daTest {
-		da, _ := isa.daInstruction(v.adr, v.ins)
+		da := isa.daInstruction(v.adr, v.ins)
 		if v.da != da {
 			fmt.Printf("ins %08x \"%s\" (expected) \"%s\" (actual)\n", v.ins, v.da, da)
+			t.Error("FAIL")
+		}
+	}
+
+}
+
+//-----------------------------------------------------------------------------
+
+func Test_RV32C(t *testing.T) {
+
+	isa := NewISA("rv32c")
+	err := isa.Add(ISArv32c)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		t.Error("FAIL")
+	}
+
+	daTest := []struct {
+		adr uint32 // program counter
+		ins uint   // instruction code
+		da  string // expected disassembly
+	}{
+		{0, 0, "?"},
+		{0, 0x4705, "c.li a4,1"},
+		{0, 0x8082, "c.ret"},
+	}
+
+	for _, v := range daTest {
+		da := isa.daInstruction(v.adr, v.ins)
+		if v.da != da {
+			fmt.Printf("ins %04x \"%s\" (expected) \"%s\" (actual)\n", v.ins, v.da, da)
 			t.Error("FAIL")
 		}
 	}

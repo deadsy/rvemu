@@ -10,8 +10,8 @@ package rv
 
 //-----------------------------------------------------------------------------
 
-// daFunc is the disassembler function for a specific instruction.
-type daFunc func(name string, adr, ins uint32) (string, string)
+// daFunc is the disassembler function for a  16/32-bit instructions.
+type daFunc func(name string, pc uint32, ins uint) string
 
 type insDefn struct {
 	defn string     // instruction definition string (from the standard)
@@ -193,6 +193,7 @@ var ISArv32c = ISAModule{
 	ilen: 16,
 	defn: []insDefn{
 		// Quadrant 0
+		{"000 00000000 000 00 ILLEGAL", decodeTypeCIW, daTypeCIWa},
 		{"000 nzuimm[5:4|9:6|2|3] rd0 00 C.ADDI4SPN", decodeTypeCIW, daNone},
 		{"001 uimm[5:3] rs10 uimm[7:6] rd0 00 C.FLD", decodeTypeCL, daNone},
 		{"010 uimm[5:3] rs10 uimm[2|6] rd0 00 C.LW", decodeTypeCL, daNone},
@@ -204,7 +205,7 @@ var ISArv32c = ISAModule{
 		{"000 nzimm[5] 00000 nzimm[4:0] 01 C.NOP", decodeTypeCI, daNone},
 		{"000 nzimm[5] rs1/rd!=0 nzimm[4:0] 01 C.ADDI", decodeTypeCI, daNone},
 		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", decodeTypeCJ, daNone},
-		{"010 imm[5] rd!=0 imm[4:0] 01 C.LI", decodeTypeCI, daNone},
+		{"010 imm[5] rd!=0 imm[4:0] 01 C.LI", decodeTypeCI, daTypeCIa},
 		{"011 nzimm[9] 00010 nzimm[4|6|8:7|5] 01 C.ADDI16SP", decodeTypeCI, daNone},
 		{"011 nzimm[17] rd!={0,2} nzimm[16:12] 01 C.LUI", decodeTypeCI, daNone},
 		{"100 nzuimm[5] 00 rs10/rd0 nzuimm[4:0] 01 C.SRLI", decodeTypeCI, daNone},
@@ -223,7 +224,7 @@ var ISArv32c = ISAModule{
 		{"001 uimm[5] rd uimm[4:3|8:6] 10 C.FLDSP", decodeTypeCSS, daNone},
 		{"010 uimm[5] rd!=0 uimm[4:2|7:6] 10 C.LWSP", decodeTypeCSS, daNone},
 		{"011 uimm[5] rd uimm[4:2|7:6] 10 C.FLWSP", decodeTypeCSS, daNone},
-		{"100 0 rs1!=0 00000 10 C.JR", decodeTypeCJ, daNone},
+		{"100 0 rs1!=0 00000 10 C.JR", decodeTypeCJ, daTypeCJa},
 		{"100 0 rd!=0 rs2!=0 10 C.MV", decodeTypeCR, daNone},
 		{"100 1 00000 00000 10 C.EBREAK", decodeTypeCI, daNone},
 		{"100 1 rs1!=0 00000 10 C.JALR", decodeTypeCJ, daNone},
@@ -323,7 +324,7 @@ var ISArv64d = ISAModule{
 // insInfo is instruction information.
 type insInfo struct {
 	name      string // instruction mneumonic
-	val, mask uint32 // value and mask of fixed bits in the instruction
+	val, mask uint   // value and mask of fixed bits in the instruction
 	da        daFunc // disassembler
 }
 
@@ -355,8 +356,8 @@ func (isa *ISA) Add(module ...ISAModule) error {
 	return nil
 }
 
-// lookup returns the instruction information for a given instruction.
-func (isa *ISA) lookup(ins uint32) *insInfo {
+// lookup returns the instruction information for an instruction.
+func (isa *ISA) lookup(ins uint) *insInfo {
 	for _, ii := range isa.instruction {
 		if ins&ii.mask == ii.val {
 			return ii

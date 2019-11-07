@@ -16,9 +16,9 @@ import (
 //-----------------------------------------------------------------------------
 
 // bits2vm converts a bit pattern to a value and mask.
-func bits2vm(s string) (uint32, uint32) {
-	var v uint32
-	var m uint32
+func bits2vm(s string) (uint, uint) {
+	var v uint
+	var m uint
 	for _, c := range s {
 		v <<= 1
 		m <<= 1
@@ -33,9 +33,9 @@ func bits2vm(s string) (uint32, uint32) {
 }
 
 // vm2bits converts a value and mask into a bit pattern.
-func vm2bits(v, m uint32) string {
+func vm2bits(v, m uint) string {
 	s := make([]rune, 32)
-	mask := uint32(1 << 31)
+	mask := uint(1 << 31)
 	for i := range s {
 		if m&mask == 0 {
 			s[i] = '.'
@@ -180,6 +180,7 @@ var knownDecodes = map[string]decodeType{
 	"7b_5b_rs1_3b_rd_7b":                      decodeTypeR,
 	"rs3_2b_rs2_rs1_rm_rd_7b":                 decodeTypeR4,
 	"3b_nzuimm[5:4|9:6|2|3]_rd0_2b":           decodeTypeCIW,
+	"3b_8b_3b_2b":                             decodeTypeCIW,
 	"3b_uimm[5:3]_rs10_uimm[7:6]_rd0_2b":      decodeTypeCL,
 	"3b_uimm[5:3]_rs10_uimm[2|6]_rd0_2b":      decodeTypeCL,
 	"3b_uimm[5:3]_rs10_uimm[7:6]_rs20_2b":     decodeTypeCS,
