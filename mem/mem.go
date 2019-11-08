@@ -85,4 +85,9 @@ func (m *Memory) Symbol(adr uint32) string {
 	return m.st[adr]
 }
 
+// AddSymbol adds a symbol to the symbol table.
+func (m *Memory) AddSymbol(adr uint32, s string) {
+	m.st[adr] = s
+}
+
 //-----------------------------------------------------------------------------
