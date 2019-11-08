@@ -210,11 +210,11 @@ func (da *Disassembly) String() string {
 //-----------------------------------------------------------------------------
 
 func daDump32(pc uint32, ins uint) string {
-	return fmt.Sprintf("%08x: %08x", pc, ins)
+	return fmt.Sprintf("%08x: %08x", pc, uint32(ins))
 }
 
 func daDump16(pc uint32, ins uint) string {
-	return fmt.Sprintf("%08x: %04x", pc, ins)
+	return fmt.Sprintf("%08x: %04x    ", pc, uint16(ins))
 }
 
 func daSymbol(adr uint32, st SymbolTable) string {

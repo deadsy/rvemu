@@ -10,16 +10,28 @@ package rv
 
 //-----------------------------------------------------------------------------
 
-// daFunc is the disassembler function for a  16/32-bit instructions.
+// daFunc is the disassembler function
 type daFunc func(name string, pc uint32, ins uint) string
 
-type insDefn struct {
-	defn string     // instruction definition string (from the standard)
-	dt   decodeType // decode type
-	da   daFunc
+// emuFunc is the emulator function
+type emuFunc func(m *RV, ins uint)
+
+// insMeta is instruction meta-data determined at runtime
+type insMeta struct {
+	name      string     // instruction mneumonic
+	val, mask uint       // value and mask of fixed bits in the instruction
+	dt        decodeType // decode type
 }
 
-// ISAModule is a set of RISC-V instructions as described in the specification.
+// insDefn is the base definition of an instruction
+type insDefn struct {
+	defn string  // instruction definition string (from the standard)
+	meta insMeta // meta data determined at runtime
+	da   daFunc  // disassembly function
+	emu  emuFunc // emulation function
+}
+
+// ISAModule is a set (module) of RISC-V instructions.
 type ISAModule struct {
 	name string    // name of module
 	ilen int       // instruction length
@@ -193,7 +205,7 @@ var ISArv32c = ISAModule{
 	ilen: 16,
 	defn: []insDefn{
 		// Quadrant 0
-		{"000 00000000 000 00 ILLEGAL", decodeTypeCIW, daTypeCIWa},
+		{"000 00000000 000 00 C.ILLEGAL", decodeTypeCIW, daTypeCIWa},
 		{"000 nzuimm[5:4|9:6|2|3] rd0 00 C.ADDI4SPN", decodeTypeCIW, daNone},
 		{"001 uimm[5:3] rs10 uimm[7:6] rd0 00 C.FLD", decodeTypeCL, daNone},
 		{"010 uimm[5:3] rs10 uimm[2|6] rd0 00 C.LW", decodeTypeCL, daNone},
