@@ -185,7 +185,7 @@ func daTypeCIWa(name string, pc uint32, ins uint) string {
 func daTypeCJa(name string, pc uint32, ins uint) string {
 	rs1 := decodeCJ(ins)
 	if rs1 == 1 {
-		return "c.ret"
+		return "ret"
 	}
 	return fmt.Sprintf("%s %s", name, abiXName[rs1])
 }
@@ -226,9 +226,9 @@ func daSymbol(adr uint32, st SymbolTable) string {
 
 // daInstruction returns the disassembly for a 16/32-bit instruction.
 func (isa *ISA) daInstruction(pc uint32, ins uint) string {
-	ii := isa.lookup(ins)
-	if ii != nil {
-		return ii.da(ii.name, pc, ins)
+	im := isa.lookup(ins)
+	if im != nil {
+		return im.defn.da(im.name, pc, ins)
 	}
 	return "?"
 }

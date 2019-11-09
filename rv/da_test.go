@@ -104,8 +104,8 @@ func Test_RV32C(t *testing.T) {
 		da  string // expected disassembly
 	}{
 		{0, 0, "?"},
-		{0, 0x4705, "c.li a4,1"},
-		{0, 0x8082, "c.ret"},
+		{0, 0x4705, "li a4,1"},
+		{0, 0x8082, "ret"},
 	}
 
 	for _, v := range daTest {

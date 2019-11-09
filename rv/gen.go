@@ -218,18 +218,24 @@ func getDecode(s string) (decodeType, error) {
 
 //-----------------------------------------------------------------------------
 
-// parseDefn parses an instruction definition string.
-func parseDefn(id *insDefn, ilen int) (*insInfo, error) {
+// parseDefn parses an instruction definition string and returns the meta-data.
+func parseDefn(id *insDefn, ilen int) (*insMeta, error) {
+
+	im := insMeta{
+		defn: id,
+		n:    ilen,
+	}
+
 	parts := strings.Split(id.defn, " ")
 	n := len(parts)
 	if n <= 0 {
 		return nil, fmt.Errorf("bad instruction definition string \"%s\"", id.defn)
 	}
 
-	ii := insInfo{}
-
 	// mneumonic
-	ii.name = strings.ToLower(parts[n-1])
+	im.name = strings.ToLower(parts[n-1])
+	// strip the "c." for the compressed instruction set
+	im.name = strings.TrimPrefix(im.name, "c.")
 
 	// remove the mneumonic from the end
 	parts = parts[0 : n-1]
@@ -257,19 +263,16 @@ func parseDefn(id *insDefn, ilen int) (*insInfo, error) {
 	if len(bits) != ilen {
 		return nil, fmt.Errorf("instruction length != %d \"%s\"", ilen, id.defn)
 	}
-	ii.val, ii.mask = bits2vm(bits)
+	im.val, im.mask = bits2vm(bits)
 
 	// set the decode type
 	dt, err := getDecode(strings.Join(s1, "_"))
 	if err != nil {
 		return nil, err
 	}
-	id.meta.dt = dt
+	im.dt = dt
 
-	// disassembler
-	ii.da = id.da
-
-	return &ii, nil
+	return &im, nil
 }
 
 //-----------------------------------------------------------------------------
