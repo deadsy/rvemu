@@ -67,8 +67,7 @@ func decodeI(ins uint) (int, uint, uint) {
 func decodeS(ins uint) (int, uint, uint) {
 	imm0 := bitUnsigned(ins, 31, 25) // imm[11:5]
 	imm1 := bitUnsigned(ins, 11, 7)  // imm[4:0]
-	x := int((imm0 << 5) + imm1)
-	imm := bitSex(x, 11)
+	imm := bitSex(int((imm0<<5)+imm1), 11)
 	rs2 := bitUnsigned(ins, 24, 20)
 	rs1 := bitUnsigned(ins, 19, 15)
 	return imm, rs2, rs1
@@ -79,8 +78,7 @@ func decodeB(ins uint) (int, uint, uint) {
 	imm1 := bitUnsigned(ins, 30, 25) // imm[10:5]
 	imm2 := bitUnsigned(ins, 11, 8)  // imm[4:1]
 	imm3 := bitUnsigned(ins, 7, 7)   // imm[11]
-	x := int((imm0 << 12) + (imm1 << 5) + (imm2 << 1) + (imm3 << 11))
-	imm := bitSex(x, 12)
+	imm := bitSex(int((imm0<<12)+(imm1<<5)+(imm2<<1)+(imm3<<11)), 12)
 	rs2 := bitUnsigned(ins, 24, 20)
 	rs1 := bitUnsigned(ins, 19, 15)
 	return imm, rs2, rs1
@@ -97,8 +95,7 @@ func decodeJ(ins uint) (int, uint) {
 	imm1 := bitUnsigned(ins, 30, 21) // imm[10:1]
 	imm2 := bitUnsigned(ins, 20, 20) // imm[11]
 	imm3 := bitUnsigned(ins, 19, 12) // imm[19:12]
-	x := int((imm0 << 20) + (imm1 << 1) + (imm2 << 11) + (imm3 << 12))
-	imm := bitSex(x, 20)
+	imm := bitSex(int((imm0<<20)+(imm1<<1)+(imm2<<11)+(imm3<<12)), 20)
 	rd := bitUnsigned(ins, 11, 7)
 	return imm, rd
 }
@@ -106,8 +103,7 @@ func decodeJ(ins uint) (int, uint) {
 func decodeCIa(ins uint) (int, uint) {
 	imm0 := bitUnsigned(ins, 12, 12) // imm[5]
 	imm1 := bitUnsigned(ins, 6, 2)   // imm[4:0]
-	x := int((imm0 << 5) + (imm1 << 0))
-	imm := bitSex(x, 5)
+	imm := bitSex(int((imm0<<5)+(imm1<<0)), 5)
 	rd := bitUnsigned(ins, 11, 7)
 	return imm, rd
 }
@@ -118,9 +114,40 @@ func decodeCIb(ins uint) int {
 	imm2 := bitUnsigned(ins, 5, 5)   // imm[6]
 	imm3 := bitUnsigned(ins, 4, 3)   // imm[8:7]
 	imm4 := bitUnsigned(ins, 2, 2)   // imm[5]
-	x := int((imm0 << 9) + (imm1 << 4) + (imm2 << 6) + (imm3 << 7) + (imm4 << 5))
-	imm := bitSex(x, 9)
+	imm := bitSex(int((imm0<<9)+(imm1<<4)+(imm2<<6)+(imm3<<7)+(imm4<<5)), 9)
 	return imm
+}
+
+func decodeCIc(ins uint) (uint, uint) {
+	imm0 := bitUnsigned(ins, 12, 12) // imm[5]
+	imm1 := bitUnsigned(ins, 6, 2)   // imm[4:0]
+	imm := (imm0 << 5) + (imm1 << 0)
+	rd := bitUnsigned(ins, 9, 7) + 8
+	return imm, rd
+}
+
+func decodeCId(ins uint) (uint, uint) {
+	imm0 := bitUnsigned(ins, 12, 12) // imm[5]
+	imm1 := bitUnsigned(ins, 6, 2)   // imm[4:0]
+	imm := (imm0 << 5) + (imm1 << 0)
+	rd := bitUnsigned(ins, 11, 7)
+	return imm, rd
+}
+
+func decodeCIe(ins uint) (int, uint) {
+	imm0 := bitUnsigned(ins, 12, 12) // imm[5]
+	imm1 := bitUnsigned(ins, 6, 2)   // imm[4:0]
+	imm := bitSex(int((imm0<<5)+(imm1<<0)), 5)
+	rd := bitUnsigned(ins, 9, 7) + 8
+	return imm, rd
+}
+
+func decodeCIf(ins uint) (int, uint) {
+	imm0 := bitUnsigned(ins, 12, 12) // imm[17]
+	imm1 := bitUnsigned(ins, 6, 2)   // imm[16:12]
+	imm := bitSex(int((imm0<<17)+(imm1<<12)), 17) >> 12
+	rd := bitUnsigned(ins, 11, 7)
+	return imm, rd
 }
 
 func decodeCIW(ins uint) (uint, uint) {
@@ -129,13 +156,26 @@ func decodeCIW(ins uint) (uint, uint) {
 	imm2 := bitUnsigned(ins, 6, 6)   // imm[2]
 	imm3 := bitUnsigned(ins, 5, 5)   // imm[3]
 	imm := (imm0 << 4) + (imm1 << 6) + (imm2 << 2) + (imm3 << 3)
-	rd := bitUnsigned(ins, 4, 2)
+	rd := bitUnsigned(ins, 4, 2) + 8
 	return imm, rd
 }
 
-func decodeCJ(ins uint) uint {
+func decodeCJa(ins uint) uint {
 	rs1 := bitUnsigned(ins, 11, 7)
 	return rs1
+}
+
+func decodeCJb(ins uint) int {
+	imm0 := bitUnsigned(ins, 12, 12) // imm[11]
+	imm1 := bitUnsigned(ins, 11, 11) // imm[4]
+	imm2 := bitUnsigned(ins, 10, 9)  // imm[9:8]
+	imm3 := bitUnsigned(ins, 8, 8)   // imm[10]
+	imm4 := bitUnsigned(ins, 7, 7)   // imm[6]
+	imm5 := bitUnsigned(ins, 6, 6)   // imm[7]
+	imm6 := bitUnsigned(ins, 5, 3)   // imm[3:1]
+	imm7 := bitUnsigned(ins, 2, 2)   // imm[5]
+	imm := bitSex(int((imm0<<11)+(imm1<<4)+(imm2<<8)+(imm3<<10)+(imm4<<6)+(imm5<<7)+(imm6<<1)+(imm7<<5)), 11)
+	return imm
 }
 
 func decodeCR(ins uint) (uint, uint) {
@@ -159,6 +199,17 @@ func decodeCSSb(ins uint) (uint, uint) {
 	imm := (imm0 << 2) + (imm1 << 6)
 	rs2 := bitUnsigned(ins, 6, 2)
 	return imm, rs2
+}
+
+func decodeCB(ins uint) (int, uint) {
+	imm0 := bitUnsigned(ins, 12, 12) // imm[8]
+	imm1 := bitUnsigned(ins, 11, 10) // imm[4:3]
+	imm2 := bitUnsigned(ins, 6, 5)   // imm[7:6]
+	imm3 := bitUnsigned(ins, 4, 3)   // imm[2:1]
+	imm4 := bitUnsigned(ins, 2, 2)   // imm[5]
+	imm := bitSex(int((imm0<<8)+(imm1<<3)+(imm2<<6)+(imm3<<1)+(imm4<<5)), 8)
+	rs := bitUnsigned(ins, 9, 7) + 8
+	return imm, rs
 }
 
 //-----------------------------------------------------------------------------

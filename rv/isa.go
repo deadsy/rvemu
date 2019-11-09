@@ -209,18 +209,18 @@ var ISArv32c = ISAModule{
 		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", daNone, emuNone},              // CJ
 		{"010 imm[5] rd!=0 imm[4:0] 01 C.LI", daTypeCIa, emuNone},                 // CI
 		{"011 nzimm[9] 00010 nzimm[4|6|8:7|5] 01 C.ADDI16SP", daTypeCIb, emuNone}, // CI
-		{"011 nzimm[17] rd!={0,2} nzimm[16:12] 01 C.LUI", daNone, emuNone},        // CI
-		{"100 nzuimm[5] 00 rs10/rd0 nzuimm[4:0] 01 C.SRLI", daNone, emuNone},      // CI
-		{"100 nzuimm[5] 01 rs10/rd0 nzuimm[4:0] 01 C.SRAI", daNone, emuNone},      // CI
-		{"100 imm[5] 10 rs10/rd0 imm[4:0] 01 C.ANDI", daNone, emuNone},            // CI
+		{"011 nzimm[17] rd!={0,2} nzimm[16:12] 01 C.LUI", daTypeCIg, emuNone},     // CI
+		{"100 nzuimm[5] 00 rs10/rd0 nzuimm[4:0] 01 C.SRLI", daTypeCId, emuNone},   // CI
+		{"100 nzuimm[5] 01 rs10/rd0 nzuimm[4:0] 01 C.SRAI", daTypeCId, emuNone},   // CI
+		{"100 imm[5] 10 rs10/rd0 imm[4:0] 01 C.ANDI", daTypeCIf, emuNone},         // CI
 		{"100 0 11 rs10/rd0 00 rs20 01 C.SUB", daNone, emuNone},                   // CR
 		{"100 0 11 rs10/rd0 01 rs20 01 C.XOR", daNone, emuNone},                   // CR
 		{"100 0 11 rs10/rd0 10 rs20 01 C.OR", daNone, emuNone},                    // CR
 		{"100 0 11 rs10/rd0 11 rs20 01 C.AND", daNone, emuNone},                   // CR
-		{"101 imm[11|4|9:8|10|6|7|3:1|5] 01 C.J", daNone, emuNone},                // CJ
-		{"110 imm[8|4:3] rs10 imm[7:6|2:1|5] 01 C.BEQZ", daNone, emuNone},         // CB
-		{"111 imm[8|4:3] rs10 imm[7:6|2:1|5] 01 C.BNEZ", daNone, emuNone},         // CB
-		{"000 nzuimm[5] rs1/rd!=0 nzuimm[4:0] 10 C.SLLI", daNone, emuNone},        // CI (Quadrant 2)
+		{"101 imm[11|4|9:8|10|6|7|3:1|5] 01 C.J", daTypeCJb, emuNone},             // CJ
+		{"110 imm[8|4:3] rs10 imm[7:6|2:1|5] 01 C.BEQZ", daTypeCBa, emuNone},      // CB
+		{"111 imm[8|4:3] rs10 imm[7:6|2:1|5] 01 C.BNEZ", daTypeCBa, emuNone},      // CB
+		{"000 nzuimm[5] rs1/rd!=0 nzuimm[4:0] 10 C.SLLI", daTypeCIe, emuNone},     // CI (Quadrant 2)
 		{"000 0 rs1/rd!=0 00000 10 C.SLLI64", daNone, emuNone},                    // CI
 		{"001 uimm[5] rd uimm[4:3|8:6] 10 C.FLDSP", daNone, emuNone},              // CSS
 		{"010 uimm[5] rd!=0 uimm[4:2|7:6] 10 C.LWSP", daTypeCSSa, emuNone},        // CSS
@@ -229,7 +229,7 @@ var ISArv32c = ISAModule{
 		{"100 0 rd!=0 rs2!=0 10 C.MV", daTypeCRa, emuNone},                        // CR
 		{"100 1 00000 00000 10 C.EBREAK", daNone, emuNone},                        // CI
 		{"100 1 rs1!=0 00000 10 C.JALR", daNone, emuNone},                         // CJ
-		{"100 1 rs1/rd!=0 rs2!=0 10 C.ADD", daNone, emuNone},                      // CR
+		{"100 1 rs1/rd!=0 rs2!=0 10 C.ADD", daTypeCRb, emuNone},                   // CR
 		{"101 uimm[5:3|8:6] rs2 10 C.FSDSP", daNone, emuNone},                     // CSS
 		{"110 uimm[5:2|7:6] rs2 10 C.SWSP", daTypeCSSb, emuNone},                  // CSS
 		{"111 uimm[5:2|7:6] rs2 10 C.FSWSP", daNone, emuNone},                     // CSS

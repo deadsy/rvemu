@@ -117,6 +117,13 @@ func Test_RV32C(t *testing.T) {
 		{0, 0x1800, "addi s0,sp,48"},
 		{0, 0x1101, "addi sp,sp,-32"},
 		{0, 0x873e, "mv a4,a5"},
+		{0, 0x8391, "srli a5,a5,0x4"},
+		{0, 0x0742, "slli a4,a4,0x10"},
+		{0, 0x8bbd, "andi a5,a5,15"},
+		{0, 0x97b6, "add a5,a5,a3"},
+		{0x186, 0xa029, "j 190"},
+		{0, 0x67ad, "lui a5,0xb"},
+		{0x1d0, 0xf3e1, "bnez a5,190"},
 	}
 
 	for _, v := range daTest {

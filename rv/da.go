@@ -172,7 +172,7 @@ func daTypeJa(name string, pc uint32, ins uint) string {
 
 func daTypeCIa(name string, pc uint32, ins uint) string {
 	imm, rd := decodeCIa(ins)
-	return fmt.Sprintf("%s %s,%x", name, abiXName[rd], imm)
+	return fmt.Sprintf("%s %s,%d", name, abiXName[rd], imm)
 }
 
 func daTypeCIb(name string, pc uint32, ins uint) string {
@@ -185,6 +185,26 @@ func daTypeCIc(name string, pc uint32, ins uint) string {
 	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], abiXName[rd], imm)
 }
 
+func daTypeCId(name string, pc uint32, ins uint) string {
+	imm, rd := decodeCIc(ins)
+	return fmt.Sprintf("%s %s,%s,0x%x", name, abiXName[rd], abiXName[rd], imm)
+}
+
+func daTypeCIe(name string, pc uint32, ins uint) string {
+	imm, rd := decodeCId(ins)
+	return fmt.Sprintf("%s %s,%s,0x%x", name, abiXName[rd], abiXName[rd], imm)
+}
+
+func daTypeCIf(name string, pc uint32, ins uint) string {
+	imm, rd := decodeCIe(ins)
+	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], abiXName[rd], imm)
+}
+
+func daTypeCIg(name string, pc uint32, ins uint) string {
+	imm, rd := decodeCIf(ins)
+	return fmt.Sprintf("%s %s,0x%x", name, abiXName[rd], imm)
+}
+
 //-----------------------------------------------------------------------------
 // Type CIW Decodes
 
@@ -194,18 +214,23 @@ func daTypeCIWa(name string, pc uint32, ins uint) string {
 
 func daTypeCIWb(name string, pc uint32, ins uint) string {
 	imm, rd := decodeCIW(ins)
-	return fmt.Sprintf("%s %s,sp,%d", name, abiXName[8+rd], imm)
+	return fmt.Sprintf("%s %s,sp,%d", name, abiXName[rd], imm)
 }
 
 //-----------------------------------------------------------------------------
 // Type CJ Decodes
 
 func daTypeCJa(name string, pc uint32, ins uint) string {
-	rs1 := decodeCJ(ins)
+	rs1 := decodeCJa(ins)
 	if rs1 == 1 {
 		return "ret"
 	}
 	return fmt.Sprintf("%s %s", name, abiXName[rs1])
+}
+
+func daTypeCJb(name string, pc uint32, ins uint) string {
+	imm := decodeCJb(ins)
+	return fmt.Sprintf("%s %x", name, int(pc)+imm)
 }
 
 //-----------------------------------------------------------------------------
@@ -214,6 +239,11 @@ func daTypeCJa(name string, pc uint32, ins uint) string {
 func daTypeCRa(name string, pc uint32, ins uint) string {
 	rd, rs := decodeCR(ins)
 	return fmt.Sprintf("%s %s,%s", name, abiXName[rd], abiXName[rs])
+}
+
+func daTypeCRb(name string, pc uint32, ins uint) string {
+	rd, rs := decodeCR(ins)
+	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiXName[rd], abiXName[rs])
 }
 
 //-----------------------------------------------------------------------------
@@ -227,6 +257,14 @@ func daTypeCSSa(name string, pc uint32, ins uint) string {
 func daTypeCSSb(name string, pc uint32, ins uint) string {
 	imm, rs2 := decodeCSSb(ins)
 	return fmt.Sprintf("%s %s,%d(sp)", name, abiXName[rs2], imm)
+}
+
+//-----------------------------------------------------------------------------
+// Type CB Decodes
+
+func daTypeCBa(name string, pc uint32, ins uint) string {
+	imm, rs := decodeCB(ins)
+	return fmt.Sprintf("%s %s,%x", name, abiXName[rs], int(pc)+imm)
 }
 
 //-----------------------------------------------------------------------------
