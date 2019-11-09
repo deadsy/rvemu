@@ -76,6 +76,20 @@ func loadDump(m *mem.Memory, filename string) error {
 				return fmt.Errorf("unrecognised instruction length at line %d", i+1)
 			}
 		}
+
+		// get the reference disassembly
+		if n > 2 {
+			s := make([]string, 0)
+			for j := range field[2:] {
+				x := field[2+j]
+				if x[0] == '#' || x[0] == '<' {
+					break
+				}
+				s = append(s, x)
+			}
+			m.AddDisassembly(uint32(adr), strings.Join(s, " "))
+		}
+
 	}
 
 	return nil
@@ -113,11 +127,15 @@ func main() {
 	// Disassemble
 	for true {
 		da := cpu.Disassemble(adr)
-		fmt.Printf("%s\n", da.String())
-		adr += uint32(da.Length)
 		if da.Assembly == "?" {
 			break
 		}
+		if da.Assembly == m.Disassembly(adr) {
+			fmt.Printf("%s\n", da.String())
+		} else {
+			fmt.Printf("%s should be: \"%s\"\n", da.String(), m.Disassembly(adr))
+		}
+		adr += uint32(da.Length)
 	}
 
 	os.Exit(0)

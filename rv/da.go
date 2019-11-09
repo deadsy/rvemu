@@ -117,6 +117,9 @@ func daTypeSb(name string, pc uint32, ins uint) string {
 
 func daTypeRa(name string, pc uint32, ins uint) string {
 	rs2, rs1, rd := decodeR(ins)
+	if name == "sub" && rs1 == 0 {
+		return fmt.Sprintf("neg %s,%s", abiXName[rd], abiXName[rs2])
+	}
 	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiXName[rs1], abiXName[rs2])
 }
 
@@ -168,8 +171,18 @@ func daTypeJa(name string, pc uint32, ins uint) string {
 // Type CI Decodes
 
 func daTypeCIa(name string, pc uint32, ins uint) string {
-	imm, rd := decodeCI(ins)
+	imm, rd := decodeCIa(ins)
 	return fmt.Sprintf("%s %s,%x", name, abiXName[rd], imm)
+}
+
+func daTypeCIb(name string, pc uint32, ins uint) string {
+	imm := decodeCIb(ins)
+	return fmt.Sprintf("%s sp,sp,%d", name, imm)
+}
+
+func daTypeCIc(name string, pc uint32, ins uint) string {
+	imm, rd := decodeCIa(ins)
+	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], abiXName[rd], imm)
 }
 
 //-----------------------------------------------------------------------------
@@ -177,6 +190,11 @@ func daTypeCIa(name string, pc uint32, ins uint) string {
 
 func daTypeCIWa(name string, pc uint32, ins uint) string {
 	return "?"
+}
+
+func daTypeCIWb(name string, pc uint32, ins uint) string {
+	imm, rd := decodeCIW(ins)
+	return fmt.Sprintf("%s %s,sp,%d", name, abiXName[8+rd], imm)
 }
 
 //-----------------------------------------------------------------------------
@@ -188,6 +206,27 @@ func daTypeCJa(name string, pc uint32, ins uint) string {
 		return "ret"
 	}
 	return fmt.Sprintf("%s %s", name, abiXName[rs1])
+}
+
+//-----------------------------------------------------------------------------
+// Type CR Decodes
+
+func daTypeCRa(name string, pc uint32, ins uint) string {
+	rd, rs := decodeCR(ins)
+	return fmt.Sprintf("%s %s,%s", name, abiXName[rd], abiXName[rs])
+}
+
+//-----------------------------------------------------------------------------
+// Type CSS Decodes
+
+func daTypeCSSa(name string, pc uint32, ins uint) string {
+	imm, rd := decodeCSSa(ins)
+	return fmt.Sprintf("%s %s,%d(sp)", name, abiXName[rd], imm)
+}
+
+func daTypeCSSb(name string, pc uint32, ins uint) string {
+	imm, rs2 := decodeCSSb(ins)
+	return fmt.Sprintf("%s %s,%d(sp)", name, abiXName[rs2], imm)
 }
 
 //-----------------------------------------------------------------------------

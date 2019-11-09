@@ -218,6 +218,26 @@ func getDecode(s string) (decodeType, error) {
 
 //-----------------------------------------------------------------------------
 
+// nameRemap remaps instruction names (if needed).
+func nameRemap(name string) string {
+	x := map[string]string{
+		"c.ret":      "ret",
+		"c.lwsp":     "lw",
+		"c.swsp":     "sw",
+		"c.li":       "li",
+		"c.mv":       "mv",
+		"c.addi16sp": "addi",
+		"c.addi4spn": "addi",
+		"c.addi":     "addi",
+	}
+	if s, ok := x[name]; ok {
+		return s
+	}
+	return name
+}
+
+//-----------------------------------------------------------------------------
+
 // parseDefn parses an instruction definition string and returns the meta-data.
 func parseDefn(id *insDefn, ilen int) (*insMeta, error) {
 
@@ -233,9 +253,7 @@ func parseDefn(id *insDefn, ilen int) (*insMeta, error) {
 	}
 
 	// mneumonic
-	im.name = strings.ToLower(parts[n-1])
-	// strip the "c." for the compressed instruction set
-	im.name = strings.TrimPrefix(im.name, "c.")
+	im.name = nameRemap(strings.ToLower(parts[n-1]))
 
 	// remove the mneumonic from the end
 	parts = parts[0 : n-1]

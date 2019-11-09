@@ -103,7 +103,7 @@ func decodeJ(ins uint) (int, uint) {
 	return imm, rd
 }
 
-func decodeCI(ins uint) (int, uint) {
+func decodeCIa(ins uint) (int, uint) {
 	imm0 := bitUnsigned(ins, 12, 12) // imm[5]
 	imm1 := bitUnsigned(ins, 6, 2)   // imm[4:0]
 	x := int((imm0 << 5) + (imm1 << 0))
@@ -112,9 +112,53 @@ func decodeCI(ins uint) (int, uint) {
 	return imm, rd
 }
 
+func decodeCIb(ins uint) int {
+	imm0 := bitUnsigned(ins, 12, 12) // imm[9]
+	imm1 := bitUnsigned(ins, 6, 6)   // imm[4]
+	imm2 := bitUnsigned(ins, 5, 5)   // imm[6]
+	imm3 := bitUnsigned(ins, 4, 3)   // imm[8:7]
+	imm4 := bitUnsigned(ins, 2, 2)   // imm[5]
+	x := int((imm0 << 9) + (imm1 << 4) + (imm2 << 6) + (imm3 << 7) + (imm4 << 5))
+	imm := bitSex(x, 9)
+	return imm
+}
+
+func decodeCIW(ins uint) (uint, uint) {
+	imm0 := bitUnsigned(ins, 12, 11) // imm[5:4]
+	imm1 := bitUnsigned(ins, 10, 7)  // imm[9:6]
+	imm2 := bitUnsigned(ins, 6, 6)   // imm[2]
+	imm3 := bitUnsigned(ins, 5, 5)   // imm[3]
+	imm := (imm0 << 4) + (imm1 << 6) + (imm2 << 2) + (imm3 << 3)
+	rd := bitUnsigned(ins, 4, 2)
+	return imm, rd
+}
+
 func decodeCJ(ins uint) uint {
 	rs1 := bitUnsigned(ins, 11, 7)
 	return rs1
+}
+
+func decodeCR(ins uint) (uint, uint) {
+	rd := bitUnsigned(ins, 11, 7)
+	rs := bitUnsigned(ins, 6, 2)
+	return rd, rs
+}
+
+func decodeCSSa(ins uint) (uint, uint) {
+	imm0 := bitUnsigned(ins, 12, 12) // imm[5]
+	imm1 := bitUnsigned(ins, 6, 4)   // imm[4:2]
+	imm2 := bitUnsigned(ins, 3, 2)   // imm[7:6]
+	imm := (imm0 << 5) + (imm1 << 2) + (imm2 << 6)
+	rd := bitUnsigned(ins, 11, 7)
+	return imm, rd
+}
+
+func decodeCSSb(ins uint) (uint, uint) {
+	imm0 := bitUnsigned(ins, 12, 9) // imm[5:2]
+	imm1 := bitUnsigned(ins, 8, 7)  // imm[7:6]
+	imm := (imm0 << 2) + (imm1 << 6)
+	rs2 := bitUnsigned(ins, 6, 2)
+	return imm, rs2
 }
 
 //-----------------------------------------------------------------------------

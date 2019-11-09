@@ -20,6 +20,7 @@ type Memory struct {
 	base  uint32            // base memory address
 	mem   []uint8           // memory array
 	st    map[uint32]string // symbol table
+	da    map[uint32]string // reference disassembly
 	align bool              // panic on misaligned access
 }
 
@@ -34,6 +35,7 @@ func NewMemory(base uint32, size int, align bool) *Memory {
 		base:  base,
 		mem:   mem,
 		st:    make(map[uint32]string),
+		da:    make(map[uint32]string),
 		align: align,
 	}
 }
@@ -88,6 +90,16 @@ func (m *Memory) Symbol(adr uint32) string {
 // AddSymbol adds a symbol to the symbol table.
 func (m *Memory) AddSymbol(adr uint32, s string) {
 	m.st[adr] = s
+}
+
+// Disassembly returns the reference disassembly for the memory address (if there is any).
+func (m *Memory) Disassembly(adr uint32) string {
+	return m.da[adr]
+}
+
+// AddDisassembly adds reference diassembly to the disassembly table.
+func (m *Memory) AddDisassembly(adr uint32, s string) {
+	m.da[adr] = s
 }
 
 //-----------------------------------------------------------------------------

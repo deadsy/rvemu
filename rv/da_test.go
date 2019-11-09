@@ -65,6 +65,7 @@ func Test_RV32G(t *testing.T) {
 		{0, 0x01079793, "slli a5,a5,0x10"},
 		{0, 0x0107d793, "srli a5,a5,0x10"},
 		{0, 0x00a60533, "add a0,a2,a0"},
+		{0, 0x40f007b3, "neg a5,a5"},
 		// rv32m
 		{0, 0x025535b3, "mulhu a1,a0,t0"},
 		// rv32a
@@ -106,6 +107,16 @@ func Test_RV32C(t *testing.T) {
 		{0, 0, "?"},
 		{0, 0x4705, "li a4,1"},
 		{0, 0x8082, "ret"},
+		{0, 0xce06, "sw ra,28(sp)"},
+		{0, 0xcc22, "sw s0,24(sp)"},
+		{0, 0xca26, "sw s1,20(sp)"},
+		{0, 0x40f2, "lw ra,28(sp)"},
+		{0, 0x4462, "lw s0,24(sp)"},
+		{0, 0x44d2, "lw s1,20(sp)"},
+		{0, 0x6145, "addi sp,sp,48"},
+		{0, 0x1800, "addi s0,sp,48"},
+		{0, 0x1101, "addi sp,sp,-32"},
+		{0, 0x873e, "mv a4,a5"},
 	}
 
 	for _, v := range daTest {
