@@ -259,14 +259,12 @@ func parseDefn(id *insDefn, ilen int) (*insInfo, error) {
 	}
 	ii.val, ii.mask = bits2vm(bits)
 
-	// check the decode type
+	// set the decode type
 	dt, err := getDecode(strings.Join(s1, "_"))
 	if err != nil {
 		return nil, err
 	}
-	if id.dt != dt {
-		return nil, fmt.Errorf("decode type mismatch \"%s\"", id.defn)
-	}
+	id.meta.dt = dt
 
 	// disassembler
 	ii.da = id.da
