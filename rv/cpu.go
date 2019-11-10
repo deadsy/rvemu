@@ -222,39 +222,46 @@ type Memory interface {
 
 //-----------------------------------------------------------------------------
 
-// RV is a RISC-V CPU
-type RV struct {
-	Mem   Memory // memory of the target system
-	X     [32]uint64
-	PC    uint64
-	xlen  uint // register bit length
-	nregs uint // number of registers
-	isa   *ISA // ISA implemented for the CPU
+// RV32 is a 32-bit RISC-V CPU.
+type RV32 struct {
+	Mem     Memory     // memory of the target system
+	X       [32]uint32 // registers
+	PC      uint32     // program counter
+	rv32e   bool       // 16 registers (not 32)
+	illegal bool       // illegal instruction state
+	exit    bool       // exit from emulation
+	todo    bool       // unimplemented instruction
+	isa     *ISA       // ISA implemented for the CPU
 }
 
-// newRV returns a RISC-V CPU
-func newRV(isa *ISA, mem Memory, xlen, nregs uint) *RV {
-	return &RV{
-		Mem:   mem,
-		xlen:  xlen,
-		nregs: nregs,
-		isa:   isa,
+// RV64 is a 64-bit RISC-V CPU.
+type RV64 struct {
+	Mem     Memory     // memory of the target system
+	X       [32]uint64 // registers
+	PC      uint64     // program counter
+	illegal bool       // illegal instruction state
+	exit    bool       // exit from emulation
+	todo    bool       // unimplemented instruction
+	isa     *ISA       // ISA implemented for the CPU
+}
+
+// NewRV32 returns a 32-bit RISC-V CPU.
+func NewRV32(isa *ISA, mem Memory) *RV32 {
+	return &RV32{
+		Mem: mem,
+		isa: isa,
 	}
 }
 
-// NewRV32 returns a 32-bit RISC-V CPU
-func NewRV32(isa *ISA, mem Memory) *RV {
-	return newRV(isa, mem, 32, 32)
+// Dump returns a display string for the CPU registers.
+func (m *RV32) Dump() string {
+	return ""
 }
 
-// NewRV32e returns a 32-bit embedded RISC-V CPU
-func NewRV32e(isa *ISA, mem Memory) *RV {
-	return newRV(isa, mem, 32, 16)
-}
-
-// NewRV64 returns a 64-bit RISC-V CPU
-func NewRV64(isa *ISA, mem Memory) *RV {
-	return newRV(isa, mem, 64, 32)
+// Exit sets a status code and exits the emulation
+func (m *RV32) Exit(status uint32) {
+	m.X[1] = status
+	m.exit = true
 }
 
 //-----------------------------------------------------------------------------

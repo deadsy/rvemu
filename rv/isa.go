@@ -14,13 +14,13 @@ package rv
 type daFunc func(name string, pc uint32, ins uint) string
 
 // emuFunc is an instruction emulation function
-type emuFunc func(m *RV, ins uint)
+type emuFunc32 func(m *RV32, ins uint)
 
 // insDefn is the definition of an instruction
 type insDefn struct {
-	defn string  // instruction definition string (from the standard)
-	da   daFunc  // disassembly function
-	emu  emuFunc // emulation function
+	defn  string    // instruction definition string (from the standard)
+	da    daFunc    // disassembly function
+	emu32 emuFunc32 // 32-bit emulation function
 }
 
 // ISAModule is a set/module of RISC-V instructions.

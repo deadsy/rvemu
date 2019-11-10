@@ -111,7 +111,7 @@ var cmdMemDisplay = cli.Leaf{
 //-----------------------------------------------------------------------------
 
 // goArgs converts go arguments to an address value.
-func goArgs(pc uint16, args []string) (uint16, error) {
+func goArgs(pc uint32, args []string) (uint32, error) {
 	err := cli.CheckArgc(args, []int{0, 1})
 	if err != nil {
 		return 0, err
@@ -119,12 +119,12 @@ func goArgs(pc uint16, args []string) (uint16, error) {
 	// address
 	adr := int(pc)
 	if len(args) >= 1 {
-		adr, err = cli.IntArg(args[0], [2]int{0, 0xffff}, 16)
+		adr, err = cli.IntArg(args[0], [2]int{0, 0xffffffff}, 16)
 		if err != nil {
 			return 0, err
 		}
 	}
-	return uint16(adr), nil
+	return uint32(adr), nil
 }
 
 var helpGo = []cli.Help{
@@ -162,7 +162,7 @@ var cmdTrace = cli.Leaf{
 		}
 		m.PC = adr
 		for true {
-			s := m.Disassemble(m.PC, 1)
+			s := m.Disassemble(m.PC)
 			err := m.Run()
 			c.User.Put(fmt.Sprintf("%s\n", s))
 			if err != nil {
@@ -183,7 +183,7 @@ var cmdStep = cli.Leaf{
 			return
 		}
 		m.PC = adr
-		s := m.Disassemble(m.PC, 1)
+		s := m.Disassemble(m.PC)
 		err = m.Run()
 		c.User.Put(fmt.Sprintf("%s\n", s))
 		if err != nil {
@@ -195,7 +195,7 @@ var cmdStep = cli.Leaf{
 //-----------------------------------------------------------------------------
 
 // daArgs converts disassembly arguments to an (address, size) tuple.
-func daArgs(pc uint16, args []string) (uint16, uint, error) {
+func daArgs(pc uint32, args []string) (uint32, uint, error) {
 	err := cli.CheckArgc(args, []int{0, 1, 2})
 	if err != nil {
 		return 0, 0, err
@@ -203,7 +203,7 @@ func daArgs(pc uint16, args []string) (uint16, uint, error) {
 	// address
 	adr := int(pc) // default address
 	if len(args) >= 1 {
-		adr, err = cli.IntArg(args[0], [2]int{0, 0xffff}, 16)
+		adr, err = cli.IntArg(args[0], [2]int{0, 0xffffffff}, 16)
 		if err != nil {
 			return 0, 0, err
 		}
@@ -216,7 +216,7 @@ func daArgs(pc uint16, args []string) (uint16, uint, error) {
 			return 0, 0, err
 		}
 	}
-	return uint16(adr), uint(size), nil
+	return uint32(adr), uint(size), nil
 }
 
 var helpDisassemble = []cli.Help{
@@ -228,12 +228,13 @@ var cmdDisassemble = cli.Leaf{
 	Descr: "disassemble memory",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*userApp).cpu
-		adr, size, err := daArgs(m.ReadPC(), args)
+		adr, size, err := daArgs(m.PC, args)
+		_ = size
 		if err != nil {
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		c.User.Put(fmt.Sprintf("%s\n", m.Disassemble(adr, int(size))))
+		c.User.Put(fmt.Sprintf("%s\n", m.Disassemble(adr)))
 	},
 }
 
@@ -253,8 +254,6 @@ var cmdReset = cli.Leaf{
 	Descr: "reset the cpu",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*userApp).cpu
-		m.Power(false)
-		m.Power(true)
 		m.Reset()
 	},
 }

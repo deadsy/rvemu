@@ -28,17 +28,29 @@ const historyPath = "history.txt"
 // userApp is state associated with the user application.
 type userApp struct {
 	mem *mem.Memory
-	cpu *rv.RV
+	cpu *rv.RV32
 }
 
 // newUserApp returns a user application.
-func newUserApp() *userApp {
-	mem := mem.NewMemory()
-	cpu := rv.NewRV32(mem)
+func newUserApp() (*userApp, error) {
+
+	// create the ISA
+	isa := rv.NewISA("rv32g")
+	err := isa.Add(rv.ISArv32i, rv.ISArv32m, rv.ISArv32a, rv.ISArv32f, rv.ISArv32d, rv.ISArv32c)
+	if err != nil {
+		return nil, err
+	}
+
+	// create the memory
+	mem := mem.NewMemory(0, 256<<10, false)
+
+	// create the cpu
+	cpu := rv.NewRV32(isa, mem)
+
 	return &userApp{
 		mem: mem,
 		cpu: cpu,
-	}
+	}, nil
 }
 
 // loadRaw loads a raw binary file.
@@ -48,8 +60,8 @@ func (u *userApp) loadRaw(filename string, x []uint8) (string, error) {
 	for i, v := range x {
 		u.mem.Wr8(loadAdr+uint32(i), v)
 	}
-	endAdr := loadAdr + uint16(len(x)) - 1
-	return fmt.Sprintf("%s code %04x-%04x", filename, loadAdr, endAdr), nil
+	endAdr := loadAdr + uint32(len(x)) - 1
+	return fmt.Sprintf("%s code %08x-%08x", filename, loadAdr, endAdr), nil
 }
 
 func (u *userApp) loadFile(filename string) (string, error) {
@@ -76,16 +88,19 @@ func main() {
 	flag.Parse()
 
 	// create the application
-	app := newUserApp()
+	app, err := newUserApp()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(1)
+	}
 
 	// load the file
 	status, err := app.loadFile(*fname)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
-	} else {
-		fmt.Fprintf(os.Stderr, "%s\n", status)
 	}
+	fmt.Fprintf(os.Stderr, "%s\n", status)
 
 	// create the cli
 	c := cli.NewCLI(app)

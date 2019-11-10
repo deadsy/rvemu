@@ -16,22 +16,22 @@ import (
 
 //-----------------------------------------------------------------------------
 
-func vsrOpen(m *rv.RV) {
+func vsrOpen(m *rv.RV32) {
 	fmt.Printf("*** vsrOpen ***\n")
 }
-func vsrClose(m *rv.RV) {
+func vsrClose(m *rv.RV32) {
 	fmt.Printf("*** vsrClose ***\n")
 }
-func vsrRead(m *rv.RV) {
+func vsrRead(m *rv.RV32) {
 	fmt.Printf("*** vsrRead ***\n")
 }
-func vsrWrite(m *rv.RV) {
+func vsrWrite(m *rv.RV32) {
 	fmt.Printf("*** vsrWrite ***\n")
 }
-func vsrArgs(m *rv.RV) {
+func vsrArgs(m *rv.RV32) {
 	fmt.Printf("*** vsrArgs ***\n")
 }
-func vsrExit(m *rv.RV) {
+func vsrExit(m *rv.RV32) {
 	m.Exit(0)
 }
 
