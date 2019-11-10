@@ -29,186 +29,181 @@ func bitSex(x int, n uint) int {
 }
 
 // bitUnsigned extracts an unsigned bit field.
-func bitUnsigned(x, msb, lsb uint) uint {
-	return bitExtract(x, msb, lsb) >> lsb
+func bitUnsigned(x, msb, lsb, shift uint) uint {
+	return (bitExtract(x, msb, lsb) >> lsb) << shift
 }
 
 // bitSigned extracts an signed bit field.
 func bitSigned(x, msb, lsb uint) int {
-	return bitSex(int(bitUnsigned(x, msb, lsb)), msb-lsb)
+	return bitSex(int(bitUnsigned(x, msb, lsb, 0)), msb-lsb)
 }
 
 //-----------------------------------------------------------------------------
 // instruction decoding
 
 func decodeR(ins uint) (uint, uint, uint) {
-	rs2 := bitUnsigned(ins, 24, 20)
-	rs1 := bitUnsigned(ins, 19, 15)
-	rd := bitUnsigned(ins, 11, 7)
+	rs2 := bitUnsigned(ins, 24, 20, 0)
+	rs1 := bitUnsigned(ins, 19, 15, 0)
+	rd := bitUnsigned(ins, 11, 7, 0)
 	return rs2, rs1, rd
 }
 
 func decodeR4(ins uint) (uint, uint, uint, uint, uint) {
-	rs3 := bitUnsigned(ins, 31, 27)
-	rs2 := bitUnsigned(ins, 24, 20)
-	rs1 := bitUnsigned(ins, 19, 15)
-	rm := bitUnsigned(ins, 14, 12)
-	rd := bitUnsigned(ins, 11, 7)
+	rs3 := bitUnsigned(ins, 31, 27, 0)
+	rs2 := bitUnsigned(ins, 24, 20, 0)
+	rs1 := bitUnsigned(ins, 19, 15, 0)
+	rm := bitUnsigned(ins, 14, 12, 0)
+	rd := bitUnsigned(ins, 11, 7, 0)
 	return rs3, rs2, rs1, rm, rd
 }
 
 func decodeI(ins uint) (int, uint, uint) {
 	imm := bitSigned(ins, 31, 20) // imm[11:0]
-	rs1 := bitUnsigned(ins, 19, 15)
-	rd := bitUnsigned(ins, 11, 7)
+	rs1 := bitUnsigned(ins, 19, 15, 0)
+	rd := bitUnsigned(ins, 11, 7, 0)
 	return imm, rs1, rd
 }
 
 func decodeS(ins uint) (int, uint, uint) {
-	imm0 := bitUnsigned(ins, 31, 25) // imm[11:5]
-	imm1 := bitUnsigned(ins, 11, 7)  // imm[4:0]
-	imm := bitSex(int((imm0<<5)+imm1), 11)
-	rs2 := bitUnsigned(ins, 24, 20)
-	rs1 := bitUnsigned(ins, 19, 15)
+	uimm := bitUnsigned(ins, 31, 25, 5) // imm[11:5]
+	uimm += bitUnsigned(ins, 11, 7, 0)  // imm[4:0]
+	imm := bitSex(int(uimm), 11)
+	rs2 := bitUnsigned(ins, 24, 20, 0)
+	rs1 := bitUnsigned(ins, 19, 15, 0)
 	return imm, rs2, rs1
 }
 
 func decodeB(ins uint) (int, uint, uint) {
-	imm0 := bitUnsigned(ins, 31, 31) // imm[12]
-	imm1 := bitUnsigned(ins, 30, 25) // imm[10:5]
-	imm2 := bitUnsigned(ins, 11, 8)  // imm[4:1]
-	imm3 := bitUnsigned(ins, 7, 7)   // imm[11]
-	imm := bitSex(int((imm0<<12)+(imm1<<5)+(imm2<<1)+(imm3<<11)), 12)
-	rs2 := bitUnsigned(ins, 24, 20)
-	rs1 := bitUnsigned(ins, 19, 15)
+	uimm := bitUnsigned(ins, 31, 31, 12) // imm[12]
+	uimm += bitUnsigned(ins, 30, 25, 5)  // imm[10:5]
+	uimm += bitUnsigned(ins, 11, 8, 1)   // imm[4:1]
+	uimm += bitUnsigned(ins, 7, 7, 11)   // imm[11]
+	imm := bitSex(int(uimm), 12)
+	rs2 := bitUnsigned(ins, 24, 20, 0)
+	rs1 := bitUnsigned(ins, 19, 15, 0)
 	return imm, rs2, rs1
 }
 
 func decodeU(ins uint) (uint, uint) {
-	imm := bitUnsigned(ins, 31, 12) // imm[31:12]
-	rd := bitUnsigned(ins, 11, 7)
-	return imm, rd
+	uimm := bitUnsigned(ins, 31, 12, 0) // imm[31:12]
+	rd := bitUnsigned(ins, 11, 7, 0)
+	return uimm, rd
 }
 
 func decodeJ(ins uint) (int, uint) {
-	imm0 := bitUnsigned(ins, 31, 31) // imm[20]
-	imm1 := bitUnsigned(ins, 30, 21) // imm[10:1]
-	imm2 := bitUnsigned(ins, 20, 20) // imm[11]
-	imm3 := bitUnsigned(ins, 19, 12) // imm[19:12]
-	imm := bitSex(int((imm0<<20)+(imm1<<1)+(imm2<<11)+(imm3<<12)), 20)
-	rd := bitUnsigned(ins, 11, 7)
+	uimm := bitUnsigned(ins, 31, 31, 20) // imm[20]
+	uimm += bitUnsigned(ins, 30, 21, 1)  // imm[10:1]
+	uimm += bitUnsigned(ins, 20, 20, 11) // imm[11]
+	uimm += bitUnsigned(ins, 19, 12, 12) // imm[19:12]
+	imm := bitSex(int(uimm), 20)
+	rd := bitUnsigned(ins, 11, 7, 0)
 	return imm, rd
 }
 
 func decodeCIa(ins uint) (int, uint) {
-	imm0 := bitUnsigned(ins, 12, 12) // imm[5]
-	imm1 := bitUnsigned(ins, 6, 2)   // imm[4:0]
-	imm := bitSex(int((imm0<<5)+(imm1<<0)), 5)
-	rd := bitUnsigned(ins, 11, 7)
+	uimm := bitUnsigned(ins, 12, 12, 5) // imm[5]
+	uimm += bitUnsigned(ins, 6, 2, 0)   // imm[4:0]
+	imm := bitSex(int(uimm), 5)
+	rd := bitUnsigned(ins, 11, 7, 0)
 	return imm, rd
 }
 
 func decodeCIb(ins uint) int {
-	imm0 := bitUnsigned(ins, 12, 12) // imm[9]
-	imm1 := bitUnsigned(ins, 6, 6)   // imm[4]
-	imm2 := bitUnsigned(ins, 5, 5)   // imm[6]
-	imm3 := bitUnsigned(ins, 4, 3)   // imm[8:7]
-	imm4 := bitUnsigned(ins, 2, 2)   // imm[5]
-	imm := bitSex(int((imm0<<9)+(imm1<<4)+(imm2<<6)+(imm3<<7)+(imm4<<5)), 9)
+	uimm := bitUnsigned(ins, 12, 12, 9) // imm[9]
+	uimm += bitUnsigned(ins, 6, 6, 4)   // imm[4]
+	uimm += bitUnsigned(ins, 5, 5, 6)   // imm[6]
+	uimm += bitUnsigned(ins, 4, 3, 7)   // imm[8:7]
+	uimm += bitUnsigned(ins, 2, 2, 5)   // imm[5]
+	imm := bitSex(int(uimm), 9)
 	return imm
 }
 
 func decodeCIc(ins uint) (uint, uint) {
-	imm0 := bitUnsigned(ins, 12, 12) // imm[5]
-	imm1 := bitUnsigned(ins, 6, 2)   // imm[4:0]
-	imm := (imm0 << 5) + (imm1 << 0)
-	rd := bitUnsigned(ins, 9, 7) + 8
-	return imm, rd
+	uimm := bitUnsigned(ins, 12, 12, 5) // imm[5]
+	uimm += bitUnsigned(ins, 6, 2, 0)   // imm[4:0]
+	rd := bitUnsigned(ins, 9, 7, 0) + 8
+	return uimm, rd
 }
 
 func decodeCId(ins uint) (uint, uint) {
-	imm0 := bitUnsigned(ins, 12, 12) // imm[5]
-	imm1 := bitUnsigned(ins, 6, 2)   // imm[4:0]
-	imm := (imm0 << 5) + (imm1 << 0)
-	rd := bitUnsigned(ins, 11, 7)
-	return imm, rd
+	uimm := bitUnsigned(ins, 12, 12, 5) // imm[5]
+	uimm += bitUnsigned(ins, 6, 2, 0)   // imm[4:0]
+	rd := bitUnsigned(ins, 11, 7, 0)
+	return uimm, rd
 }
 
 func decodeCIe(ins uint) (int, uint) {
-	imm0 := bitUnsigned(ins, 12, 12) // imm[5]
-	imm1 := bitUnsigned(ins, 6, 2)   // imm[4:0]
-	imm := bitSex(int((imm0<<5)+(imm1<<0)), 5)
-	rd := bitUnsigned(ins, 9, 7) + 8
+	uimm := bitUnsigned(ins, 12, 12, 5) // imm[5]
+	uimm += bitUnsigned(ins, 6, 2, 0)   // imm[4:0]
+	imm := bitSex(int(uimm), 5)
+	rd := bitUnsigned(ins, 9, 7, 0) + 8
 	return imm, rd
 }
 
 func decodeCIf(ins uint) (int, uint) {
-	imm0 := bitUnsigned(ins, 12, 12) // imm[17]
-	imm1 := bitUnsigned(ins, 6, 2)   // imm[16:12]
-	imm := bitSex(int((imm0<<17)+(imm1<<12)), 17) >> 12
-	rd := bitUnsigned(ins, 11, 7)
+	uimm := bitUnsigned(ins, 12, 12, 17) // imm[17]
+	uimm += bitUnsigned(ins, 6, 2, 12)   // imm[16:12]
+	imm := bitSex(int(uimm), 17) >> 12
+	rd := bitUnsigned(ins, 11, 7, 0)
 	return imm, rd
 }
 
 func decodeCIW(ins uint) (uint, uint) {
-	imm0 := bitUnsigned(ins, 12, 11) // imm[5:4]
-	imm1 := bitUnsigned(ins, 10, 7)  // imm[9:6]
-	imm2 := bitUnsigned(ins, 6, 6)   // imm[2]
-	imm3 := bitUnsigned(ins, 5, 5)   // imm[3]
-	imm := (imm0 << 4) + (imm1 << 6) + (imm2 << 2) + (imm3 << 3)
-	rd := bitUnsigned(ins, 4, 2) + 8
-	return imm, rd
+	uimm := bitUnsigned(ins, 12, 11, 4) // imm[5:4]
+	uimm += bitUnsigned(ins, 10, 7, 6)  // imm[9:6]
+	uimm += bitUnsigned(ins, 6, 6, 2)   // imm[2]
+	uimm += bitUnsigned(ins, 5, 5, 3)   // imm[3]
+	rd := bitUnsigned(ins, 4, 2, 0) + 8
+	return uimm, rd
 }
 
 func decodeCJa(ins uint) uint {
-	rs1 := bitUnsigned(ins, 11, 7)
+	rs1 := bitUnsigned(ins, 11, 7, 0)
 	return rs1
 }
 
 func decodeCJb(ins uint) int {
-	imm0 := bitUnsigned(ins, 12, 12) // imm[11]
-	imm1 := bitUnsigned(ins, 11, 11) // imm[4]
-	imm2 := bitUnsigned(ins, 10, 9)  // imm[9:8]
-	imm3 := bitUnsigned(ins, 8, 8)   // imm[10]
-	imm4 := bitUnsigned(ins, 7, 7)   // imm[6]
-	imm5 := bitUnsigned(ins, 6, 6)   // imm[7]
-	imm6 := bitUnsigned(ins, 5, 3)   // imm[3:1]
-	imm7 := bitUnsigned(ins, 2, 2)   // imm[5]
-	imm := bitSex(int((imm0<<11)+(imm1<<4)+(imm2<<8)+(imm3<<10)+(imm4<<6)+(imm5<<7)+(imm6<<1)+(imm7<<5)), 11)
+	uimm := bitUnsigned(ins, 12, 12, 11) // imm[11]
+	uimm += bitUnsigned(ins, 11, 11, 4)  // imm[4]
+	uimm += bitUnsigned(ins, 10, 9, 8)   // imm[9:8]
+	uimm += bitUnsigned(ins, 8, 8, 10)   // imm[10]
+	uimm += bitUnsigned(ins, 7, 7, 6)    // imm[6]
+	uimm += bitUnsigned(ins, 6, 6, 7)    // imm[7]
+	uimm += bitUnsigned(ins, 5, 3, 1)    // imm[3:1]
+	uimm += bitUnsigned(ins, 2, 2, 5)    // imm[5]
+	imm := bitSex(int(uimm), 11)
 	return imm
 }
 
 func decodeCR(ins uint) (uint, uint) {
-	rd := bitUnsigned(ins, 11, 7)
-	rs := bitUnsigned(ins, 6, 2)
+	rd := bitUnsigned(ins, 11, 7, 0)
+	rs := bitUnsigned(ins, 6, 2, 0)
 	return rd, rs
 }
 
 func decodeCSSa(ins uint) (uint, uint) {
-	imm0 := bitUnsigned(ins, 12, 12) // imm[5]
-	imm1 := bitUnsigned(ins, 6, 4)   // imm[4:2]
-	imm2 := bitUnsigned(ins, 3, 2)   // imm[7:6]
-	imm := (imm0 << 5) + (imm1 << 2) + (imm2 << 6)
-	rd := bitUnsigned(ins, 11, 7)
-	return imm, rd
+	uimm := bitUnsigned(ins, 12, 12, 5) // imm[5]
+	uimm += bitUnsigned(ins, 6, 4, 2)   // imm[4:2]
+	uimm += bitUnsigned(ins, 3, 2, 6)   // imm[7:6]
+	rd := bitUnsigned(ins, 11, 7, 0)
+	return uimm, rd
 }
 
 func decodeCSSb(ins uint) (uint, uint) {
-	imm0 := bitUnsigned(ins, 12, 9) // imm[5:2]
-	imm1 := bitUnsigned(ins, 8, 7)  // imm[7:6]
-	imm := (imm0 << 2) + (imm1 << 6)
-	rs2 := bitUnsigned(ins, 6, 2)
-	return imm, rs2
+	uimm := bitUnsigned(ins, 12, 9, 2) // imm[5:2]
+	uimm += bitUnsigned(ins, 8, 7, 6)  // imm[7:6]
+	rs2 := bitUnsigned(ins, 6, 2, 0)
+	return uimm, rs2
 }
 
 func decodeCB(ins uint) (int, uint) {
-	imm0 := bitUnsigned(ins, 12, 12) // imm[8]
-	imm1 := bitUnsigned(ins, 11, 10) // imm[4:3]
-	imm2 := bitUnsigned(ins, 6, 5)   // imm[7:6]
-	imm3 := bitUnsigned(ins, 4, 3)   // imm[2:1]
-	imm4 := bitUnsigned(ins, 2, 2)   // imm[5]
-	imm := bitSex(int((imm0<<8)+(imm1<<3)+(imm2<<6)+(imm3<<1)+(imm4<<5)), 8)
-	rs := bitUnsigned(ins, 9, 7) + 8
+	uimm := bitUnsigned(ins, 12, 12, 8) // imm[8]
+	uimm += bitUnsigned(ins, 11, 10, 3) // imm[4:3]
+	uimm += bitUnsigned(ins, 6, 5, 6)   // imm[7:6]
+	uimm += bitUnsigned(ins, 4, 3, 1)   // imm[2:1]
+	uimm += bitUnsigned(ins, 2, 2, 5)   // imm[5]
+	imm := bitSex(int(uimm), 8)
+	rs := bitUnsigned(ins, 9, 7, 0) + 8
 	return imm, rs
 }
 

@@ -128,25 +128,25 @@ var ISArv32f = ISAModule{
 	name: "rv32f",
 	ilen: 32,
 	defn: []insDefn{
-		{"imm[11:0] rs1 010 rd 0000111 FLW", daTypeIa, emuNone},           // I
+		{"imm[11:0] rs1 010 rd 0000111 FLW", daTypeIg, emuNone},           // I
 		{"imm[11:5] rs2 rs1 010 imm[4:0] 0100111 FSW", daTypeSb, emuNone}, // S
 		{"rs3 00 rs2 rs1 rm rd 1000011 FMADD.S", daNone, emuNone},         // R4
 		{"rs3 00 rs2 rs1 rm rd 1000111 FMSUB.S", daNone, emuNone},         // R4
 		{"rs3 00 rs2 rs1 rm rd 1001011 FNMSUB.S", daNone, emuNone},        // R4
 		{"rs3 00 rs2 rs1 rm rd 1001111 FNMADD.S", daNone, emuNone},        // R4
-		{"0000000 rs2 rs1 rm rd 1010011 FADD.S", daTypeRa, emuNone},       // R
-		{"0000100 rs2 rs1 rm rd 1010011 FSUB.S", daTypeRa, emuNone},       // R
-		{"0001000 rs2 rs1 rm rd 1010011 FMUL.S", daTypeRa, emuNone},       // R
-		{"0001100 rs2 rs1 rm rd 1010011 FDIV.S", daTypeRa, emuNone},       // R
+		{"0000000 rs2 rs1 rm rd 1010011 FADD.S", daTypeRc, emuNone},       // R
+		{"0000100 rs2 rs1 rm rd 1010011 FSUB.S", daTypeRc, emuNone},       // R
+		{"0001000 rs2 rs1 rm rd 1010011 FMUL.S", daTypeRc, emuNone},       // R
+		{"0001100 rs2 rs1 rm rd 1010011 FDIV.S", daTypeRc, emuNone},       // R
 		{"0101100 00000 rs1 rm rd 1010011 FSQRT.S", daNone, emuNone},      // R
-		{"0010000 rs2 rs1 000 rd 1010011 FSGNJ.S", daTypeRa, emuNone},     // R
-		{"0010000 rs2 rs1 001 rd 1010011 FSGNJN.S", daTypeRa, emuNone},    // R
-		{"0010000 rs2 rs1 010 rd 1010011 FSGNJX.S", daTypeRa, emuNone},    // R
-		{"0010100 rs2 rs1 000 rd 1010011 FMIN.S", daTypeRa, emuNone},      // R
-		{"0010100 rs2 rs1 001 rd 1010011 FMAX.S", daTypeRa, emuNone},      // R
+		{"0010000 rs2 rs1 000 rd 1010011 FSGNJ.S", daTypeRc, emuNone},     // R
+		{"0010000 rs2 rs1 001 rd 1010011 FSGNJN.S", daTypeRc, emuNone},    // R
+		{"0010000 rs2 rs1 010 rd 1010011 FSGNJX.S", daTypeRc, emuNone},    // R
+		{"0010100 rs2 rs1 000 rd 1010011 FMIN.S", daTypeRc, emuNone},      // R
+		{"0010100 rs2 rs1 001 rd 1010011 FMAX.S", daTypeRc, emuNone},      // R
 		{"1100000 00000 rs1 rm rd 1010011 FCVT.W.S", daNone, emuNone},     // R
 		{"1100000 00001 rs1 rm rd 1010011 FCVT.WU.S", daNone, emuNone},    // R
-		{"1110000 00000 rs1 000 rd 1010011 FMV.X.W", daNone, emuNone},     // R
+		{"1110000 00000 rs1 000 rd 1010011 FMV.X.W", daTypeRd, emuNone},   // R
 		{"1010000 rs2 rs1 010 rd 1010011 FEQ.S", daTypeRa, emuNone},       // R
 		{"1010000 rs2 rs1 001 rd 1010011 FLT.S", daTypeRa, emuNone},       // R
 		{"1010000 rs2 rs1 000 rd 1010011 FLE.S", daTypeRa, emuNone},       // R

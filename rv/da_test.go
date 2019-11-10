@@ -72,6 +72,12 @@ func Test_RV32G(t *testing.T) {
 		{0, 0x100526af, "lr.w a3,(a0)"},
 		{0, 0x18c526af, "sc.w a3,a2,(a0)"},
 		{0, 0x0c55232f, "amoswap.w t1,t0,(a0)"},
+		// rv32f
+		{0x14, 0xfec42707, "flw fa4,-20(s0)"},
+		{0x18, 0xfe842787, "flw fa5,-24(s0)"},
+		{0x1c, 0x10f777d3, "fmul.s fa5,fa4,fa5"},
+		{0x20, 0xe0078553, "fmv.x.w a0,fa5"},
+		{0x4c, 0x18f777d3, "fdiv.s fa5,fa4,fa5"},
 		// rv32d
 		{0, 0x0005b787, "fld fa5,0(a1)"},
 		{0, 0x72a7f7c3, "fmadd.d fa5,fa5,fa0,fa4"},
