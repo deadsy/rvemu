@@ -9,6 +9,7 @@ RISC-V Emulator
 package main
 
 import (
+	"debug/elf"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -75,6 +76,23 @@ func (u *userApp) loadFile(filename string) (string, error) {
 
 //-----------------------------------------------------------------------------
 
+// loadELF loads an ELF file.
+func (u *userApp) loadELF(filename string) (string, error) {
+
+	f, err := elf.Open(filename)
+	if err != nil {
+		return "", err
+	}
+
+	status := fmt.Sprintf("%+v", f)
+
+	f.Close()
+
+	return status, nil
+}
+
+//-----------------------------------------------------------------------------
+
 // Put outputs a string to the user application.
 func (u *userApp) Put(s string) {
 	fmt.Printf("%s", s)
@@ -95,7 +113,8 @@ func main() {
 	}
 
 	// load the file
-	status, err := app.loadFile(*fname)
+	//status, err := app.loadFile(*fname)
+	status, err := app.loadELF(*fname)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
