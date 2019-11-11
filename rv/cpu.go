@@ -8,6 +8,11 @@ RISC-V CPU Definitions
 
 package rv
 
+import (
+	"fmt"
+	"strings"
+)
+
 //-----------------------------------------------------------------------------
 // Bitfield Operations
 
@@ -255,7 +260,17 @@ func NewRV32(isa *ISA, mem Memory) *RV32 {
 
 // Dump returns a display string for the CPU registers.
 func (m *RV32) Dump() string {
-	return ""
+	nregs := 32
+	if m.rv32e {
+		nregs = 16
+	}
+	s := make([]string, nregs+1)
+	for i := 0; i < nregs; i++ {
+		x := fmt.Sprintf("x%d", i)
+		s[i] = fmt.Sprintf("%-4s %-4s %08x", x, abiXName[i], m.X[i])
+	}
+	s[nregs] = fmt.Sprintf("%-9s %08x", "pc", m.PC)
+	return strings.Join(s, "\n")
 }
 
 // Exit sets a status code and exits the emulation

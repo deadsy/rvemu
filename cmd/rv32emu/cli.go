@@ -42,6 +42,11 @@ var cmdExit = cli.Leaf{
 //-----------------------------------------------------------------------------
 // memory functions
 
+var helpMemDisplay = []cli.Help{
+	{"<adr> [len]", "address (hex) - default is 0"},
+	{"", "length (hex) - default is 0x40"},
+}
+
 // memArgs converts memory arguments to an (address, size) tuple.
 func memArgs(args []string) (uint32, uint, error) {
 	err := cli.CheckArgc(args, []int{0, 1, 2})
@@ -57,7 +62,7 @@ func memArgs(args []string) (uint32, uint, error) {
 		}
 	}
 	// size
-	size := 0x40 // default size
+	size := 0x80 // default size
 	if len(args) >= 2 {
 		size, err = cli.IntArg(args[1], [2]int{1, 0x100000000}, 16)
 		if err != nil {
@@ -65,11 +70,6 @@ func memArgs(args []string) (uint32, uint, error) {
 		}
 	}
 	return uint32(adr), uint(size), nil
-}
-
-var helpMemDisplay = []cli.Help{
-	{"<adr> [len]", "address (hex)"},
-	{"", "length (hex) - default is 0x40"},
 }
 
 var cmdMemDisplay = cli.Leaf{
@@ -110,6 +110,10 @@ var cmdMemDisplay = cli.Leaf{
 
 //-----------------------------------------------------------------------------
 
+var helpGo = []cli.Help{
+	{"<adr>", "address (hex) - default is PC"},
+}
+
 // goArgs converts go arguments to an address value.
 func goArgs(pc uint32, args []string) (uint32, error) {
 	err := cli.CheckArgc(args, []int{0, 1})
@@ -125,10 +129,6 @@ func goArgs(pc uint32, args []string) (uint32, error) {
 		}
 	}
 	return uint32(adr), nil
-}
-
-var helpGo = []cli.Help{
-	{"<adr>", "address (hex) - default is PC"},
 }
 
 var cmdGo = cli.Leaf{
@@ -194,8 +194,13 @@ var cmdStep = cli.Leaf{
 
 //-----------------------------------------------------------------------------
 
+var helpDisassemble = []cli.Help{
+	{"[adr] [len]", "address (hex) - default is current pc"},
+	{"", "length (hex) - default is 0x10"},
+}
+
 // daArgs converts disassembly arguments to an (address, size) tuple.
-func daArgs(pc uint32, args []string) (uint32, uint, error) {
+func daArgs(pc uint32, args []string) (uint32, int, error) {
 	err := cli.CheckArgc(args, []int{0, 1, 2})
 	if err != nil {
 		return 0, 0, err
@@ -209,19 +214,14 @@ func daArgs(pc uint32, args []string) (uint32, uint, error) {
 		}
 	}
 	// size
-	size := 16 // default size
+	size := 64 // default size
 	if len(args) >= 2 {
 		size, err = cli.IntArg(args[1], [2]int{1, 2048}, 16)
 		if err != nil {
 			return 0, 0, err
 		}
 	}
-	return uint32(adr), uint(size), nil
-}
-
-var helpDisassemble = []cli.Help{
-	{"[adr] [len]", "address (hex) - default is current pc"},
-	{"", "length (hex) - default is 0x10"},
+	return uint32(adr), size, nil
 }
 
 var cmdDisassemble = cli.Leaf{
@@ -229,12 +229,16 @@ var cmdDisassemble = cli.Leaf{
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*userApp).cpu
 		adr, size, err := daArgs(m.PC, args)
-		_ = size
 		if err != nil {
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		c.User.Put(fmt.Sprintf("%s\n", m.Disassemble(adr)))
+		for size > 0 {
+			da := m.Disassemble(adr)
+			c.User.Put(fmt.Sprintf("%s\n", da))
+			adr += uint32(da.Length)
+			size -= da.Length
+		}
 	},
 }
 
