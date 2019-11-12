@@ -222,7 +222,7 @@ type Memory interface {
 	Wr16(adr uint32, val uint16)
 	Rd8(adr uint32) uint8
 	Wr8(adr uint32, val uint8)
-	Symbol(adr uint32) string
+	Symbol(adr uint) string
 }
 
 //-----------------------------------------------------------------------------

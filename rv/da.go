@@ -326,7 +326,7 @@ func (isa *ISA) daInstruction(pc uint32, ins uint) string {
 func (m *RV32) Disassemble(adr uint32) *Disassembly {
 	ins := uint(m.Mem.Rd32(adr))
 	var da Disassembly
-	da.Symbol = m.Mem.Symbol(adr)
+	da.Symbol = m.Mem.Symbol(uint(adr))
 	if ins&3 == 3 {
 		da.Dump = daDump32(adr, ins)
 		da.Assembly = m.isa.daInstruction(adr, ins)

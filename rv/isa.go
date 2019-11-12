@@ -321,6 +321,31 @@ var ISArv64d = ISAModule{
 }
 
 //-----------------------------------------------------------------------------
+// pre-canned ISA module sets
+
+// ISArv32g = RV32imafd
+var ISArv32g = []ISAModule{
+	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d,
+}
+
+// ISArv32gc = RV32imafdc
+var ISArv32gc = []ISAModule{
+	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32c,
+}
+
+// ISArv64g = RV64imafd
+var ISArv64g = []ISAModule{
+	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d,
+	ISArv64i, ISArv64m, ISArv64a, ISArv64f, ISArv64d,
+}
+
+// ISArv64gc = RV64imafdc
+var ISArv64gc = []ISAModule{
+	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32c,
+	ISArv64i, ISArv64m, ISArv64a, ISArv64f, ISArv64d,
+}
+
+//-----------------------------------------------------------------------------
 
 // insMeta is instruction meta-data determined at runtime
 type insMeta struct {
@@ -333,22 +358,20 @@ type insMeta struct {
 
 // ISA is an instruction set
 type ISA struct {
-	name  string     // the name of the ISA
 	ins16 []*insMeta // the set of 16-bit instructions in the ISA
 	ins32 []*insMeta // the set of 32-bit instructions in the ISA
 }
 
 // NewISA creates an empty instruction set.
-func NewISA(name string) *ISA {
+func NewISA() *ISA {
 	return &ISA{
-		name:  name,
 		ins16: make([]*insMeta, 0),
 		ins32: make([]*insMeta, 0),
 	}
 }
 
 // Add a ISA sub-module to the ISA.
-func (isa *ISA) Add(module ...ISAModule) error {
+func (isa *ISA) Add(module []ISAModule) error {
 	for i := range module {
 		for j := range module[i].defn {
 			im, err := parseDefn(&module[i].defn[j], module[i].ilen)

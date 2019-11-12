@@ -53,7 +53,7 @@ func loadDump(m *mem.Memory, filename string) error {
 		if n == 2 {
 			// address + symbol
 			s := strings.Trim(field[1], "<>:")
-			m.AddSymbol(uint32(adr), s)
+			m.AddSymbol(s, uint(adr), 0)
 		}
 
 		if n > 2 {
@@ -87,7 +87,7 @@ func loadDump(m *mem.Memory, filename string) error {
 				}
 				s = append(s, x)
 			}
-			m.AddDisassembly(uint32(adr), strings.Join(s, " "))
+			m.AddDisassembly(strings.Join(s, " "), uint(adr))
 		}
 
 	}
@@ -113,8 +113,8 @@ func main() {
 	}
 
 	// create the ISA
-	isa := rv.NewISA("rv32g")
-	err = isa.Add(rv.ISArv32i, rv.ISArv32m, rv.ISArv32a, rv.ISArv32f, rv.ISArv32d, rv.ISArv32c)
+	isa := rv.NewISA()
+	err = isa.Add(rv.ISArv32gc)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
@@ -130,10 +130,10 @@ func main() {
 		if da.Assembly == "?" {
 			break
 		}
-		if da.Assembly == m.Disassembly(adr) {
+		if da.Assembly == m.Disassembly(uint(adr)) {
 			fmt.Printf("%s\n", da.String())
 		} else {
-			fmt.Printf("%s should be: \"%s\"\n", da.String(), m.Disassembly(adr))
+			fmt.Printf("%s should be: \"%s\"\n", da.String(), m.Disassembly(uint(adr)))
 		}
 		adr += uint32(da.Length)
 	}

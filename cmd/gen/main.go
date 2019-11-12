@@ -18,15 +18,13 @@ import (
 //-----------------------------------------------------------------------------
 
 func main() {
-
 	// create the ISA
-	isa := rv.NewISA("rv32g")
-	err := isa.Add(rv.ISArv32i, rv.ISArv32m, rv.ISArv32a, rv.ISArv32f, rv.ISArv32d)
+	isa := rv.NewISA()
+	err := isa.Add(rv.ISArv32g)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	}
-
 	os.Exit(0)
 }
 

@@ -36,14 +36,14 @@ type userApp struct {
 func newUserApp() (*userApp, error) {
 
 	// create the ISA
-	isa := rv.NewISA("rv32g")
-	err := isa.Add(rv.ISArv32i, rv.ISArv32m, rv.ISArv32a, rv.ISArv32f, rv.ISArv32d, rv.ISArv32c)
+	isa := rv.NewISA()
+	err := isa.Add(rv.ISArv32gc)
 	if err != nil {
 		return nil, err
 	}
 
 	// create the memory
-	mem := mem.NewMemory(0, 256<<10, false)
+	mem := mem.NewMemory(0, 128<<10, false)
 
 	// create the cpu
 	cpu := rv.NewRV32(isa, mem)
@@ -81,13 +81,43 @@ func (u *userApp) loadELF(filename string) (string, error) {
 
 	f, err := elf.Open(filename)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%s %s", filename, err)
 	}
 
-	status := fmt.Sprintf("%+v", f)
+	defer f.Close()
 
-	f.Close()
+	if f.Machine != elf.EM_RISCV {
+		return "", fmt.Errorf("%s is not a RISC-V ELF file", filename)
+	}
 
+	if f.Class != elf.ELFCLASS32 {
+		return "", fmt.Errorf("%s is not a 32-bit ELF file", filename)
+	}
+
+	if f.Type != elf.ET_EXEC {
+		return "", fmt.Errorf("%s is not an executable ELF file", filename)
+	}
+
+	// function symbols
+	st, err := f.Symbols()
+	if err != nil {
+		return "", fmt.Errorf("%s %s", filename, err)
+	}
+	nsymbols := 0
+	for i := range st {
+		var err error
+		switch elf.ST_TYPE(st[i].Info) {
+		case elf.STT_FUNC:
+			err = u.mem.AddSymbol(st[i].Name, uint(st[i].Value), uint(st[i].Size))
+		}
+		if err != nil {
+			fmt.Printf("%s\n", err)
+		} else {
+			nsymbols++
+		}
+	}
+
+	status := fmt.Sprintf("loaded %d symbols", nsymbols)
 	return status, nil
 }
 
