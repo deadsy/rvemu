@@ -48,7 +48,7 @@ var helpMemDisplay = []cli.Help{
 }
 
 // memArgs converts memory arguments to an (address, size) tuple.
-func memArgs(args []string) (uint32, uint, error) {
+func memArgs(args []string) (uint, uint, error) {
 	err := cli.CheckArgc(args, []int{0, 1, 2})
 	if err != nil {
 		return 0, 0, err
@@ -69,7 +69,7 @@ func memArgs(args []string) (uint32, uint, error) {
 			return 0, 0, err
 		}
 	}
-	return uint32(adr), uint(size), nil
+	return uint(adr), uint(size), nil
 }
 
 var cmdMemDisplay = cli.Leaf{
@@ -81,7 +81,7 @@ var cmdMemDisplay = cli.Leaf{
 			return
 		}
 		// round down address to 16 byte boundary
-		adr &= ^uint32(15)
+		adr &= ^uint(15)
 		// round up n to an integral multiple of 16 bytes
 		size = (size + 15) & ^uint(15)
 		// print the header
@@ -92,7 +92,7 @@ var cmdMemDisplay = cli.Leaf{
 			var data [16]string
 			var ascii [16]string
 			for j := 0; j < 16; j++ {
-				x := c.User.(*userApp).mem.Rd8(adr + uint32(j))
+				x, _ := c.User.(*userApp).mem.Rd8(adr + uint(j))
 				data[j] = fmt.Sprintf("%02x", x)
 				if x >= 32 && x <= 126 {
 					ascii[j] = fmt.Sprintf("%c", x)

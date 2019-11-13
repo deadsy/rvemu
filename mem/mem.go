@@ -9,7 +9,6 @@ Emulated Target Memory
 package mem
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 )
@@ -21,45 +20,10 @@ type memRange struct {
 }
 
 //-----------------------------------------------------------------------------
-// memory segments
-
-const AttrR = 1 << 0 // read
-const AttrW = 1 << 0 // write
-const AttrX = 1 << 0 // execute
-
-// Segment is a memory segment.
-type Segment struct {
-	attr       uint    // bitmask of segment attributes
-	start, end uint    // address range
-	mem        []uint8 // memory array
-}
-
-// NewSegment alocates and returns a memory segment.
-func NewSegment(start, size uint, attr uint) *Segment {
-	// allocate the memory and set it to all ones
-	mem := make([]uint8, size)
-	for i := range mem {
-		mem[i] = 0xff
-	}
-	return &Segment{
-		attr:  attr,
-		start: start,
-		end:   start + size - 1,
-		mem:   mem,
-	}
-}
-
-// In returns true if the memory region is entirely within the segment.
-func (s *Segment) In(adr, size uint) bool {
-	end := adr + size - 1
-	return (adr >= s.start) && (end <= s.end)
-}
-
-//-----------------------------------------------------------------------------
 
 // Memory is emulated target memory.
 type Memory struct {
-	segment   []*Segment          // memory segments
+	segment   []Segment           // memory segments
 	symByAddr map[uint]string     // symbol table by address
 	symByName map[string]memRange // symbol table by name
 	da        map[uint]string     // reference disassembly
@@ -68,7 +32,7 @@ type Memory struct {
 // NewMemory returns a memory object.
 func NewMemory() *Memory {
 	return &Memory{
-		seg:       make([]*Segment, 0),
+		segment:   make([]Segment, 0),
 		symByAddr: make(map[uint]string),
 		symByName: make(map[string]memRange),
 		da:        make(map[uint]string),
@@ -76,50 +40,50 @@ func NewMemory() *Memory {
 }
 
 // Add a memory segment to the memory.
-func (m *Memory) Add(s *Segment) {
+func (m *Memory) Add(s Segment) {
 	m.segment = append(m.segment, s)
 }
 
-// Rd32 reads a 32-bit data value from memory.
-func (m *Memory) Rd32(adr uint32) uint32 {
-	if m.align && (adr&3 != 0) {
-		panic(fmt.Sprintf("misaligned 32-bit read @ 0x%08x", adr))
+// find returns the segment
+func (m *Memory) find(adr, size uint) Segment {
+	for _, s := range m.segment {
+		if s.In(adr, size) {
+			return s
+		}
 	}
-	return binary.LittleEndian.Uint32(m.mem[adr-m.base:])
+	// It's expected there will be a catch-all empty
+	// memory segment defined.
+	panic("where's the empty memory segment?")
 }
 
-// Wr32 writes a 32-bit data value to memory.
-func (m *Memory) Wr32(adr uint32, val uint32) {
-	if m.align && (adr&3 != 0) {
-		panic(fmt.Sprintf("misaligned 32-bit write @ 0x%08x", adr))
-	}
-	binary.LittleEndian.PutUint32(m.mem[adr-m.base:], val)
+// Rd32 reads a 32-bit data value from memory.
+func (m *Memory) Rd32(adr uint) (uint32, Exception) {
+	return m.find(adr, 4).Rd32(adr)
 }
 
 // Rd16 reads a 16-bit data value from memory.
-func (m *Memory) Rd16(adr uint32) uint16 {
-	if m.align && (adr&1 != 0) {
-		panic(fmt.Sprintf("misaligned 16-bit read @ 0x%08x", adr))
-	}
-	return binary.LittleEndian.Uint16(m.mem[adr-m.base:])
-}
-
-// Wr16 writes a 16-bit data value to memory.
-func (m *Memory) Wr16(adr uint32, val uint16) {
-	if m.align && (adr&1 != 0) {
-		panic(fmt.Sprintf("misaligned 16-bit write @ 0x%08x", adr))
-	}
-	binary.LittleEndian.PutUint16(m.mem[adr-m.base:], val)
+func (m *Memory) Rd16(adr uint) (uint16, Exception) {
+	return m.find(adr, 2).Rd16(adr)
 }
 
 // Rd8 reads an 8-bit data value from memory.
-func (m *Memory) Rd8(adr uint32) uint8 {
-	return m.mem[adr-m.base]
+func (m *Memory) Rd8(adr uint) (uint8, Exception) {
+	return m.find(adr, 1).Rd8(adr)
+}
+
+// Wr32 writes a 32-bit data value to memory.
+func (m *Memory) Wr32(adr uint, val uint32) Exception {
+	return m.find(adr, 4).Wr32(adr, val)
+}
+
+// Wr16 writes a 16-bit data value to memory.
+func (m *Memory) Wr16(adr uint, val uint16) Exception {
+	return m.find(adr, 2).Wr16(adr, val)
 }
 
 // Wr8 writes an 8-bit data value to memory.
-func (m *Memory) Wr8(adr uint32, val uint8) {
-	m.mem[adr-m.base] = val
+func (m *Memory) Wr8(adr uint, val uint8) Exception {
+	return m.find(adr, 1).Wr8(adr, val)
 }
 
 // Symbol returns a symbol for the memory address (if there is one).

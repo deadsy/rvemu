@@ -11,6 +11,8 @@ package rv
 import (
 	"fmt"
 	"strings"
+
+	"github.com/deadsy/riscv/mem"
 )
 
 //-----------------------------------------------------------------------------
@@ -214,44 +216,31 @@ func decodeCB(ins uint) (int, uint) {
 
 //-----------------------------------------------------------------------------
 
-// Memory is an interface to the memory of the target system.
-type Memory interface {
-	Rd32(adr uint32) uint32
-	Wr32(adr uint32, val uint32)
-	Rd16(adr uint32) uint16
-	Wr16(adr uint32, val uint16)
-	Rd8(adr uint32) uint8
-	Wr8(adr uint32, val uint8)
-	Symbol(adr uint) string
-}
-
-//-----------------------------------------------------------------------------
-
 // RV32 is a 32-bit RISC-V CPU.
 type RV32 struct {
-	Mem     Memory     // memory of the target system
-	X       [32]uint32 // registers
-	PC      uint32     // program counter
-	rv32e   bool       // 16 registers (not 32)
-	illegal bool       // illegal instruction state
-	exit    bool       // exit from emulation
-	todo    bool       // unimplemented instruction
-	isa     *ISA       // ISA implemented for the CPU
+	Mem     *mem.Memory // memory of the target system
+	X       [32]uint32  // registers
+	PC      uint32      // program counter
+	rv32e   bool        // 16 registers (not 32)
+	illegal bool        // illegal instruction state
+	exit    bool        // exit from emulation
+	todo    bool        // unimplemented instruction
+	isa     *ISA        // ISA implemented for the CPU
 }
 
 // RV64 is a 64-bit RISC-V CPU.
 type RV64 struct {
-	Mem     Memory     // memory of the target system
-	X       [32]uint64 // registers
-	PC      uint64     // program counter
-	illegal bool       // illegal instruction state
-	exit    bool       // exit from emulation
-	todo    bool       // unimplemented instruction
-	isa     *ISA       // ISA implemented for the CPU
+	Mem     *mem.Memory // memory of the target system
+	X       [32]uint64  // registers
+	PC      uint64      // program counter
+	illegal bool        // illegal instruction state
+	exit    bool        // exit from emulation
+	todo    bool        // unimplemented instruction
+	isa     *ISA        // ISA implemented for the CPU
 }
 
 // NewRV32 returns a 32-bit RISC-V CPU.
-func NewRV32(isa *ISA, mem Memory) *RV32 {
+func NewRV32(isa *ISA, mem *mem.Memory) *RV32 {
 	return &RV32{
 		Mem: mem,
 		isa: isa,

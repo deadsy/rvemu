@@ -27,7 +27,8 @@ func (m *RV32) Reset() {
 func (m *RV32) Run() error {
 
 	// normal instructions
-	ins := uint(m.Mem.Rd32(m.PC))
+	x, _ := m.Mem.Rd32(uint(m.PC))
+	ins := uint(x)
 	im := m.isa.lookup(ins)
 	im.defn.emu32(m, ins)
 

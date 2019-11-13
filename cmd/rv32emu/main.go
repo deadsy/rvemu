@@ -44,13 +44,16 @@ func newUserApp() (*userApp, error) {
 	}
 
 	// create the memory
-	mem := mem.NewMemory(0, 128<<10, false)
+	m := mem.NewMemory()
+	m.Add(mem.NewChunk(0, 256<<10, mem.AttrRX))         // rom
+	m.Add(mem.NewChunk(0x80000000, 64<<10, mem.AttrRW)) // ram
+	m.Add(mem.NewEmpty(0, 1<<32, 0))                    // no access
 
 	// create the cpu
-	cpu := rv.NewRV32(isa, mem)
+	cpu := rv.NewRV32(isa, m)
 
 	return &userApp{
-		mem: mem,
+		mem: m,
 		cpu: cpu,
 	}, nil
 }
@@ -58,12 +61,12 @@ func newUserApp() (*userApp, error) {
 // loadRaw loads a raw binary file.
 func (u *userApp) loadRaw(filename string, x []uint8) (string, error) {
 	// copy the code to the load address
-	var loadAdr uint32
+	var start uint
 	for i, v := range x {
-		u.mem.Wr8(loadAdr+uint32(i), v)
+		u.mem.Wr8(start+uint(i), v)
 	}
-	endAdr := loadAdr + uint32(len(x)) - 1
-	return fmt.Sprintf("%s code %08x-%08x", filename, loadAdr, endAdr), nil
+	end := start + uint(len(x)) - 1
+	return fmt.Sprintf("%s code %08x-%08x", filename, start, end), nil
 }
 
 func (u *userApp) loadFile(filename string) (string, error) {

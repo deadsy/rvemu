@@ -324,7 +324,8 @@ func (isa *ISA) daInstruction(pc uint32, ins uint) string {
 
 // Disassemble a RISC-V instruction at the address.
 func (m *RV32) Disassemble(adr uint32) *Disassembly {
-	ins := uint(m.Mem.Rd32(adr))
+	x, _ := m.Mem.Rd32(uint(adr))
+	ins := uint(x)
 	var da Disassembly
 	da.Symbol = m.Mem.Symbol(uint(adr))
 	if ins&3 == 3 {

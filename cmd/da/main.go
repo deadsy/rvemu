@@ -64,14 +64,14 @@ func loadDump(m *mem.Memory, filename string) error {
 				if err != nil {
 					return fmt.Errorf("error at line %d: %s", i+1, err)
 				}
-				m.Wr16(uint32(adr), uint16(ins))
+				m.Wr16(uint(adr), uint16(ins))
 			} else if insLength == 8 {
 				// 32-bit instruction
 				ins, err := strconv.ParseUint(field[1], 16, 32)
 				if err != nil {
 					return fmt.Errorf("error at line %d: %s", i+1, err)
 				}
-				m.Wr32(uint32(adr), uint32(ins))
+				m.Wr32(uint(adr), uint32(ins))
 			} else {
 				return fmt.Errorf("unrecognised instruction length at line %d", i+1)
 			}
@@ -104,7 +104,9 @@ func main() {
 	flag.Parse()
 
 	// create the memory
-	m := mem.NewMemory(0, 1<<20, false)
+	m := mem.NewMemory()
+	m.Add(mem.NewChunk(0, 64<<10, mem.AttrRW))
+
 	// load the memory
 	err := loadDump(m, *fname)
 	if err != nil {
