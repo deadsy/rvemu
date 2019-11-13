@@ -21,33 +21,63 @@ type memRange struct {
 }
 
 //-----------------------------------------------------------------------------
+// memory segments
 
-// Memory is emulated read/write target memory.
-type Memory struct {
-	base      uint32              // base memory address
-	mem       []uint8             // memory array
-	symByAddr map[uint]string     // symbol table by address
-	symByName map[string]memRange // symbol table by name
-	da        map[uint]string     // reference disassembly
-	align     bool                // exception on misaligned access
-	oob       bool                // exception on out-of-bound access
+const AttrR = 1 << 0 // read
+const AttrW = 1 << 0 // write
+const AttrX = 1 << 0 // execute
+
+// Segment is a memory segment.
+type Segment struct {
+	attr       uint    // bitmask of segment attributes
+	start, end uint    // address range
+	mem        []uint8 // memory array
 }
 
-// NewMemory returns a target memory object.
-func NewMemory(base uint32, size int, align bool) *Memory {
+// NewSegment alocates and returns a memory segment.
+func NewSegment(start, size uint, attr uint) *Segment {
 	// allocate the memory and set it to all ones
 	mem := make([]uint8, size)
 	for i := range mem {
 		mem[i] = 0xff
 	}
+	return &Segment{
+		attr:  attr,
+		start: start,
+		end:   start + size - 1,
+		mem:   mem,
+	}
+}
+
+// In returns true if the memory region is entirely within the segment.
+func (s *Segment) In(adr, size uint) bool {
+	end := adr + size - 1
+	return (adr >= s.start) && (end <= s.end)
+}
+
+//-----------------------------------------------------------------------------
+
+// Memory is emulated target memory.
+type Memory struct {
+	segment   []*Segment          // memory segments
+	symByAddr map[uint]string     // symbol table by address
+	symByName map[string]memRange // symbol table by name
+	da        map[uint]string     // reference disassembly
+}
+
+// NewMemory returns a memory object.
+func NewMemory() *Memory {
 	return &Memory{
-		base:      base,
-		mem:       mem,
+		seg:       make([]*Segment, 0),
 		symByAddr: make(map[uint]string),
 		symByName: make(map[string]memRange),
 		da:        make(map[uint]string),
-		align:     align,
 	}
+}
+
+// Add a memory segment to the memory.
+func (m *Memory) Add(s *Segment) {
+	m.segment = append(m.segment, s)
 }
 
 // Rd32 reads a 32-bit data value from memory.
@@ -102,16 +132,14 @@ func (m *Memory) AddSymbol(s string, adr, size uint) error {
 	if len(s) == 0 {
 		return errors.New("zero length symbol")
 	}
-	// check the symbol is within memory range
-	s0 := uint(m.base)
-	e0 := uint(m.base) + uint(len(m.mem))
-	e1 := adr + size
-	if adr >= s0 && e1 <= e0 {
-		m.symByAddr[adr] = s
-		m.symByName[s] = memRange{adr, size}
-		return nil
+	for i := range m.segment {
+		if m.segment[i].In(adr, size) {
+			m.symByAddr[adr] = s
+			m.symByName[s] = memRange{adr, size}
+			return nil
+		}
 	}
-	return fmt.Errorf("%s is out of memory range %08x-%08x", s, adr, e1)
+	return fmt.Errorf("%s is not in a memory segment", s)
 }
 
 // Disassembly returns the reference disassembly for the memory address (if there is any).

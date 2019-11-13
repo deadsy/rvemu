@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	cli "github.com/deadsy/go-cli"
 	"github.com/deadsy/riscv/mem"
@@ -76,6 +77,35 @@ func (u *userApp) loadFile(filename string) (string, error) {
 
 //-----------------------------------------------------------------------------
 
+func (u *userApp) loadSymbols(f *elf.File) string {
+	st, err := f.Symbols()
+	if err != nil {
+		return fmt.Sprintf("can't load symbols")
+	}
+	n := 0
+	for i := range st {
+		var err error
+		switch elf.ST_TYPE(st[i].Info) {
+		case elf.STT_FUNC:
+			err = u.mem.AddSymbol(st[i].Name, uint(st[i].Value), uint(st[i].Size))
+			if err == nil {
+				n++
+			}
+		}
+	}
+	return fmt.Sprintf("loaded %d symbols", n)
+}
+
+func (u *userApp) loadSection(f *elf.File, name string) string {
+	s := f.Section(name)
+	if s == nil || s.Size == 0 {
+		return fmt.Sprintf("%s (0 bytes)", name)
+	}
+
+	end := s.Addr + s.Size - 1
+	return fmt.Sprintf("%s %08x-%08x (%d bytes)", name, s.Addr, end, s.Size)
+}
+
 // loadELF loads an ELF file.
 func (u *userApp) loadELF(filename string) (string, error) {
 
@@ -98,27 +128,13 @@ func (u *userApp) loadELF(filename string) (string, error) {
 		return "", fmt.Errorf("%s is not an executable ELF file", filename)
 	}
 
-	// function symbols
-	st, err := f.Symbols()
-	if err != nil {
-		return "", fmt.Errorf("%s %s", filename, err)
-	}
-	nsymbols := 0
-	for i := range st {
-		var err error
-		switch elf.ST_TYPE(st[i].Info) {
-		case elf.STT_FUNC:
-			err = u.mem.AddSymbol(st[i].Name, uint(st[i].Value), uint(st[i].Size))
-		}
-		if err != nil {
-			fmt.Printf("%s\n", err)
-		} else {
-			nsymbols++
-		}
-	}
+	s := make([]string, 0)
+	s = append(s, u.loadSymbols(f))
+	s = append(s, u.loadSection(f, ".text"))
+	s = append(s, u.loadSection(f, ".rodata"))
+	s = append(s, u.loadSection(f, ".data"))
 
-	status := fmt.Sprintf("loaded %d symbols", nsymbols)
-	return status, nil
+	return strings.Join(s, "\n"), nil
 }
 
 //-----------------------------------------------------------------------------

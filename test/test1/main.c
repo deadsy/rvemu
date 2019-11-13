@@ -1,5 +1,4 @@
 
-#include <stdio.h>
 #include <limits.h>
 #include <stdint.h>
 
@@ -67,15 +66,20 @@ static char *itoa(char *s, int val) {
   return s;
 }
 
+static void eputs(const char *s) {
+}
+
+int tmp[100] = {1,2,3};
+
 int main(void) {
   char tmp[32];
-  puts(itoa(tmp, 0));
-  puts(itoa(tmp, 1234));
-  puts(itoa(tmp, -1234));
-  puts(itoa(tmp, INT_MAX));
-  puts(itoa(tmp, INT_MIN));
-  puts(hex8(tmp, 0xAB));
-  puts(hex16(tmp, 0xABCD));
-  puts(hex32(tmp, 0xDEADBEEF));
+  eputs(itoa(tmp, 0));
+  eputs(itoa(tmp, 1234));
+  eputs(itoa(tmp, -1234));
+  eputs(itoa(tmp, INT_MAX));
+  eputs(itoa(tmp, INT_MIN));
+  eputs(hex8(tmp, 0xAB));
+  eputs(hex16(tmp, 0xABCD));
+  eputs(hex32(tmp, 0xDEADBEEF));
   return 0;
 }

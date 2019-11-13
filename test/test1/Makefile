@@ -9,6 +9,7 @@ X_OBJCOPY = $(XTOOLS)objcopy
 SRC = main.c
 
 OBJ = $(patsubst %.c, %.o, $(SRC))
+OBJ += start.o
 
 # include paths
 INCLUDE =
@@ -17,13 +18,12 @@ INCLUDE =
 DEFINE =
 
 # compiler flags
-#X_CFLAGS = -march=rv32i -mabi=ilp32
-X_CFLAGS = -march=rv32im -mabi=ilp32
+X_CFLAGS = -march=rv32gc -mabi=ilp32
 X_CFLAGS += -Wall -Wstrict-prototypes -Werror
 
 # linker flags
 LDSCRIPT = emu.ld
-X_LDFLAGS = -T$(LDSCRIPT) -Wl,-Map,$(OUTPUT).map -Wl,--gc-sections
+X_LDFLAGS = -T$(LDSCRIPT) -Wl,-Map,$(OUTPUT).map -Wl,--gc-sections -nostdlib
 
 .S.o:
 	$(X_GCC) $(INCLUDE) $(DEFINE) $(X_CFLAGS) -c $< -o $@
@@ -34,7 +34,6 @@ X_LDFLAGS = -T$(LDSCRIPT) -Wl,-Map,$(OUTPUT).map -Wl,--gc-sections
 
 all: $(OBJ)
 	$(X_GCC) $(X_CFLAGS) $(X_LDFLAGS) $(OBJ) -o $(OUTPUT)
-	$(X_OBJCOPY) -O binary $(OUTPUT) $(OUTPUT).bin
 
 clean:
 	-rm $(OBJ)	
