@@ -8,23 +8,26 @@ Memory Segments
 
 package mem
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"math"
+)
 
 //-----------------------------------------------------------------------------
 
-// Exception is a bit mask of memory acess exceptions.
+// Exception is a bit mask of memory access exceptions.
 type Exception uint
 
 // Exception values.
 const (
-	ExcAlign   Exception = 1 << iota // misaligned read/write
-	ExcRead                          // can't read this memory
-	ExcWrite                         // can't write this memory
-	ExcAddress                       // invalid memory address
-	ExcExec                          // can't read instructions from this memory
+	ExAlign Exception = 1 << iota // misaligned read/write
+	ExRead                        // can't read this memory
+	ExWrite                       // can't write this memory
+	ExEmpty                       // no memory at this address
+	ExExec                        // can't read instructions from this memory
 )
 
-// Attribute is a bit mask of memory acess attributes.
+// Attribute is a bit mask of memory access attributes.
 type Attribute uint
 
 // Attribute values.
@@ -41,9 +44,45 @@ const AttrRW = AttrR | AttrW
 const AttrRX = AttrR | AttrX
 
 //-----------------------------------------------------------------------------
+// memory access exceptions
+
+func wrException(adr uint, attr Attribute, align uint) Exception {
+	var ex Exception
+	if attr&AttrW == 0 {
+		ex |= ExWrite
+	}
+	if adr&(align-1) != 0 {
+		ex |= ExAlign
+	}
+	return ex
+}
+
+func rdException(adr uint, attr Attribute, align uint) Exception {
+	var ex Exception
+	if attr&AttrR == 0 {
+		ex |= ExRead
+	}
+	if adr&(align-1) != 0 {
+		ex |= ExAlign
+	}
+	return ex
+}
+
+func rdInsException(adr uint, attr Attribute) Exception {
+	// rv32c has mixed 32/16 bit instruction streams so
+	// we allow 32-bit reads on 2 byte address boundaries.
+	ex := rdException(adr, attr, 2)
+	if attr&AttrX == 0 {
+		ex |= ExExec
+	}
+	return ex
+}
+
+//-----------------------------------------------------------------------------
 
 // Segment is an interface to a contiguous region of memory.
 type Segment interface {
+	RdIns(adr uint) (uint, Exception)
 	Rd64(adr uint) (uint64, Exception)
 	Rd32(adr uint) (uint32, Exception)
 	Rd16(adr uint) (uint16, Exception)
@@ -85,48 +124,53 @@ func (m *Chunk) In(adr, size uint) bool {
 	return (adr >= m.start) && (end <= m.end)
 }
 
+// RdIns reads a 32-bit instruction from memory.
+func (m *Chunk) RdIns(adr uint) (uint, Exception) {
+	return uint(binary.LittleEndian.Uint32(m.mem[adr-m.start:])), rdInsException(adr, m.attr)
+}
+
 // Rd64 reads a 64-bit data value from memory.
 func (m *Chunk) Rd64(adr uint) (uint64, Exception) {
-	return binary.LittleEndian.Uint64(m.mem[adr-m.start:]), 0
+	return binary.LittleEndian.Uint64(m.mem[adr-m.start:]), rdException(adr, m.attr, 8)
 }
 
 // Rd32 reads a 32-bit data value from memory.
 func (m *Chunk) Rd32(adr uint) (uint32, Exception) {
-	return binary.LittleEndian.Uint32(m.mem[adr-m.start:]), 0
+	return binary.LittleEndian.Uint32(m.mem[adr-m.start:]), rdException(adr, m.attr, 4)
 }
 
 // Rd16 reads a 16-bit data value from memory.
 func (m *Chunk) Rd16(adr uint) (uint16, Exception) {
-	return binary.LittleEndian.Uint16(m.mem[adr-m.start:]), 0
+	return binary.LittleEndian.Uint16(m.mem[adr-m.start:]), rdException(adr, m.attr, 2)
 }
 
 // Rd8 reads an 8-bit data value from memory.
 func (m *Chunk) Rd8(adr uint) (uint8, Exception) {
-	return m.mem[adr-m.start], 0
+	return m.mem[adr-m.start], rdException(adr, m.attr, 1)
 }
 
 // Wr64 writes a 64-bit data value to memory.
 func (m *Chunk) Wr64(adr uint, val uint64) Exception {
 	binary.LittleEndian.PutUint64(m.mem[adr-m.start:], val)
-	return 0
+	return wrException(adr, m.attr, 8)
 }
 
 // Wr32 writes a 32-bit data value to memory.
 func (m *Chunk) Wr32(adr uint, val uint32) Exception {
 	binary.LittleEndian.PutUint32(m.mem[adr-m.start:], val)
-	return 0
+	return wrException(adr, m.attr, 4)
 }
 
 // Wr16 writes a 16-bit data value to memory.
 func (m *Chunk) Wr16(adr uint, val uint16) Exception {
 	binary.LittleEndian.PutUint16(m.mem[adr-m.start:], val)
-	return 0
+	return wrException(adr, m.attr, 2)
 }
 
 // Wr8 writes an 8-bit data value to memory.
 func (m *Chunk) Wr8(adr uint, val uint8) Exception {
 	m.mem[adr-m.start] = val
-	return 0
+	return wrException(adr, m.attr, 1)
 }
 
 //-----------------------------------------------------------------------------
@@ -152,44 +196,49 @@ func (m *Empty) In(adr, size uint) bool {
 	return (adr >= m.start) && (end <= m.end)
 }
 
+// RdIns reads a 32-bit instruction from memory.
+func (m *Empty) RdIns(adr uint) (uint, Exception) {
+	return math.MaxUint32, rdInsException(adr, m.attr) | ExEmpty
+}
+
 // Rd64 reads a 64-bit data value from memory.
 func (m *Empty) Rd64(adr uint) (uint64, Exception) {
-	return 0, 0
+	return math.MaxUint64, rdException(adr, m.attr, 8) | ExEmpty
 }
 
 // Rd32 reads a 32-bit data value from memory.
 func (m *Empty) Rd32(adr uint) (uint32, Exception) {
-	return 0, 0
+	return math.MaxUint32, rdException(adr, m.attr, 4) | ExEmpty
 }
 
 // Rd16 reads a 16-bit data value from memory.
 func (m *Empty) Rd16(adr uint) (uint16, Exception) {
-	return 0, 0
+	return math.MaxUint16, rdException(adr, m.attr, 2) | ExEmpty
 }
 
 // Rd8 reads an 8-bit data value from memory.
 func (m *Empty) Rd8(adr uint) (uint8, Exception) {
-	return 0, 0
+	return math.MaxUint8, rdException(adr, m.attr, 1) | ExEmpty
 }
 
 // Wr64 writes a 64-bit data value to memory.
 func (m *Empty) Wr64(adr uint, val uint64) Exception {
-	return 0
+	return wrException(adr, m.attr, 8) | ExEmpty
 }
 
 // Wr32 writes a 32-bit data value to memory.
 func (m *Empty) Wr32(adr uint, val uint32) Exception {
-	return 0
+	return wrException(adr, m.attr, 4) | ExEmpty
 }
 
 // Wr16 writes a 16-bit data value to memory.
 func (m *Empty) Wr16(adr uint, val uint16) Exception {
-	return 0
+	return wrException(adr, m.attr, 2) | ExEmpty
 }
 
 // Wr8 writes an 8-bit data value to memory.
 func (m *Empty) Wr8(adr uint, val uint8) Exception {
-	return 0
+	return wrException(adr, m.attr, 1) | ExEmpty
 }
 
 //-----------------------------------------------------------------------------

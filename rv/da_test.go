@@ -17,8 +17,8 @@ import (
 
 func Test_RV32G(t *testing.T) {
 
-	isa := NewISA("rv32g")
-	err := isa.Add(ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d)
+	isa := NewISA()
+	err := isa.Add(ISArv32g)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		t.Error("FAIL")
@@ -98,8 +98,8 @@ func Test_RV32G(t *testing.T) {
 
 func Test_RV32C(t *testing.T) {
 
-	isa := NewISA("rv32c")
-	err := isa.Add(ISArv32c)
+	isa := NewISA()
+	err := isa.Add([]ISAModule{ISArv32c})
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		t.Error("FAIL")

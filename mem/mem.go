@@ -56,6 +56,11 @@ func (m *Memory) find(adr, size uint) Segment {
 	panic("where's the empty memory segment?")
 }
 
+// RdIns reads a 32-bit instruction from memory.
+func (m *Memory) RdIns(adr uint) (uint, Exception) {
+	return m.find(adr, 4).RdIns(adr)
+}
+
 // Rd32 reads a 32-bit data value from memory.
 func (m *Memory) Rd32(adr uint) (uint32, Exception) {
 	return m.find(adr, 4).Rd32(adr)
