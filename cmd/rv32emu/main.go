@@ -104,7 +104,13 @@ func (u *userApp) loadSection(f *elf.File, name string) string {
 	if s == nil || s.Size == 0 {
 		return fmt.Sprintf("%s (0 bytes)", name)
 	}
-
+	data, err := s.Data()
+	if err != nil {
+		return fmt.Sprintf("%s can't read section: %s", name, err)
+	}
+	for i, v := range data {
+		u.mem.Wr8(uint(s.Addr)+uint(i), v)
+	}
 	end := s.Addr + s.Size - 1
 	return fmt.Sprintf("%s %08x-%08x (%d bytes)", name, s.Addr, end, s.Size)
 }

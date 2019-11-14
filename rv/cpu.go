@@ -64,11 +64,18 @@ func decodeR4(ins uint) (uint, uint, uint, uint, uint) {
 	return rs3, rs2, rs1, rm, rd
 }
 
-func decodeI(ins uint) (int, uint, uint) {
+func decodeIa(ins uint) (int, uint, uint) {
 	imm := bitSigned(ins, 31, 20) // imm[11:0]
 	rs1 := bitUnsigned(ins, 19, 15, 0)
 	rd := bitUnsigned(ins, 11, 7, 0)
 	return imm, rs1, rd
+}
+
+func decodeIb(ins uint) (uint, uint, uint) {
+	csr := bitUnsigned(ins, 31, 20, 0)
+	rs1 := bitUnsigned(ins, 19, 15, 0)
+	rd := bitUnsigned(ins, 11, 7, 0)
+	return csr, rs1, rd
 }
 
 func decodeS(ins uint) (int, uint, uint) {
@@ -215,28 +222,55 @@ func decodeCB(ins uint) (int, uint) {
 }
 
 //-----------------------------------------------------------------------------
+// control and status registers
+
+const csrFCSR = 0x003
+
+/*
+
+const csrSSTATUS = 0x100
+const csrSIE = 0x104
+const csrSTVEC = 0x105
+const csrSCOUNTEREN = 0x106
+const csrSSCRATCH = 0x140
+const csrSEPC = 0x141
+const csrSCAUSE = 0x142
+const csrSTVAL = 0x143
+const csrSIP = 0x144
+const csrSATP = 0x180
+const csrCYCLE = 0xc00
+const csrTIME = 0xc01
+const csrINSTRET = 0xc02
+const csrCYCLEH = 0xc80
+const csrTIMEH = 0xc81
+const csrINSTRETH = 0xc82
+
+*/
+
+//-----------------------------------------------------------------------------
+
+// emuFlags stores emulation event flags.
+type emuFlags uint
+
+// Emulation event flag values.
+const (
+	flagIllegal emuFlags = 1 << iota // illegal instruction
+	flagExit                         // exit from emulation
+	flagTodo                         // unimplemented instruction
+	flagMemory                       // memory exception
+)
+
+//-----------------------------------------------------------------------------
+// rv32
 
 // RV32 is a 32-bit RISC-V CPU.
 type RV32 struct {
-	Mem     *mem.Memory // memory of the target system
-	X       [32]uint32  // registers
-	PC      uint32      // program counter
-	rv32e   bool        // 16 registers (not 32)
-	illegal bool        // illegal instruction state
-	exit    bool        // exit from emulation
-	todo    bool        // unimplemented instruction
-	isa     *ISA        // ISA implemented for the CPU
-}
-
-// RV64 is a 64-bit RISC-V CPU.
-type RV64 struct {
-	Mem     *mem.Memory // memory of the target system
-	X       [32]uint64  // registers
-	PC      uint64      // program counter
-	illegal bool        // illegal instruction state
-	exit    bool        // exit from emulation
-	todo    bool        // unimplemented instruction
-	isa     *ISA        // ISA implemented for the CPU
+	Mem  *mem.Memory // memory of the target system
+	X    [32]uint32  // interger registers
+	F    [32]float32 // float registers
+	PC   uint32      // program counter
+	flag emuFlags    // event flags
+	isa  *ISA        // ISA implemented for the CPU
 }
 
 // NewRV32 returns a 32-bit RISC-V CPU.
@@ -250,9 +284,6 @@ func NewRV32(isa *ISA, mem *mem.Memory) *RV32 {
 // Dump returns a display string for the CPU registers.
 func (m *RV32) Dump() string {
 	nregs := 32
-	if m.rv32e {
-		nregs = 16
-	}
 	s := make([]string, nregs+1)
 	for i := 0; i < nregs; i++ {
 		x := fmt.Sprintf("x%d", i)
@@ -265,7 +296,33 @@ func (m *RV32) Dump() string {
 // Exit sets a status code and exits the emulation
 func (m *RV32) Exit(status uint32) {
 	m.X[1] = status
-	m.exit = true
+	m.flag |= flagExit
+}
+
+func (m *RV32) wrX(i uint, val uint32) {
+	if i != 0 {
+		m.X[i] = val
+	}
+}
+
+func (m *RV32) rdCSR(csr uint) uint32 {
+	return 0
+}
+
+func (m *RV32) wrCSR(csr uint, val uint32) {
+}
+
+//-----------------------------------------------------------------------------
+// rv64
+
+// RV64 is a 64-bit RISC-V CPU.
+type RV64 struct {
+	Mem  *mem.Memory // memory of the target system
+	X    [32]uint64  // registers
+	F    [32]float64 // float registers
+	PC   uint64      // program counter
+	flag emuFlags    // event flags
+	isa  *ISA        // ISA implemented for the CPU
 }
 
 //-----------------------------------------------------------------------------

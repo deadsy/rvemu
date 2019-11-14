@@ -40,7 +40,7 @@ var ISArv32i = ISAModule{
 	defn: []insDefn{
 		{"imm[31:12] rd 0110111 LUI", daTypeUa, emuNone},                         // U
 		{"imm[31:12] rd 0010111 AUIPC", daTypeUa, emuNone},                       // U
-		{"imm[20|10:1|11|19:12] rd 1101111 JAL", daTypeJa, emuNone},              // J
+		{"imm[20|10:1|11|19:12] rd 1101111 JAL", daTypeJa, emuJAL},               // J
 		{"imm[11:0] rs1 000 rd 1100111 JALR", daTypeIe, emuNone},                 // I
 		{"imm[12|10:5] rs2 rs1 000 imm[4:1|11] 1100011 BEQ", daTypeBa, emuNone},  // B
 		{"imm[12|10:5] rs2 rs1 001 imm[4:1|11] 1100011 BNE", daTypeBa, emuNone},  // B
@@ -79,9 +79,9 @@ var ISArv32i = ISAModule{
 		{"0000 0000 0000 00000 001 00000 0001111 FENCE.I", daNone, emuNone},      // I
 		{"000000000000 00000 000 00000 1110011 ECALL", daNone, emuNone},          // I
 		{"000000000001 00000 000 00000 1110011 EBREAK", daNone, emuNone},         // I
-		{"csr rs1 001 rd 1110011 CSRRW", daNone, emuNone},                        // I
-		{"csr rs1 010 rd 1110011 CSRRS", daNone, emuNone},                        // I
-		{"csr rs1 011 rd 1110011 CSRRC", daNone, emuNone},                        // I
+		{"csr rs1 001 rd 1110011 CSRRW", daTypeIh, emuCSRRW},                     // I
+		{"csr rs1 010 rd 1110011 CSRRS", daTypeIh, emuNone},                      // I
+		{"csr rs1 011 rd 1110011 CSRRC", daTypeIh, emuNone},                      // I
 		{"csr zimm 101 rd 1110011 CSRRWI", daNone, emuNone},                      // I
 		{"csr zimm 110 rd 1110011 CSRRSI", daNone, emuNone},                      // I
 		{"csr zimm 111 rd 1110011 CSRRCI", daNone, emuNone},                      // I
@@ -128,32 +128,32 @@ var ISArv32f = ISAModule{
 	name: "rv32f",
 	ilen: 32,
 	defn: []insDefn{
-		{"imm[11:0] rs1 010 rd 0000111 FLW", daTypeIg, emuNone},           // I
-		{"imm[11:5] rs2 rs1 010 imm[4:0] 0100111 FSW", daTypeSb, emuNone}, // S
-		{"rs3 00 rs2 rs1 rm rd 1000011 FMADD.S", daNone, emuNone},         // R4
-		{"rs3 00 rs2 rs1 rm rd 1000111 FMSUB.S", daNone, emuNone},         // R4
-		{"rs3 00 rs2 rs1 rm rd 1001011 FNMSUB.S", daNone, emuNone},        // R4
-		{"rs3 00 rs2 rs1 rm rd 1001111 FNMADD.S", daNone, emuNone},        // R4
-		{"0000000 rs2 rs1 rm rd 1010011 FADD.S", daTypeRc, emuNone},       // R
-		{"0000100 rs2 rs1 rm rd 1010011 FSUB.S", daTypeRc, emuNone},       // R
-		{"0001000 rs2 rs1 rm rd 1010011 FMUL.S", daTypeRc, emuNone},       // R
-		{"0001100 rs2 rs1 rm rd 1010011 FDIV.S", daTypeRc, emuNone},       // R
-		{"0101100 00000 rs1 rm rd 1010011 FSQRT.S", daNone, emuNone},      // R
-		{"0010000 rs2 rs1 000 rd 1010011 FSGNJ.S", daTypeRc, emuNone},     // R
-		{"0010000 rs2 rs1 001 rd 1010011 FSGNJN.S", daTypeRc, emuNone},    // R
-		{"0010000 rs2 rs1 010 rd 1010011 FSGNJX.S", daTypeRc, emuNone},    // R
-		{"0010100 rs2 rs1 000 rd 1010011 FMIN.S", daTypeRc, emuNone},      // R
-		{"0010100 rs2 rs1 001 rd 1010011 FMAX.S", daTypeRc, emuNone},      // R
-		{"1100000 00000 rs1 rm rd 1010011 FCVT.W.S", daNone, emuNone},     // R
-		{"1100000 00001 rs1 rm rd 1010011 FCVT.WU.S", daNone, emuNone},    // R
-		{"1110000 00000 rs1 000 rd 1010011 FMV.X.W", daTypeRd, emuNone},   // R
-		{"1010000 rs2 rs1 010 rd 1010011 FEQ.S", daTypeRa, emuNone},       // R
-		{"1010000 rs2 rs1 001 rd 1010011 FLT.S", daTypeRa, emuNone},       // R
-		{"1010000 rs2 rs1 000 rd 1010011 FLE.S", daTypeRa, emuNone},       // R
-		{"1110000 00000 rs1 001 rd 1010011 FCLASS.S", daNone, emuNone},    // R
-		{"1101000 00000 rs1 rm rd 1010011 FCVT.S.W", daNone, emuNone},     // R
-		{"1101000 00001 rs1 rm rd 1010011 FCVT.S.WU", daNone, emuNone},    // R
-		{"1111000 00000 rs1 000 rd 1010011 FMV.W.X", daNone, emuNone},     // R
+		{"imm[11:0] rs1 010 rd 0000111 FLW", daTypeIg, emuNone},            // I
+		{"imm[11:5] rs2 rs1 010 imm[4:0] 0100111 FSW", daTypeSb, emuNone},  // S
+		{"rs3 00 rs2 rs1 rm rd 1000011 FMADD.S", daNone, emuNone},          // R4
+		{"rs3 00 rs2 rs1 rm rd 1000111 FMSUB.S", daNone, emuNone},          // R4
+		{"rs3 00 rs2 rs1 rm rd 1001011 FNMSUB.S", daNone, emuNone},         // R4
+		{"rs3 00 rs2 rs1 rm rd 1001111 FNMADD.S", daNone, emuNone},         // R4
+		{"0000000 rs2 rs1 rm rd 1010011 FADD.S", daTypeRc, emuNone},        // R
+		{"0000100 rs2 rs1 rm rd 1010011 FSUB.S", daTypeRc, emuNone},        // R
+		{"0001000 rs2 rs1 rm rd 1010011 FMUL.S", daTypeRc, emuNone},        // R
+		{"0001100 rs2 rs1 rm rd 1010011 FDIV.S", daTypeRc, emuNone},        // R
+		{"0101100 00000 rs1 rm rd 1010011 FSQRT.S", daNone, emuNone},       // R
+		{"0010000 rs2 rs1 000 rd 1010011 FSGNJ.S", daTypeRc, emuNone},      // R
+		{"0010000 rs2 rs1 001 rd 1010011 FSGNJN.S", daTypeRc, emuNone},     // R
+		{"0010000 rs2 rs1 010 rd 1010011 FSGNJX.S", daTypeRc, emuNone},     // R
+		{"0010100 rs2 rs1 000 rd 1010011 FMIN.S", daTypeRc, emuNone},       // R
+		{"0010100 rs2 rs1 001 rd 1010011 FMAX.S", daTypeRc, emuNone},       // R
+		{"1100000 00000 rs1 rm rd 1010011 FCVT.W.S", daNone, emuNone},      // R
+		{"1100000 00001 rs1 rm rd 1010011 FCVT.WU.S", daNone, emuNone},     // R
+		{"1110000 00000 rs1 000 rd 1010011 FMV.X.W", daTypeRd, emuNone},    // R
+		{"1010000 rs2 rs1 010 rd 1010011 FEQ.S", daTypeRa, emuNone},        // R
+		{"1010000 rs2 rs1 001 rd 1010011 FLT.S", daTypeRa, emuNone},        // R
+		{"1010000 rs2 rs1 000 rd 1010011 FLE.S", daTypeRa, emuNone},        // R
+		{"1110000 00000 rs1 001 rd 1010011 FCLASS.S", daNone, emuNone},     // R
+		{"1101000 00000 rs1 rm rd 1010011 FCVT.S.W", daNone, emuNone},      // R
+		{"1101000 00001 rs1 rm rd 1010011 FCVT.S.WU", daNone, emuNone},     // R
+		{"1111000 00000 rs1 000 rd 1010011 FMV.W.X", daTypeRe, emuFMVxWxX}, // R
 	},
 }
 
@@ -207,7 +207,7 @@ var ISArv32c = ISAModule{
 		{"000 nzimm[5] 00000 nzimm[4:0] 01 C.NOP", daNone, emuNone},               // CI (Quadrant 1)
 		{"000 nzimm[5] rs1/rd!=0 nzimm[4:0] 01 C.ADDI", daTypeCIc, emuNone},       // CI
 		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", daNone, emuNone},              // CJ
-		{"010 imm[5] rd!=0 imm[4:0] 01 C.LI", daTypeCIa, emuNone},                 // CI
+		{"010 imm[5] rd!=0 imm[4:0] 01 C.LI", daTypeCIa, emuCxLI},                 // CI
 		{"011 nzimm[9] 00010 nzimm[4|6|8:7|5] 01 C.ADDI16SP", daTypeCIb, emuNone}, // CI
 		{"011 nzimm[17] rd!={0,2} nzimm[16:12] 01 C.LUI", daTypeCIg, emuNone},     // CI
 		{"100 nzuimm[5] 00 rs10/rd0 nzuimm[4:0] 01 C.SRLI", daTypeCId, emuNone},   // CI

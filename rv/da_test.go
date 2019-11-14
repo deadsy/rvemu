@@ -66,6 +66,7 @@ func Test_RV32G(t *testing.T) {
 		{0, 0x0107d793, "srli a5,a5,0x10"},
 		{0, 0x00a60533, "add a0,a2,a0"},
 		{0, 0x40f007b3, "neg a5,a5"},
+		{0x40, 0x00301073, "fscsr zero"},
 		// rv32m
 		{0, 0x025535b3, "mulhu a1,a0,t0"},
 		// rv32a
@@ -78,6 +79,7 @@ func Test_RV32G(t *testing.T) {
 		{0x1c, 0x10f777d3, "fmul.s fa5,fa4,fa5"},
 		{0x20, 0xe0078553, "fmv.x.w a0,fa5"},
 		{0x4c, 0x18f777d3, "fdiv.s fa5,fa4,fa5"},
+		{0x44, 0xf0000053, "fmv.w.x ft0,zero"},
 		// rv32d
 		{0, 0x0005b787, "fld fa5,0(a1)"},
 		{0, 0x72a7f7c3, "fmadd.d fa5,fa5,fa0,fa4"},
