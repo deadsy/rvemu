@@ -8,6 +8,11 @@ RISC-V Control and Status Register Definitions
 
 package rv
 
+import (
+	"fmt"
+	"strings"
+)
+
 //-----------------------------------------------------------------------------
 
 const csrUSTATUS = 0x0
@@ -255,7 +260,7 @@ const csrMHCOUNTEREN = 0x322
 
 //-----------------------------------------------------------------------------
 
-var csrName = map[uint]string{
+var csrNameTable = map[uint]string{
 	csrUSTATUS:        "USTATUS",
 	csrUIE:            "UIE",
 	csrUTVEC:          "UTVEC",
@@ -496,6 +501,13 @@ var csrName = map[uint]string{
 	csrMUCOUNTEREN:    "MUCOUNTEREN",
 	csrMSCOUNTEREN:    "MSCOUNTEREN",
 	csrMHCOUNTEREN:    "MHCOUNTEREN",
+}
+
+func csrName(csr uint) string {
+	if s, ok := csrNameTable[csr]; ok {
+		return strings.ToLower(s)
+	}
+	return fmt.Sprintf("0x%03x", csr)
 }
 
 //-----------------------------------------------------------------------------

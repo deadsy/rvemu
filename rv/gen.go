@@ -238,6 +238,7 @@ func nameRemap(name string) string {
 		"c.lui":      "lui",
 		"c.bnez":     "bnez",
 		"c.beqz":     "beqz",
+		"c.jal":      "jal",
 	}
 	if s, ok := x[name]; ok {
 		return s

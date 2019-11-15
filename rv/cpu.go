@@ -98,10 +98,11 @@ func decodeB(ins uint) (int, uint, uint) {
 	return imm, rs2, rs1
 }
 
-func decodeU(ins uint) (uint, uint) {
+func decodeU(ins uint) (int, uint) {
 	uimm := bitUnsigned(ins, 31, 12, 0) // imm[31:12]
+	imm := bitSex(int(uimm), 19)
 	rd := bitUnsigned(ins, 11, 7, 0)
-	return uimm, rd
+	return imm, rd
 }
 
 func decodeJ(ins uint) (int, uint) {

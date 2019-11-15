@@ -1,6 +1,7 @@
 
-.section .text.start, "ax", @progbits
+# define STKSHIFT 15
 
+.section .text.start, "ax", @progbits
 
 .globl _start
 .type _start, @function
@@ -73,6 +74,14 @@ _start:
   fmv.w.x f29,x0
   fmv.w.x f30,x0
   fmv.w.x f31,x0
+
+  la  tp, _end + 63
+  and tp, tp, -64
+  csrr a0, mhartid
+
+  add sp, a0, 1
+  sll sp, sp, STKSHIFT
+  add sp, sp, tp
 
   j main
 

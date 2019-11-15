@@ -43,4 +43,8 @@ SECTIONS
     PROVIDE(_ebss = ABSOLUTE(.));
   } >ram
 
+
+  . = ALIGN(64);
+  PROVIDE(_end = ABSOLUTE(.));
+
 }

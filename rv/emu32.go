@@ -28,7 +28,9 @@ func emu32_LUI(m *RV32, ins uint) {
 }
 
 func emu32_AUIPC(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rd := decodeU(ins)
+	m.wrX(rd, uint32(int(m.PC)+(imm<<12)))
+	m.PC += 4
 }
 
 func emu32_JAL(m *RV32, ins uint) {
@@ -66,15 +68,30 @@ func emu32_BGEU(m *RV32, ins uint) {
 }
 
 func emu32_LB(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	val, ex := m.Mem.Rd8(adr)
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint32(bitSex(int(val), 7)))
+	m.PC += 4
 }
 
 func emu32_LH(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	val, ex := m.Mem.Rd16(adr)
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint32(bitSex(int(val), 15)))
+	m.PC += 4
 }
 
 func emu32_LW(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	val, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	m.wrX(rd, val)
+	m.PC += 4
 }
 
 func emu32_LBU(m *RV32, ins uint) {
@@ -86,22 +103,33 @@ func emu32_LHU(m *RV32, ins uint) {
 }
 
 func emu32_SB(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs2, rs1 := decodeS(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	ex := m.Mem.Wr8(adr, uint8(m.X[rs2]))
+	m.checkMemory(adr, ex)
+	m.PC += 4
 }
 
 func emu32_SH(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs2, rs1 := decodeS(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	ex := m.Mem.Wr16(adr, uint16(m.X[rs2]))
+	m.checkMemory(adr, ex)
+	m.PC += 4
 }
 
 func emu32_SW(m *RV32, ins uint) {
-	//imm, rs2, rs1 := decodeS(ins)
-	//ea := uint(int(m.X[rs1]) + imm)
-	//m.X[rs2], ex = m.mem.Rd32(ea)
-	m.flag |= flagTodo
+	imm, rs2, rs1 := decodeS(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	ex := m.Mem.Wr32(adr, m.X[rs2])
+	m.checkMemory(adr, ex)
+	m.PC += 4
 }
 
 func emu32_ADDI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	m.wrX(rd, uint32(int(m.X[rs1])+imm))
+	m.PC += 4
 }
 
 func emu32_SLTI(m *RV32, ins uint) {
@@ -121,7 +149,9 @@ func emu32_ORI(m *RV32, ins uint) {
 }
 
 func emu32_ANDI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	m.wrX(rd, m.X[rs1]&uint32(imm))
+	m.PC += 4
 }
 
 func emu32_SLLI(m *RV32, ins uint) {
@@ -201,7 +231,13 @@ func emu32_CSRRW(m *RV32, ins uint) {
 }
 
 func emu32_CSRRS(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	csr, rs1, rd := decodeIb(ins)
+	t := m.rdCSR(csr)
+	if rs1 != 0 {
+		m.wrCSR(csr, t|m.X[rs1])
+	}
+	m.wrX(rd, t)
+	m.PC += 4
 }
 
 func emu32_CSRRC(m *RV32, ins uint) {
@@ -522,11 +558,13 @@ func emu32_FCVT_D_WU(m *RV32, ins uint) {
 // rv32c
 
 func emu32_C_ILLEGAL(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	m.flag |= flagIllegal
 }
 
 func emu32_C_ADDI4SPN(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	uimm, rd := decodeCIW(ins)
+	m.X[rd] = m.X[regSp] + uint32(uimm)
+	m.PC += 2
 }
 
 func emu32_C_FLD(m *RV32, ins uint) {
@@ -562,7 +600,9 @@ func emu32_C_ADDI(m *RV32, ins uint) {
 }
 
 func emu32_C_JAL(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm := decodeCJb(ins)
+	m.X[regRa] = m.PC + 2
+	m.PC = uint32(int(m.PC) + imm)
 }
 
 func emu32_C_LI(m *RV32, ins uint) {
@@ -622,7 +662,9 @@ func emu32_C_BNEZ(m *RV32, ins uint) {
 }
 
 func emu32_C_SLLI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	uimm, rd := decodeCId(ins)
+	m.wrX(rd, m.X[rd]<<uimm)
+	m.PC += 2
 }
 
 func emu32_C_SLLI64(m *RV32, ins uint) {
@@ -646,7 +688,11 @@ func emu32_C_JR(m *RV32, ins uint) {
 }
 
 func emu32_C_MV(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rd, rs := decodeCR(ins)
+	if rs != 0 {
+		m.wrX(rd, m.X[rs])
+	}
+	m.PC += 2
 }
 
 func emu32_C_EBREAK(m *RV32, ins uint) {
@@ -658,7 +704,9 @@ func emu32_C_JALR(m *RV32, ins uint) {
 }
 
 func emu32_C_ADD(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rd, rs := decodeCR(ins)
+	m.wrX(rd, m.X[rd]+m.X[rs])
+	m.PC += 2
 }
 
 func emu32_C_FSDSP(m *RV32, ins uint) {

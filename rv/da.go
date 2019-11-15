@@ -106,7 +106,10 @@ func daTypeIh(name string, pc uint32, ins uint) string {
 		}
 		return fmt.Sprintf("fscsr %s,%s", abiXName[rd], abiXName[rs1])
 	}
-	return fmt.Sprintf("%s %s,%d,%s", name, abiXName[rd], csr, abiXName[rs1])
+	if name == "csrrs" && rs1 == 0 {
+		return fmt.Sprintf("csrr %s,%s", abiXName[rd], csrName(csr))
+	}
+	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], csrName(csr), abiXName[rs1])
 }
 
 //-----------------------------------------------------------------------------
@@ -114,7 +117,7 @@ func daTypeIh(name string, pc uint32, ins uint) string {
 
 func daTypeUa(name string, pc uint32, ins uint) string {
 	imm, rd := decodeU(ins)
-	return fmt.Sprintf("%s %s,0x%x", name, abiXName[rd], imm)
+	return fmt.Sprintf("%s %s,0x%x", name, abiXName[rd], uint(imm)&0xfffff)
 }
 
 //-----------------------------------------------------------------------------
@@ -224,8 +227,8 @@ func daTypeCId(name string, pc uint32, ins uint) string {
 }
 
 func daTypeCIe(name string, pc uint32, ins uint) string {
-	imm, rd := decodeCId(ins)
-	return fmt.Sprintf("%s %s,%s,0x%x", name, abiXName[rd], abiXName[rd], imm)
+	uimm, rd := decodeCId(ins)
+	return fmt.Sprintf("%s %s,%s,0x%x", name, abiXName[rd], abiXName[rd], uimm)
 }
 
 func daTypeCIf(name string, pc uint32, ins uint) string {
@@ -246,8 +249,8 @@ func daTypeCIWa(name string, pc uint32, ins uint) string {
 }
 
 func daTypeCIWb(name string, pc uint32, ins uint) string {
-	imm, rd := decodeCIW(ins)
-	return fmt.Sprintf("%s %s,sp,%d", name, abiXName[rd], imm)
+	uimm, rd := decodeCIW(ins)
+	return fmt.Sprintf("%s %s,sp,%d", name, abiXName[rd], uimm)
 }
 
 //-----------------------------------------------------------------------------
@@ -264,6 +267,11 @@ func daTypeCJa(name string, pc uint32, ins uint) string {
 func daTypeCJb(name string, pc uint32, ins uint) string {
 	imm := decodeCJb(ins)
 	return fmt.Sprintf("%s %x", name, int(pc)+imm)
+}
+
+func daTypeCJc(name string, pc uint32, ins uint) string {
+	imm := decodeCJb(ins)
+	return fmt.Sprintf("%s ra,%x", name, int(pc)+imm)
 }
 
 //-----------------------------------------------------------------------------
