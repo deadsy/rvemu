@@ -9,13 +9,6 @@ RISC-V 64-bit Emulator
 package rv
 
 //-----------------------------------------------------------------------------
-// default emulation
-
-func emu64_None(m *RV64, ins uint) {
-	m.flag |= flagTodo
-}
-
-//-----------------------------------------------------------------------------
 // rv32i
 
 func emu64_LUI(m *RV64, ins uint) {
@@ -27,7 +20,9 @@ func emu64_AUIPC(m *RV64, ins uint) {
 }
 
 func emu64_JAL(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	imm, rd := decodeJ(ins)
+	m.wrX(rd, m.PC+4)
+	m.PC = uint64(int(m.PC) + int(imm))
 }
 
 func emu64_JALR(m *RV64, ins uint) {
@@ -380,7 +375,9 @@ func emu64_FCVT_S_WU(m *RV64, ins uint) {
 }
 
 func emu64_FMV_W_X(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	_, rs1, rd := decodeR(ins)
+	m.F[rd] = u32Upper | (m.X[rs1] & u32Lower)
+	m.PC += 4
 }
 
 //-----------------------------------------------------------------------------
@@ -538,11 +535,15 @@ func emu64_C_JAL(m *RV64, ins uint) {
 }
 
 func emu64_C_LI(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	imm, rd := decodeCIa(ins)
+	m.wrX(rd, uint64(imm))
+	m.PC += 2
 }
 
 func emu64_C_ADDI16SP(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	imm := decodeCIb(ins)
+	m.X[regSp] = uint64(int(m.X[regSp]) + imm)
+	m.PC += 2
 }
 
 func emu64_C_LUI(m *RV64, ins uint) {
@@ -634,7 +635,11 @@ func emu64_C_FSDSP(m *RV64, ins uint) {
 }
 
 func emu64_C_SWSP(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	uimm, rs2 := decodeCSSb(ins)
+	adr := uint(m.X[regSp]) + uimm
+	ex := m.Mem.Wr32(adr, uint32(m.X[rs2]))
+	m.checkMemory(adr, ex)
+	m.PC += 2
 }
 
 func emu64_C_FSWSP(m *RV64, ins uint) {

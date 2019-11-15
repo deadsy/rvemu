@@ -66,9 +66,9 @@ var ISArv32i = ISAModule{
 		{"imm[11:0] rs1 100 rd 0010011 XORI", daTypeIf, emu32_XORI, emu64_XORI},                  // I
 		{"imm[11:0] rs1 110 rd 0010011 ORI", daTypeIa, emu32_ORI, emu64_ORI},                     // I
 		{"imm[11:0] rs1 111 rd 0010011 ANDI", daTypeIa, emu32_ANDI, emu64_ANDI},                  // I
-		{"0000000 shamt5 rs1 001 rd 0010011 SLLI", daTypeId, emu32_SLLI, emu64_None},             // I
-		{"0000000 shamt5 rs1 101 rd 0010011 SRLI", daTypeId, emu32_SRLI, emu64_None},             // I
-		{"0100000 shamt5 rs1 101 rd 0010011 SRAI", daTypeId, emu32_SRAI, emu64_None},             // I
+		{"0000000 shamt5 rs1 001 rd 0010011 SLLI", daTypeId, emu32_SLLI, emu64_SLLI},             // I
+		{"0000000 shamt5 rs1 101 rd 0010011 SRLI", daTypeId, emu32_SRLI, emu64_SRLI},             // I
+		{"0100000 shamt5 rs1 101 rd 0010011 SRAI", daTypeId, emu32_SRAI, emu64_SRAI},             // I
 		{"0000000 rs2 rs1 000 rd 0110011 ADD", daTypeRa, emu32_ADD, emu64_ADD},                   // R
 		{"0100000 rs2 rs1 000 rd 0110011 SUB", daTypeRa, emu32_SUB, emu64_SUB},                   // R
 		{"0000000 rs2 rs1 001 rd 0110011 SLL", daTypeRa, emu32_SLL, emu64_SLL},                   // R
@@ -248,21 +248,21 @@ var ISArv64i = ISAModule{
 	name: "rv64i",
 	ilen: 32,
 	defn: []insDefn{
-		{"imm[11:0] rs1 110 rd 0000011 LWU", daTypeIa, emu32_None, emu64_LWU},         // I
-		{"imm[11:0] rs1 011 rd 0000011 LD", daTypeIa, emu32_None, emu64_LD},           // I
-		{"imm[11:5] rs2 rs1 011 imm[4:0] 0100011 SD", daTypeSa, emu32_None, emu64_SD}, // S
-		{"000000 shamt6 rs1 001 rd 0010011 SLLI", daNone, emu32_None, emu64_SLLI},     // I
-		{"000000 shamt6 rs1 101 rd 0010011 SRLI", daNone, emu32_None, emu64_SRLI},     // I
-		{"010000 shamt6 rs1 101 rd 0010011 SRAI", daNone, emu32_None, emu64_SRAI},     // I
-		{"imm[11:0] rs1 000 rd 0011011 ADDIW", daTypeIa, emu32_None, emu64_ADDIW},     // I
-		{"0000000 shamt5 rs1 001 rd 0011011 SLLIW", daNone, emu32_None, emu64_SLLIW},  // I
-		{"0000000 shamt5 rs1 101 rd 0011011 SRLIW", daNone, emu32_None, emu64_SRLIW},  // I
-		{"0100000 shamt5 rs1 101 rd 0011011 SRAIW", daNone, emu32_None, emu64_SRAIW},  // I
-		{"0000000 rs2 rs1 000 rd 0111011 ADDW", daNone, emu32_None, emu64_ADDW},       // R
-		{"0100000 rs2 rs1 000 rd 0111011 SUBW", daNone, emu32_None, emu64_SUBW},       // R
-		{"0000000 rs2 rs1 001 rd 0111011 SLLW", daNone, emu32_None, emu64_SLLW},       // R
-		{"0000000 rs2 rs1 101 rd 0111011 SRLW", daNone, emu32_None, emu64_SRLW},       // R
-		{"0100000 rs2 rs1 101 rd 0111011 SRAW", daNone, emu32_None, emu64_SRAW},       // R
+		{"imm[11:0] rs1 110 rd 0000011 LWU", daTypeIa, emu32_Illegal, emu64_LWU},         // I
+		{"imm[11:0] rs1 011 rd 0000011 LD", daTypeIa, emu32_Illegal, emu64_LD},           // I
+		{"imm[11:5] rs2 rs1 011 imm[4:0] 0100011 SD", daTypeSa, emu32_Illegal, emu64_SD}, // S
+		{"000000 shamt6 rs1 001 rd 0010011 SLLI", daNone, emu32_Illegal, emu64_SLLI},     // I
+		{"000000 shamt6 rs1 101 rd 0010011 SRLI", daNone, emu32_Illegal, emu64_SRLI},     // I
+		{"010000 shamt6 rs1 101 rd 0010011 SRAI", daNone, emu32_Illegal, emu64_SRAI},     // I
+		{"imm[11:0] rs1 000 rd 0011011 ADDIW", daTypeIa, emu32_Illegal, emu64_ADDIW},     // I
+		{"0000000 shamt5 rs1 001 rd 0011011 SLLIW", daNone, emu32_Illegal, emu64_SLLIW},  // I
+		{"0000000 shamt5 rs1 101 rd 0011011 SRLIW", daNone, emu32_Illegal, emu64_SRLIW},  // I
+		{"0100000 shamt5 rs1 101 rd 0011011 SRAIW", daNone, emu32_Illegal, emu64_SRAIW},  // I
+		{"0000000 rs2 rs1 000 rd 0111011 ADDW", daNone, emu32_Illegal, emu64_ADDW},       // R
+		{"0100000 rs2 rs1 000 rd 0111011 SUBW", daNone, emu32_Illegal, emu64_SUBW},       // R
+		{"0000000 rs2 rs1 001 rd 0111011 SLLW", daNone, emu32_Illegal, emu64_SLLW},       // R
+		{"0000000 rs2 rs1 101 rd 0111011 SRLW", daNone, emu32_Illegal, emu64_SRLW},       // R
+		{"0100000 rs2 rs1 101 rd 0111011 SRAW", daNone, emu32_Illegal, emu64_SRAW},       // R
 	},
 }
 
@@ -271,11 +271,11 @@ var ISArv64m = ISAModule{
 	name: "rv64m",
 	ilen: 32,
 	defn: []insDefn{
-		{"0000001 rs2 rs1 000 rd 0111011 MULW", daNone, emu32_None, emu64_MULW},   // R
-		{"0000001 rs2 rs1 100 rd 0111011 DIVW", daNone, emu32_None, emu64_DIVW},   // R
-		{"0000001 rs2 rs1 101 rd 0111011 DIVUW", daNone, emu32_None, emu64_DIVUW}, // R
-		{"0000001 rs2 rs1 110 rd 0111011 REMW", daNone, emu32_None, emu64_REMW},   // R
-		{"0000001 rs2 rs1 111 rd 0111011 REMUW", daNone, emu32_None, emu64_REMUW}, // R
+		{"0000001 rs2 rs1 000 rd 0111011 MULW", daNone, emu32_Illegal, emu64_MULW},   // R
+		{"0000001 rs2 rs1 100 rd 0111011 DIVW", daNone, emu32_Illegal, emu64_DIVW},   // R
+		{"0000001 rs2 rs1 101 rd 0111011 DIVUW", daNone, emu32_Illegal, emu64_DIVUW}, // R
+		{"0000001 rs2 rs1 110 rd 0111011 REMW", daNone, emu32_Illegal, emu64_REMW},   // R
+		{"0000001 rs2 rs1 111 rd 0111011 REMUW", daNone, emu32_Illegal, emu64_REMUW}, // R
 	},
 }
 
@@ -284,17 +284,17 @@ var ISArv64a = ISAModule{
 	name: "rv64a",
 	ilen: 32,
 	defn: []insDefn{
-		{"00010 aq rl 00000 rs1 011 rd 0101111 LR.D", daNone, emu32_None, emu64_LR_D},         // R
-		{"00011 aq rl rs2 rs1 011 rd 0101111 SC.D", daNone, emu32_None, emu64_SC_D},           // R
-		{"00001 aq rl rs2 rs1 011 rd 0101111 AMOSWAP.D", daNone, emu32_None, emu64_AMOSWAP_D}, // R
-		{"00000 aq rl rs2 rs1 011 rd 0101111 AMOADD.D", daNone, emu32_None, emu64_AMOADD_D},   // R
-		{"00100 aq rl rs2 rs1 011 rd 0101111 AMOXOR.D", daNone, emu32_None, emu64_AMOXOR_D},   // R
-		{"01100 aq rl rs2 rs1 011 rd 0101111 AMOAND.D", daNone, emu32_None, emu64_AMOAND_D},   // R
-		{"01000 aq rl rs2 rs1 011 rd 0101111 AMOOR.D", daNone, emu32_None, emu64_AMOOR_D},     // R
-		{"10000 aq rl rs2 rs1 011 rd 0101111 AMOMIN.D", daNone, emu32_None, emu64_AMOMIN_D},   // R
-		{"10100 aq rl rs2 rs1 011 rd 0101111 AMOMAX.D", daNone, emu32_None, emu64_AMOMAX_D},   // R
-		{"11000 aq rl rs2 rs1 011 rd 0101111 AMOMINU.D", daNone, emu32_None, emu64_AMOMINU_D}, // R
-		{"11100 aq rl rs2 rs1 011 rd 0101111 AMOMAXU.D", daNone, emu32_None, emu64_AMOMAXU_D}, // R
+		{"00010 aq rl 00000 rs1 011 rd 0101111 LR.D", daNone, emu32_Illegal, emu64_LR_D},         // R
+		{"00011 aq rl rs2 rs1 011 rd 0101111 SC.D", daNone, emu32_Illegal, emu64_SC_D},           // R
+		{"00001 aq rl rs2 rs1 011 rd 0101111 AMOSWAP.D", daNone, emu32_Illegal, emu64_AMOSWAP_D}, // R
+		{"00000 aq rl rs2 rs1 011 rd 0101111 AMOADD.D", daNone, emu32_Illegal, emu64_AMOADD_D},   // R
+		{"00100 aq rl rs2 rs1 011 rd 0101111 AMOXOR.D", daNone, emu32_Illegal, emu64_AMOXOR_D},   // R
+		{"01100 aq rl rs2 rs1 011 rd 0101111 AMOAND.D", daNone, emu32_Illegal, emu64_AMOAND_D},   // R
+		{"01000 aq rl rs2 rs1 011 rd 0101111 AMOOR.D", daNone, emu32_Illegal, emu64_AMOOR_D},     // R
+		{"10000 aq rl rs2 rs1 011 rd 0101111 AMOMIN.D", daNone, emu32_Illegal, emu64_AMOMIN_D},   // R
+		{"10100 aq rl rs2 rs1 011 rd 0101111 AMOMAX.D", daNone, emu32_Illegal, emu64_AMOMAX_D},   // R
+		{"11000 aq rl rs2 rs1 011 rd 0101111 AMOMINU.D", daNone, emu32_Illegal, emu64_AMOMINU_D}, // R
+		{"11100 aq rl rs2 rs1 011 rd 0101111 AMOMAXU.D", daNone, emu32_Illegal, emu64_AMOMAXU_D}, // R
 	},
 }
 
@@ -303,10 +303,10 @@ var ISArv64f = ISAModule{
 	name: "rv64f",
 	ilen: 32,
 	defn: []insDefn{
-		{"1100000 00010 rs1 rm rd 1010011 FCVT.L.S", daNone, emu32_None, emu64_FCVT_L_S},   // R
-		{"1100000 00011 rs1 rm rd 1010011 FCVT.LU.S", daNone, emu32_None, emu64_FCVT_LU_S}, // R
-		{"1101000 00010 rs1 rm rd 1010011 FCVT.S.L", daNone, emu32_None, emu64_FCVT_S_L},   // R
-		{"1101000 00011 rs1 rm rd 1010011 FCVT.S.LU", daNone, emu32_None, emu64_FCVT_S_LU}, // R
+		{"1100000 00010 rs1 rm rd 1010011 FCVT.L.S", daNone, emu32_Illegal, emu64_FCVT_L_S},   // R
+		{"1100000 00011 rs1 rm rd 1010011 FCVT.LU.S", daNone, emu32_Illegal, emu64_FCVT_LU_S}, // R
+		{"1101000 00010 rs1 rm rd 1010011 FCVT.S.L", daNone, emu32_Illegal, emu64_FCVT_S_L},   // R
+		{"1101000 00011 rs1 rm rd 1010011 FCVT.S.LU", daNone, emu32_Illegal, emu64_FCVT_S_LU}, // R
 	},
 }
 
@@ -315,12 +315,12 @@ var ISArv64d = ISAModule{
 	name: "rv64d",
 	ilen: 32,
 	defn: []insDefn{
-		{"1100001 00010 rs1 rm rd 1010011 FCVT.L.D", daNone, emu32_None, emu64_FCVT_L_D},   // R
-		{"1100001 00011 rs1 rm rd 1010011 FCVT.LU.D", daNone, emu32_None, emu64_FCVT_LU_D}, // R
-		{"1110001 00000 rs1 000 rd 1010011 FMV.X.D", daNone, emu32_None, emu64_FMV_X_D},    // R
-		{"1101001 00010 rs1 rm rd 1010011 FCVT.D.L", daNone, emu32_None, emu64_FCVT_D_L},   // R
-		{"1101001 00011 rs1 rm rd 1010011 FCVT.D.LU", daNone, emu32_None, emu64_FCVT_D_LU}, // R
-		{"1111001 00000 rs1 000 rd 1010011 FMV.D.X", daNone, emu32_None, emu64_FMV_D_X},    // R
+		{"1100001 00010 rs1 rm rd 1010011 FCVT.L.D", daNone, emu32_Illegal, emu64_FCVT_L_D},   // R
+		{"1100001 00011 rs1 rm rd 1010011 FCVT.LU.D", daNone, emu32_Illegal, emu64_FCVT_LU_D}, // R
+		{"1110001 00000 rs1 000 rd 1010011 FMV.X.D", daNone, emu32_Illegal, emu64_FMV_X_D},    // R
+		{"1101001 00010 rs1 rm rd 1010011 FCVT.D.L", daNone, emu32_Illegal, emu64_FCVT_D_L},   // R
+		{"1101001 00011 rs1 rm rd 1010011 FCVT.D.LU", daNone, emu32_Illegal, emu64_FCVT_D_LU}, // R
+		{"1111001 00000 rs1 000 rd 1010011 FMV.D.X", daNone, emu32_Illegal, emu64_FMV_D_X},    // R
 	},
 }
 

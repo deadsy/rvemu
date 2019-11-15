@@ -11,6 +11,7 @@ package mem
 import (
 	"encoding/binary"
 	"math"
+	"strings"
 )
 
 //-----------------------------------------------------------------------------
@@ -26,6 +27,28 @@ const (
 	ExEmpty                       // no memory at this address
 	ExExec                        // can't read instructions from this memory
 )
+
+func (e Exception) String() string {
+	s := make([]string, 0)
+	if e&ExAlign != 0 {
+		s = append(s, "align")
+	}
+	if e&ExRead != 0 {
+		s = append(s, "read")
+	}
+	if e&ExWrite != 0 {
+		s = append(s, "write")
+	}
+	if e&ExEmpty != 0 {
+		s = append(s, "empty")
+	}
+	if e&ExExec != 0 {
+		s = append(s, "exec")
+	}
+	return strings.Join(s, ",")
+}
+
+//-----------------------------------------------------------------------------
 
 // Attribute is a bit mask of memory access attributes.
 type Attribute uint

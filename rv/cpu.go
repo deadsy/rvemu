@@ -222,32 +222,6 @@ func decodeCB(ins uint) (int, uint) {
 }
 
 //-----------------------------------------------------------------------------
-// control and status registers
-
-const csrFCSR = 0x003
-
-/*
-
-const csrSSTATUS = 0x100
-const csrSIE = 0x104
-const csrSTVEC = 0x105
-const csrSCOUNTEREN = 0x106
-const csrSSCRATCH = 0x140
-const csrSEPC = 0x141
-const csrSCAUSE = 0x142
-const csrSTVAL = 0x143
-const csrSIP = 0x144
-const csrSATP = 0x180
-const csrCYCLE = 0xc00
-const csrTIME = 0xc01
-const csrINSTRET = 0xc02
-const csrCYCLEH = 0xc80
-const csrTIMEH = 0xc81
-const csrINSTRETH = 0xc82
-
-*/
-
-//-----------------------------------------------------------------------------
 
 // emuFlags stores emulation event flags.
 type emuFlags uint
@@ -261,16 +235,35 @@ const (
 )
 
 //-----------------------------------------------------------------------------
+// memory exceptions
+
+type memoryException struct {
+	pc  uint          // PC when the exception occured
+	adr uint          // address that caused the exception
+	ex  mem.Exception // exception bitmap
+}
+
+func (e memoryException) String() string {
+	return fmt.Sprintf("at PC %08x (%s @ %08x)", e.pc, e.ex, e.adr)
+}
+
+//-----------------------------------------------------------------------------
+
+const u32Lower = uint64(0xffffffff)
+const u32Upper = uint64(u32Lower << 32)
+
+//-----------------------------------------------------------------------------
 // rv32
 
 // RV32 is a 32-bit RISC-V CPU.
 type RV32 struct {
-	Mem  *mem.Memory // memory of the target system
-	X    [32]uint32  // interger registers
-	F    [32]float32 // float registers
-	PC   uint32      // program counter
-	flag emuFlags    // event flags
-	isa  *ISA        // ISA implemented for the CPU
+	Mem  *mem.Memory     // memory of the target system
+	X    [32]uint32      // interger registers
+	F    [32]uint64      // float registers
+	PC   uint32          // program counter
+	flag emuFlags        // event flags
+	mx   memoryException // memory exceptions
+	isa  *ISA            // ISA implemented for the CPU
 }
 
 // NewRV32 returns a 32-bit RISC-V CPU.
@@ -305,11 +298,12 @@ func (m *RV32) wrX(i uint, val uint32) {
 	}
 }
 
-func (m *RV32) rdCSR(csr uint) uint32 {
-	return 0
-}
-
-func (m *RV32) wrCSR(csr uint, val uint32) {
+func (m *RV32) checkMemory(adr uint, ex mem.Exception) {
+	if ex == 0 {
+		return
+	}
+	m.flag |= flagMemory
+	m.mx = memoryException{uint(m.PC), adr, ex}
 }
 
 //-----------------------------------------------------------------------------
@@ -317,12 +311,33 @@ func (m *RV32) wrCSR(csr uint, val uint32) {
 
 // RV64 is a 64-bit RISC-V CPU.
 type RV64 struct {
-	Mem  *mem.Memory // memory of the target system
-	X    [32]uint64  // registers
-	F    [32]float64 // float registers
-	PC   uint64      // program counter
-	flag emuFlags    // event flags
-	isa  *ISA        // ISA implemented for the CPU
+	Mem  *mem.Memory     // memory of the target system
+	X    [32]uint64      // registers
+	F    [32]uint64      // float registers
+	PC   uint64          // program counter
+	flag emuFlags        // event flags
+	mx   memoryException // memory exceptions
+	isa  *ISA            // ISA implemented for the CPU
+}
+
+// Exit sets a status code and exits the emulation
+func (m *RV64) Exit(status uint64) {
+	m.X[1] = status
+	m.flag |= flagExit
+}
+
+func (m *RV64) wrX(i uint, val uint64) {
+	if i != 0 {
+		m.X[i] = val
+	}
+}
+
+func (m *RV64) checkMemory(adr uint, ex mem.Exception) {
+	if ex == 0 {
+		return
+	}
+	m.flag |= flagMemory
+	m.mx = memoryException{uint(m.PC), adr, ex}
 }
 
 //-----------------------------------------------------------------------------

@@ -1,0 +1,517 @@
+//-----------------------------------------------------------------------------
+/*
+
+RISC-V Control and Status Register Definitions
+
+*/
+//-----------------------------------------------------------------------------
+
+package rv
+
+//-----------------------------------------------------------------------------
+
+const csrUSTATUS = 0x0
+const csrUIE = 0x4
+const csrUTVEC = 0x5
+const csrUSCRATCH = 0x40
+const csrUEPC = 0x41
+const csrUCAUSE = 0x42
+const csrUTVAL = 0x43
+const csrUIP = 0x44
+const csrFFLAGS = 0x1
+const csrFRM = 0x2
+const csrFCSR = 0x3
+const csrCYCLE = 0xc00
+const csrTIME = 0xc01
+const csrINSTRET = 0xc02
+const csrHPMCOUNTER3 = 0xc03
+const csrHPMCOUNTER4 = 0xc04
+const csrHPMCOUNTER5 = 0xc05
+const csrHPMCOUNTER6 = 0xc06
+const csrHPMCOUNTER7 = 0xc07
+const csrHPMCOUNTER8 = 0xc08
+const csrHPMCOUNTER9 = 0xc09
+const csrHPMCOUNTER10 = 0xc0a
+const csrHPMCOUNTER11 = 0xc0b
+const csrHPMCOUNTER12 = 0xc0c
+const csrHPMCOUNTER13 = 0xc0d
+const csrHPMCOUNTER14 = 0xc0e
+const csrHPMCOUNTER15 = 0xc0f
+const csrHPMCOUNTER16 = 0xc10
+const csrHPMCOUNTER17 = 0xc11
+const csrHPMCOUNTER18 = 0xc12
+const csrHPMCOUNTER19 = 0xc13
+const csrHPMCOUNTER20 = 0xc14
+const csrHPMCOUNTER21 = 0xc15
+const csrHPMCOUNTER22 = 0xc16
+const csrHPMCOUNTER23 = 0xc17
+const csrHPMCOUNTER24 = 0xc18
+const csrHPMCOUNTER25 = 0xc19
+const csrHPMCOUNTER26 = 0xc1a
+const csrHPMCOUNTER27 = 0xc1b
+const csrHPMCOUNTER28 = 0xc1c
+const csrHPMCOUNTER29 = 0xc1d
+const csrHPMCOUNTER30 = 0xc1e
+const csrHPMCOUNTER31 = 0xc1f
+const csrCYCLEH = 0xc80
+const csrTIMEH = 0xc81
+const csrINSTRETH = 0xc82
+const csrHPMCOUNTER3H = 0xc83
+const csrHPMCOUNTER4H = 0xc84
+const csrHPMCOUNTER5H = 0xc85
+const csrHPMCOUNTER6H = 0xc86
+const csrHPMCOUNTER7H = 0xc87
+const csrHPMCOUNTER8H = 0xc88
+const csrHPMCOUNTER9H = 0xc89
+const csrHPMCOUNTER10H = 0xc8a
+const csrHPMCOUNTER11H = 0xc8b
+const csrHPMCOUNTER12H = 0xc8c
+const csrHPMCOUNTER13H = 0xc8d
+const csrHPMCOUNTER14H = 0xc8e
+const csrHPMCOUNTER15H = 0xc8f
+const csrHPMCOUNTER16H = 0xc90
+const csrHPMCOUNTER17H = 0xc91
+const csrHPMCOUNTER18H = 0xc92
+const csrHPMCOUNTER19H = 0xc93
+const csrHPMCOUNTER20H = 0xc94
+const csrHPMCOUNTER21H = 0xc95
+const csrHPMCOUNTER22H = 0xc96
+const csrHPMCOUNTER23H = 0xc97
+const csrHPMCOUNTER24H = 0xc98
+const csrHPMCOUNTER25H = 0xc99
+const csrHPMCOUNTER26H = 0xc9a
+const csrHPMCOUNTER27H = 0xc9b
+const csrHPMCOUNTER28H = 0xc9c
+const csrHPMCOUNTER29H = 0xc9d
+const csrHPMCOUNTER30H = 0xc9e
+const csrHPMCOUNTER31H = 0xc9f
+const csrSSTATUS = 0x100
+const csrSEDELEG = 0x102
+const csrSIDELEG = 0x103
+const csrSIE = 0x104
+const csrSTVEC = 0x105
+const csrSCOUNTEREN = 0x106
+const csrSSCRATCH = 0x140
+const csrSEPC = 0x141
+const csrSCAUSE = 0x142
+const csrSTVAL = 0x143
+const csrSIP = 0x144
+const csrSATP = 0x180
+const csrMVENDORID = 0xf11
+const csrMARCHID = 0xf12
+const csrMIMPID = 0xf13
+const csrMHARTID = 0xf14
+const csrMSTATUS = 0x300
+const csrMISA = 0x301 // 0xf10 in 1.9, 0x301 in 1.9.1.
+const csrMEDELEG = 0x302
+const csrMIDELEG = 0x303
+const csrMIE = 0x304
+const csrMTVEC = 0x305
+const csrMCOUNTEREN = 0x306
+const csrMSCRATCH = 0x340
+const csrMEPC = 0x341
+const csrMCAUSE = 0x342
+const csrMTVAL = 0x343
+const csrMIP = 0x344
+const csrPMPCFG0 = 0x3a0
+const csrPMPCFG1 = 0x3a1
+const csrPMPCFG2 = 0x3a2
+const csrPMPCFG3 = 0x3a3
+const csrPMPADDR0 = 0x3b0
+const csrPMPADDR1 = 0x3b1
+const csrPMPADDR2 = 0x3b2
+const csrPMPADDR3 = 0x3b3
+const csrPMPADDR4 = 0x3b4
+const csrPMPADDR5 = 0x3b5
+const csrPMPADDR6 = 0x3b6
+const csrPMPADDR7 = 0x3b7
+const csrPMPADDR8 = 0x3b8
+const csrPMPADDR9 = 0x3b9
+const csrPMPADDR10 = 0x3ba
+const csrPMPADDR11 = 0x3bb
+const csrPMPADDR12 = 0x3bc
+const csrPMPADDR13 = 0x3bd
+const csrPMPADDR14 = 0x3be
+const csrPMPADDR15 = 0x3bf
+const csrMCYCLE = 0xb00
+const csrMINSTRET = 0xb02
+const csrMHPMCOUNTER3 = 0xb03
+const csrMHPMCOUNTER4 = 0xb04
+const csrMHPMCOUNTER5 = 0xb05
+const csrMHPMCOUNTER6 = 0xb06
+const csrMHPMCOUNTER7 = 0xb07
+const csrMHPMCOUNTER8 = 0xb08
+const csrMHPMCOUNTER9 = 0xb09
+const csrMHPMCOUNTER10 = 0xb0a
+const csrMHPMCOUNTER11 = 0xb0b
+const csrMHPMCOUNTER12 = 0xb0c
+const csrMHPMCOUNTER13 = 0xb0d
+const csrMHPMCOUNTER14 = 0xb0e
+const csrMHPMCOUNTER15 = 0xb0f
+const csrMHPMCOUNTER16 = 0xb10
+const csrMHPMCOUNTER17 = 0xb11
+const csrMHPMCOUNTER18 = 0xb12
+const csrMHPMCOUNTER19 = 0xb13
+const csrMHPMCOUNTER20 = 0xb14
+const csrMHPMCOUNTER21 = 0xb15
+const csrMHPMCOUNTER22 = 0xb16
+const csrMHPMCOUNTER23 = 0xb17
+const csrMHPMCOUNTER24 = 0xb18
+const csrMHPMCOUNTER25 = 0xb19
+const csrMHPMCOUNTER26 = 0xb1a
+const csrMHPMCOUNTER27 = 0xb1b
+const csrMHPMCOUNTER28 = 0xb1c
+const csrMHPMCOUNTER29 = 0xb1d
+const csrMHPMCOUNTER30 = 0xb1e
+const csrMHPMCOUNTER31 = 0xb1f
+const csrMCYCLEH = 0xb80
+const csrMINSTRETH = 0xb82
+const csrMHPMCOUNTER3H = 0xb83
+const csrMHPMCOUNTER4H = 0xb84
+const csrMHPMCOUNTER5H = 0xb85
+const csrMHPMCOUNTER6H = 0xb86
+const csrMHPMCOUNTER7H = 0xb87
+const csrMHPMCOUNTER8H = 0xb88
+const csrMHPMCOUNTER9H = 0xb89
+const csrMHPMCOUNTER10H = 0xb8a
+const csrMHPMCOUNTER11H = 0xb8b
+const csrMHPMCOUNTER12H = 0xb8c
+const csrMHPMCOUNTER13H = 0xb8d
+const csrMHPMCOUNTER14H = 0xb8e
+const csrMHPMCOUNTER15H = 0xb8f
+const csrMHPMCOUNTER16H = 0xb90
+const csrMHPMCOUNTER17H = 0xb91
+const csrMHPMCOUNTER18H = 0xb92
+const csrMHPMCOUNTER19H = 0xb93
+const csrMHPMCOUNTER20H = 0xb94
+const csrMHPMCOUNTER21H = 0xb95
+const csrMHPMCOUNTER22H = 0xb96
+const csrMHPMCOUNTER23H = 0xb97
+const csrMHPMCOUNTER24H = 0xb98
+const csrMHPMCOUNTER25H = 0xb99
+const csrMHPMCOUNTER26H = 0xb9a
+const csrMHPMCOUNTER27H = 0xb9b
+const csrMHPMCOUNTER28H = 0xb9c
+const csrMHPMCOUNTER29H = 0xb9d
+const csrMHPMCOUNTER30H = 0xb9e
+const csrMHPMCOUNTER31H = 0xb9f
+const csrMHPMEVENT3 = 0x323
+const csrMHPMEVENT4 = 0x324
+const csrMHPMEVENT5 = 0x325
+const csrMHPMEVENT6 = 0x326
+const csrMHPMEVENT7 = 0x327
+const csrMHPMEVENT8 = 0x328
+const csrMHPMEVENT9 = 0x329
+const csrMHPMEVENT10 = 0x32a
+const csrMHPMEVENT11 = 0x32b
+const csrMHPMEVENT12 = 0x32c
+const csrMHPMEVENT13 = 0x32d
+const csrMHPMEVENT14 = 0x32e
+const csrMHPMEVENT15 = 0x32f
+const csrMHPMEVENT16 = 0x330
+const csrMHPMEVENT17 = 0x331
+const csrMHPMEVENT18 = 0x332
+const csrMHPMEVENT19 = 0x333
+const csrMHPMEVENT20 = 0x334
+const csrMHPMEVENT21 = 0x335
+const csrMHPMEVENT22 = 0x336
+const csrMHPMEVENT23 = 0x337
+const csrMHPMEVENT24 = 0x338
+const csrMHPMEVENT25 = 0x339
+const csrMHPMEVENT26 = 0x33a
+const csrMHPMEVENT27 = 0x33b
+const csrMHPMEVENT28 = 0x33c
+const csrMHPMEVENT29 = 0x33d
+const csrMHPMEVENT30 = 0x33e
+const csrMHPMEVENT31 = 0x33f
+const csrTSELECT = 0x7a0
+const csrTDATA1 = 0x7a1
+const csrTDATA2 = 0x7a2
+const csrTDATA3 = 0x7a3
+const csrDCSR = 0x7b0
+const csrDPC = 0x7b1
+const csrDSCRATCH = 0x7b2
+
+// These registers are present in priv spec 1.9.1, dropped in 1.10.
+const csrHSTATUS = 0x200
+const csrHEDELEG = 0x202
+const csrHIDELEG = 0x203
+const csrHIE = 0x204
+const csrHTVEC = 0x205
+const csrHSCRATCH = 0x240
+const csrHEPC = 0x241
+const csrHCAUSE = 0x242
+const csrHBADADDR = 0x243
+const csrHIP = 0x244
+const csrMBASE = 0x380
+const csrMBOUND = 0x381
+const csrMIBASE = 0x382
+const csrMIBOUND = 0x383
+const csrMDBASE = 0x384
+const csrMDBOUND = 0x385
+const csrMUCOUNTEREN = 0x320
+const csrMSCOUNTEREN = 0x321
+const csrMHCOUNTEREN = 0x322
+
+//-----------------------------------------------------------------------------
+
+var csrName = map[uint]string{
+	csrUSTATUS:        "USTATUS",
+	csrUIE:            "UIE",
+	csrUTVEC:          "UTVEC",
+	csrUSCRATCH:       "USCRATCH",
+	csrUEPC:           "UEPC",
+	csrUCAUSE:         "UCAUSE",
+	csrUTVAL:          "UTVAL",
+	csrUIP:            "UIP",
+	csrFFLAGS:         "FFLAGS",
+	csrFRM:            "FRM",
+	csrFCSR:           "FCSR",
+	csrCYCLE:          "CYCLE",
+	csrTIME:           "TIME",
+	csrINSTRET:        "INSTRET",
+	csrHPMCOUNTER3:    "HPMCOUNTER3",
+	csrHPMCOUNTER4:    "HPMCOUNTER4",
+	csrHPMCOUNTER5:    "HPMCOUNTER5",
+	csrHPMCOUNTER6:    "HPMCOUNTER6",
+	csrHPMCOUNTER7:    "HPMCOUNTER7",
+	csrHPMCOUNTER8:    "HPMCOUNTER8",
+	csrHPMCOUNTER9:    "HPMCOUNTER9",
+	csrHPMCOUNTER10:   "HPMCOUNTER10",
+	csrHPMCOUNTER11:   "HPMCOUNTER11",
+	csrHPMCOUNTER12:   "HPMCOUNTER12",
+	csrHPMCOUNTER13:   "HPMCOUNTER13",
+	csrHPMCOUNTER14:   "HPMCOUNTER14",
+	csrHPMCOUNTER15:   "HPMCOUNTER15",
+	csrHPMCOUNTER16:   "HPMCOUNTER16",
+	csrHPMCOUNTER17:   "HPMCOUNTER17",
+	csrHPMCOUNTER18:   "HPMCOUNTER18",
+	csrHPMCOUNTER19:   "HPMCOUNTER19",
+	csrHPMCOUNTER20:   "HPMCOUNTER20",
+	csrHPMCOUNTER21:   "HPMCOUNTER21",
+	csrHPMCOUNTER22:   "HPMCOUNTER22",
+	csrHPMCOUNTER23:   "HPMCOUNTER23",
+	csrHPMCOUNTER24:   "HPMCOUNTER24",
+	csrHPMCOUNTER25:   "HPMCOUNTER25",
+	csrHPMCOUNTER26:   "HPMCOUNTER26",
+	csrHPMCOUNTER27:   "HPMCOUNTER27",
+	csrHPMCOUNTER28:   "HPMCOUNTER28",
+	csrHPMCOUNTER29:   "HPMCOUNTER29",
+	csrHPMCOUNTER30:   "HPMCOUNTER30",
+	csrHPMCOUNTER31:   "HPMCOUNTER31",
+	csrCYCLEH:         "CYCLEH",
+	csrTIMEH:          "TIMEH",
+	csrINSTRETH:       "INSTRETH",
+	csrHPMCOUNTER3H:   "HPMCOUNTER3H",
+	csrHPMCOUNTER4H:   "HPMCOUNTER4H",
+	csrHPMCOUNTER5H:   "HPMCOUNTER5H",
+	csrHPMCOUNTER6H:   "HPMCOUNTER6H",
+	csrHPMCOUNTER7H:   "HPMCOUNTER7H",
+	csrHPMCOUNTER8H:   "HPMCOUNTER8H",
+	csrHPMCOUNTER9H:   "HPMCOUNTER9H",
+	csrHPMCOUNTER10H:  "HPMCOUNTER10H",
+	csrHPMCOUNTER11H:  "HPMCOUNTER11H",
+	csrHPMCOUNTER12H:  "HPMCOUNTER12H",
+	csrHPMCOUNTER13H:  "HPMCOUNTER13H",
+	csrHPMCOUNTER14H:  "HPMCOUNTER14H",
+	csrHPMCOUNTER15H:  "HPMCOUNTER15H",
+	csrHPMCOUNTER16H:  "HPMCOUNTER16H",
+	csrHPMCOUNTER17H:  "HPMCOUNTER17H",
+	csrHPMCOUNTER18H:  "HPMCOUNTER18H",
+	csrHPMCOUNTER19H:  "HPMCOUNTER19H",
+	csrHPMCOUNTER20H:  "HPMCOUNTER20H",
+	csrHPMCOUNTER21H:  "HPMCOUNTER21H",
+	csrHPMCOUNTER22H:  "HPMCOUNTER22H",
+	csrHPMCOUNTER23H:  "HPMCOUNTER23H",
+	csrHPMCOUNTER24H:  "HPMCOUNTER24H",
+	csrHPMCOUNTER25H:  "HPMCOUNTER25H",
+	csrHPMCOUNTER26H:  "HPMCOUNTER26H",
+	csrHPMCOUNTER27H:  "HPMCOUNTER27H",
+	csrHPMCOUNTER28H:  "HPMCOUNTER28H",
+	csrHPMCOUNTER29H:  "HPMCOUNTER29H",
+	csrHPMCOUNTER30H:  "HPMCOUNTER30H",
+	csrHPMCOUNTER31H:  "HPMCOUNTER31H",
+	csrSSTATUS:        "SSTATUS",
+	csrSEDELEG:        "SEDELEG",
+	csrSIDELEG:        "SIDELEG",
+	csrSIE:            "SIE",
+	csrSTVEC:          "STVEC",
+	csrSCOUNTEREN:     "SCOUNTEREN",
+	csrSSCRATCH:       "SSCRATCH",
+	csrSEPC:           "SEPC",
+	csrSCAUSE:         "SCAUSE",
+	csrSTVAL:          "STVAL",
+	csrSIP:            "SIP",
+	csrSATP:           "SATP",
+	csrMVENDORID:      "MVENDORID",
+	csrMARCHID:        "MARCHID",
+	csrMIMPID:         "MIMPID",
+	csrMHARTID:        "MHARTID",
+	csrMSTATUS:        "MSTATUS",
+	csrMISA:           "MISA",
+	csrMEDELEG:        "MEDELEG",
+	csrMIDELEG:        "MIDELEG",
+	csrMIE:            "MIE",
+	csrMTVEC:          "MTVEC",
+	csrMCOUNTEREN:     "MCOUNTEREN",
+	csrMSCRATCH:       "MSCRATCH",
+	csrMEPC:           "MEPC",
+	csrMCAUSE:         "MCAUSE",
+	csrMTVAL:          "MTVAL",
+	csrMIP:            "MIP",
+	csrPMPCFG0:        "PMPCFG0",
+	csrPMPCFG1:        "PMPCFG1",
+	csrPMPCFG2:        "PMPCFG2",
+	csrPMPCFG3:        "PMPCFG3",
+	csrPMPADDR0:       "PMPADDR0",
+	csrPMPADDR1:       "PMPADDR1",
+	csrPMPADDR2:       "PMPADDR2",
+	csrPMPADDR3:       "PMPADDR3",
+	csrPMPADDR4:       "PMPADDR4",
+	csrPMPADDR5:       "PMPADDR5",
+	csrPMPADDR6:       "PMPADDR6",
+	csrPMPADDR7:       "PMPADDR7",
+	csrPMPADDR8:       "PMPADDR8",
+	csrPMPADDR9:       "PMPADDR9",
+	csrPMPADDR10:      "PMPADDR10",
+	csrPMPADDR11:      "PMPADDR11",
+	csrPMPADDR12:      "PMPADDR12",
+	csrPMPADDR13:      "PMPADDR13",
+	csrPMPADDR14:      "PMPADDR14",
+	csrPMPADDR15:      "PMPADDR15",
+	csrMCYCLE:         "MCYCLE",
+	csrMINSTRET:       "MINSTRET",
+	csrMHPMCOUNTER3:   "MHPMCOUNTER3",
+	csrMHPMCOUNTER4:   "MHPMCOUNTER4",
+	csrMHPMCOUNTER5:   "MHPMCOUNTER5",
+	csrMHPMCOUNTER6:   "MHPMCOUNTER6",
+	csrMHPMCOUNTER7:   "MHPMCOUNTER7",
+	csrMHPMCOUNTER8:   "MHPMCOUNTER8",
+	csrMHPMCOUNTER9:   "MHPMCOUNTER9",
+	csrMHPMCOUNTER10:  "MHPMCOUNTER10",
+	csrMHPMCOUNTER11:  "MHPMCOUNTER11",
+	csrMHPMCOUNTER12:  "MHPMCOUNTER12",
+	csrMHPMCOUNTER13:  "MHPMCOUNTER13",
+	csrMHPMCOUNTER14:  "MHPMCOUNTER14",
+	csrMHPMCOUNTER15:  "MHPMCOUNTER15",
+	csrMHPMCOUNTER16:  "MHPMCOUNTER16",
+	csrMHPMCOUNTER17:  "MHPMCOUNTER17",
+	csrMHPMCOUNTER18:  "MHPMCOUNTER18",
+	csrMHPMCOUNTER19:  "MHPMCOUNTER19",
+	csrMHPMCOUNTER20:  "MHPMCOUNTER20",
+	csrMHPMCOUNTER21:  "MHPMCOUNTER21",
+	csrMHPMCOUNTER22:  "MHPMCOUNTER22",
+	csrMHPMCOUNTER23:  "MHPMCOUNTER23",
+	csrMHPMCOUNTER24:  "MHPMCOUNTER24",
+	csrMHPMCOUNTER25:  "MHPMCOUNTER25",
+	csrMHPMCOUNTER26:  "MHPMCOUNTER26",
+	csrMHPMCOUNTER27:  "MHPMCOUNTER27",
+	csrMHPMCOUNTER28:  "MHPMCOUNTER28",
+	csrMHPMCOUNTER29:  "MHPMCOUNTER29",
+	csrMHPMCOUNTER30:  "MHPMCOUNTER30",
+	csrMHPMCOUNTER31:  "MHPMCOUNTER31",
+	csrMCYCLEH:        "MCYCLEH",
+	csrMINSTRETH:      "MINSTRETH",
+	csrMHPMCOUNTER3H:  "MHPMCOUNTER3H",
+	csrMHPMCOUNTER4H:  "MHPMCOUNTER4H",
+	csrMHPMCOUNTER5H:  "MHPMCOUNTER5H",
+	csrMHPMCOUNTER6H:  "MHPMCOUNTER6H",
+	csrMHPMCOUNTER7H:  "MHPMCOUNTER7H",
+	csrMHPMCOUNTER8H:  "MHPMCOUNTER8H",
+	csrMHPMCOUNTER9H:  "MHPMCOUNTER9H",
+	csrMHPMCOUNTER10H: "MHPMCOUNTER10H",
+	csrMHPMCOUNTER11H: "MHPMCOUNTER11H",
+	csrMHPMCOUNTER12H: "MHPMCOUNTER12H",
+	csrMHPMCOUNTER13H: "MHPMCOUNTER13H",
+	csrMHPMCOUNTER14H: "MHPMCOUNTER14H",
+	csrMHPMCOUNTER15H: "MHPMCOUNTER15H",
+	csrMHPMCOUNTER16H: "MHPMCOUNTER16H",
+	csrMHPMCOUNTER17H: "MHPMCOUNTER17H",
+	csrMHPMCOUNTER18H: "MHPMCOUNTER18H",
+	csrMHPMCOUNTER19H: "MHPMCOUNTER19H",
+	csrMHPMCOUNTER20H: "MHPMCOUNTER20H",
+	csrMHPMCOUNTER21H: "MHPMCOUNTER21H",
+	csrMHPMCOUNTER22H: "MHPMCOUNTER22H",
+	csrMHPMCOUNTER23H: "MHPMCOUNTER23H",
+	csrMHPMCOUNTER24H: "MHPMCOUNTER24H",
+	csrMHPMCOUNTER25H: "MHPMCOUNTER25H",
+	csrMHPMCOUNTER26H: "MHPMCOUNTER26H",
+	csrMHPMCOUNTER27H: "MHPMCOUNTER27H",
+	csrMHPMCOUNTER28H: "MHPMCOUNTER28H",
+	csrMHPMCOUNTER29H: "MHPMCOUNTER29H",
+	csrMHPMCOUNTER30H: "MHPMCOUNTER30H",
+	csrMHPMCOUNTER31H: "MHPMCOUNTER31H",
+	csrMHPMEVENT3:     "MHPMEVENT3",
+	csrMHPMEVENT4:     "MHPMEVENT4",
+	csrMHPMEVENT5:     "MHPMEVENT5",
+	csrMHPMEVENT6:     "MHPMEVENT6",
+	csrMHPMEVENT7:     "MHPMEVENT7",
+	csrMHPMEVENT8:     "MHPMEVENT8",
+	csrMHPMEVENT9:     "MHPMEVENT9",
+	csrMHPMEVENT10:    "MHPMEVENT10",
+	csrMHPMEVENT11:    "MHPMEVENT11",
+	csrMHPMEVENT12:    "MHPMEVENT12",
+	csrMHPMEVENT13:    "MHPMEVENT13",
+	csrMHPMEVENT14:    "MHPMEVENT14",
+	csrMHPMEVENT15:    "MHPMEVENT15",
+	csrMHPMEVENT16:    "MHPMEVENT16",
+	csrMHPMEVENT17:    "MHPMEVENT17",
+	csrMHPMEVENT18:    "MHPMEVENT18",
+	csrMHPMEVENT19:    "MHPMEVENT19",
+	csrMHPMEVENT20:    "MHPMEVENT20",
+	csrMHPMEVENT21:    "MHPMEVENT21",
+	csrMHPMEVENT22:    "MHPMEVENT22",
+	csrMHPMEVENT23:    "MHPMEVENT23",
+	csrMHPMEVENT24:    "MHPMEVENT24",
+	csrMHPMEVENT25:    "MHPMEVENT25",
+	csrMHPMEVENT26:    "MHPMEVENT26",
+	csrMHPMEVENT27:    "MHPMEVENT27",
+	csrMHPMEVENT28:    "MHPMEVENT28",
+	csrMHPMEVENT29:    "MHPMEVENT29",
+	csrMHPMEVENT30:    "MHPMEVENT30",
+	csrMHPMEVENT31:    "MHPMEVENT31",
+	csrTSELECT:        "TSELECT",
+	csrTDATA1:         "TDATA1",
+	csrTDATA2:         "TDATA2",
+	csrTDATA3:         "TDATA3",
+	csrDCSR:           "DCSR",
+	csrDPC:            "DPC",
+	csrDSCRATCH:       "DSCRATCH",
+	csrHSTATUS:        "HSTATUS",
+	csrHEDELEG:        "HEDELEG",
+	csrHIDELEG:        "HIDELEG",
+	csrHIE:            "HIE",
+	csrHTVEC:          "HTVEC",
+	csrHSCRATCH:       "HSCRATCH",
+	csrHEPC:           "HEPC",
+	csrHCAUSE:         "HCAUSE",
+	csrHBADADDR:       "HBADADDR",
+	csrHIP:            "HIP",
+	csrMBASE:          "MBASE",
+	csrMBOUND:         "MBOUND",
+	csrMIBASE:         "MIBASE",
+	csrMIBOUND:        "MIBOUND",
+	csrMDBASE:         "MDBASE",
+	csrMDBOUND:        "MDBOUND",
+	csrMUCOUNTEREN:    "MUCOUNTEREN",
+	csrMSCOUNTEREN:    "MSCOUNTEREN",
+	csrMHCOUNTEREN:    "MHCOUNTEREN",
+}
+
+//-----------------------------------------------------------------------------
+
+func (m *RV64) rdCSR(csr uint) uint64 {
+	return 0
+}
+
+func (m *RV64) wrCSR(csr uint, val uint64) {
+}
+
+func (m *RV32) rdCSR(csr uint) uint32 {
+	return 0
+}
+
+func (m *RV32) wrCSR(csr uint, val uint32) {
+}
+
+//-----------------------------------------------------------------------------

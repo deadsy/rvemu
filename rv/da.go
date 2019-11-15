@@ -28,6 +28,13 @@ var abiFName = [32]string{
 	"fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11",
 }
 
+const regZero = 0 // zero
+const regRa = 1   // return address
+const regSp = 2   // stack pointer
+const regGp = 3   // global pointer
+const regTp = 3   // thread pointer
+const regFp = 8   // frame pointer
+
 //-----------------------------------------------------------------------------
 // default decode
 

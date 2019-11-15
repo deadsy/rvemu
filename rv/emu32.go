@@ -10,14 +10,14 @@ package rv
 
 import (
 	"fmt"
-	"math"
 )
 
 //-----------------------------------------------------------------------------
 // default emulation
 
-func emu32_None(m *RV32, ins uint) {
-	m.flag |= flagTodo
+func emu32_Illegal(m *RV32, ins uint) {
+	// Trying to run an rv64 instruction on an rv32.
+	m.flag |= flagIllegal
 }
 
 //-----------------------------------------------------------------------------
@@ -94,6 +94,9 @@ func emu32_SH(m *RV32, ins uint) {
 }
 
 func emu32_SW(m *RV32, ins uint) {
+	//imm, rs2, rs1 := decodeS(ins)
+	//ea := uint(int(m.X[rs1]) + imm)
+	//m.X[rs2], ex = m.mem.Rd32(ea)
 	m.flag |= flagTodo
 }
 
@@ -404,7 +407,7 @@ func emu32_FCVT_S_WU(m *RV32, ins uint) {
 
 func emu32_FMV_W_X(m *RV32, ins uint) {
 	_, rs1, rd := decodeR(ins)
-	m.F[rd] = math.Float32frombits(m.X[rs1])
+	m.F[rd] = u32Upper | uint64(m.X[rs1])
 	m.PC += 4
 }
 
@@ -569,7 +572,9 @@ func emu32_C_LI(m *RV32, ins uint) {
 }
 
 func emu32_C_ADDI16SP(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm := decodeCIb(ins)
+	m.X[regSp] = uint32(int(m.X[regSp]) + imm)
+	m.PC += 2
 }
 
 func emu32_C_LUI(m *RV32, ins uint) {
@@ -661,7 +666,11 @@ func emu32_C_FSDSP(m *RV32, ins uint) {
 }
 
 func emu32_C_SWSP(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	uimm, rs2 := decodeCSSb(ins)
+	adr := uint(m.X[regSp]) + uimm
+	ex := m.Mem.Wr32(adr, m.X[rs2])
+	m.checkMemory(adr, ex)
+	m.PC += 2
 }
 
 func emu32_C_FSWSP(m *RV32, ins uint) {
@@ -677,20 +686,29 @@ func (m *RV32) Reset() {
 // Run the RV32 CPU for a single instruction.
 func (m *RV32) Run() error {
 
-	// normal instructions
-	ins, _ := m.Mem.RdIns(uint(m.PC))
+	// read the next instruction
+	ins, ex := m.Mem.RdIns(uint(m.PC))
+	if ex != 0 {
+		return fmt.Errorf("memory exception %s", m.mx)
+	}
+
+	// lookup and emulate the instruction
 	im := m.isa.lookup(ins)
 	im.defn.emu32(m, ins)
 
+	// check exception flags
 	if m.flag != 0 {
 		if m.flag&flagIllegal != 0 {
-			return fmt.Errorf("illegal instruction at %08x", m.PC)
+			return fmt.Errorf("illegal instruction at PC %08x", m.PC)
+		}
+		if m.flag&flagMemory != 0 {
+			return fmt.Errorf("memory exception %s", m.mx)
 		}
 		if m.flag&flagExit != 0 {
-			return fmt.Errorf("exit at %08x, status %08x", m.PC, m.X[1])
+			return fmt.Errorf("exit at PC %08x, status %08x", m.PC, m.X[1])
 		}
 		if m.flag&flagTodo != 0 {
-			return fmt.Errorf("unimplemented instruction at %08x", m.PC)
+			return fmt.Errorf("unimplemented instruction at PC %08x", m.PC)
 		}
 	}
 
