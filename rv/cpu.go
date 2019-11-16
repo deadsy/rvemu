@@ -78,6 +78,13 @@ func decodeIb(ins uint) (uint, uint, uint) {
 	return csr, rs1, rd
 }
 
+func decodeIc(ins uint) (uint, uint, uint) {
+	shamt := bitUnsigned(ins, 25, 20, 0)
+	rs1 := bitUnsigned(ins, 19, 15, 0)
+	rd := bitUnsigned(ins, 11, 7, 0)
+	return shamt, rs1, rd
+}
+
 func decodeS(ins uint) (int, uint, uint) {
 	uimm := bitUnsigned(ins, 31, 25, 5) // imm[11:5]
 	uimm += bitUnsigned(ins, 11, 7, 0)  // imm[4:0]
@@ -141,8 +148,8 @@ func decodeCIc(ins uint) (uint, uint) {
 }
 
 func decodeCId(ins uint) (uint, uint) {
-	uimm := bitUnsigned(ins, 12, 12, 5) // imm[5]
-	uimm += bitUnsigned(ins, 6, 2, 0)   // imm[4:0]
+	uimm := bitUnsigned(ins, 12, 12, 5) // uimm[5]
+	uimm += bitUnsigned(ins, 6, 2, 0)   // uimm[4:0]
 	rd := bitUnsigned(ins, 11, 7, 0)
 	return uimm, rd
 }
@@ -258,13 +265,15 @@ const u32Upper = uint64(u32Lower << 32)
 
 // RV32 is a 32-bit RISC-V CPU.
 type RV32 struct {
-	Mem  *mem.Memory     // memory of the target system
-	X    [32]uint32      // interger registers
-	F    [32]uint64      // float registers
-	PC   uint32          // program counter
-	flag emuFlags        // event flags
-	mx   memoryException // memory exceptions
-	isa  *ISA            // ISA implemented for the CPU
+	Mem      *mem.Memory     // memory of the target system
+	X        [32]uint32      // interger registers
+	F        [32]uint64      // float registers
+	PC       uint32          // program counter
+	insCount uint            // number of instructions run
+	lastPC   uint32          // stuck PC detection
+	flag     emuFlags        // event flags
+	mx       memoryException // memory exceptions
+	isa      *ISA            // ISA implemented for the CPU
 }
 
 // NewRV32 returns a 32-bit RISC-V CPU.
@@ -312,13 +321,15 @@ func (m *RV32) checkMemory(adr uint, ex mem.Exception) {
 
 // RV64 is a 64-bit RISC-V CPU.
 type RV64 struct {
-	Mem  *mem.Memory     // memory of the target system
-	X    [32]uint64      // registers
-	F    [32]uint64      // float registers
-	PC   uint64          // program counter
-	flag emuFlags        // event flags
-	mx   memoryException // memory exceptions
-	isa  *ISA            // ISA implemented for the CPU
+	Mem      *mem.Memory     // memory of the target system
+	X        [32]uint64      // registers
+	F        [32]uint64      // float registers
+	PC       uint64          // program counter
+	insCount uint            // number of instructions run
+	lastPC   uint64          // stuck PC detection
+	flag     emuFlags        // event flags
+	mx       memoryException // memory exceptions
+	isa      *ISA            // ISA implemented for the CPU
 }
 
 // Exit sets a status code and exits the emulation

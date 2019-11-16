@@ -67,8 +67,8 @@ func daTypeIc(name string, pc uint32, ins uint) string {
 }
 
 func daTypeId(name string, pc uint32, ins uint) string {
-	imm, rs1, rd := decodeIa(ins)
-	return fmt.Sprintf("%s %s,%s,0x%x", name, abiXName[rd], abiXName[rs1], imm)
+	shamt, rs1, rd := decodeIc(ins)
+	return fmt.Sprintf("%s %s,%s,0x%x", name, abiXName[rd], abiXName[rs1], shamt)
 }
 
 func daTypeIe(name string, pc uint32, ins uint) string {
@@ -206,6 +206,10 @@ func daTypeJa(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type CI Decodes
 
+func daNop(name string, pc uint32, ins uint) string {
+	return "nop"
+}
+
 func daTypeCIa(name string, pc uint32, ins uint) string {
 	imm, rd := decodeCIa(ins)
 	return fmt.Sprintf("%s %s,%d", name, abiXName[rd], imm)
@@ -222,8 +226,8 @@ func daTypeCIc(name string, pc uint32, ins uint) string {
 }
 
 func daTypeCId(name string, pc uint32, ins uint) string {
-	imm, rd := decodeCIc(ins)
-	return fmt.Sprintf("%s %s,%s,0x%x", name, abiXName[rd], abiXName[rd], imm)
+	uimm, rd := decodeCIc(ins)
+	return fmt.Sprintf("%s %s,%s,0x%x", name, abiXName[rd], abiXName[rd], uimm)
 }
 
 func daTypeCIe(name string, pc uint32, ins uint) string {
@@ -291,8 +295,8 @@ func daTypeCRb(name string, pc uint32, ins uint) string {
 // Type CSS Decodes
 
 func daTypeCSSa(name string, pc uint32, ins uint) string {
-	imm, rd := decodeCSSa(ins)
-	return fmt.Sprintf("%s %s,%d(sp)", name, abiXName[rd], imm)
+	uimm, rd := decodeCSSa(ins)
+	return fmt.Sprintf("%s %s,%d(sp)", name, abiXName[rd], uimm)
 }
 
 func daTypeCSSb(name string, pc uint32, ins uint) string {

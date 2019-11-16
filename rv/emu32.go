@@ -24,7 +24,9 @@ func emu32_Illegal(m *RV32, ins uint) {
 // rv32i
 
 func emu32_LUI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rd := decodeU(ins)
+	m.wrX(rd, uint32(imm<<12))
+	m.PC += 4
 }
 
 func emu32_AUIPC(m *RV32, ins uint) {
@@ -40,31 +42,67 @@ func emu32_JAL(m *RV32, ins uint) {
 }
 
 func emu32_JALR(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	m.wrX(rd, m.PC+4)
+	m.PC = uint32((int(m.X[rs1]) + imm) & ^1)
 }
 
 func emu32_BEQ(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs2, rs1 := decodeB(ins)
+	if m.X[rs1] == m.X[rs2] {
+		m.PC = uint32(int(m.PC) + imm)
+	} else {
+		m.PC += 4
+	}
 }
 
 func emu32_BNE(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs2, rs1 := decodeB(ins)
+	if m.X[rs1] != m.X[rs2] {
+		m.PC = uint32(int(m.PC) + imm)
+	} else {
+		m.PC += 4
+	}
 }
 
 func emu32_BLT(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs2, rs1 := decodeB(ins)
+	x1 := bitSex(int(m.X[rs1]), 31)
+	x2 := bitSex(int(m.X[rs2]), 31)
+	if x1 < x2 {
+		m.PC = uint32(int(m.PC) + imm)
+	} else {
+		m.PC += 4
+	}
 }
 
 func emu32_BGE(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs2, rs1 := decodeB(ins)
+	x1 := bitSex(int(m.X[rs1]), 31)
+	x2 := bitSex(int(m.X[rs2]), 31)
+	if x1 >= x2 {
+		m.PC = uint32(int(m.PC) + imm)
+	} else {
+		m.PC += 4
+	}
 }
 
 func emu32_BLTU(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs2, rs1 := decodeB(ins)
+	if m.X[rs1] < m.X[rs2] {
+		m.PC = uint32(int(m.PC) + imm)
+	} else {
+		m.PC += 4
+	}
 }
 
 func emu32_BGEU(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs2, rs1 := decodeB(ins)
+	if m.X[rs1] >= m.X[rs2] {
+		m.PC = uint32(int(m.PC) + imm)
+	} else {
+		m.PC += 4
+	}
 }
 
 func emu32_LB(m *RV32, ins uint) {
@@ -95,11 +133,21 @@ func emu32_LW(m *RV32, ins uint) {
 }
 
 func emu32_LBU(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	val, ex := m.Mem.Rd8(adr)
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint32(val))
+	m.PC += 4
 }
 
 func emu32_LHU(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	val, ex := m.Mem.Rd16(adr)
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint32(val))
+	m.PC += 4
 }
 
 func emu32_SB(m *RV32, ins uint) {
@@ -141,11 +189,15 @@ func emu32_SLTIU(m *RV32, ins uint) {
 }
 
 func emu32_XORI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	m.wrX(rd, m.X[rs1]^uint32(imm))
+	m.PC += 4
 }
 
 func emu32_ORI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	m.wrX(rd, m.X[rs1]|uint32(imm))
+	m.PC += 4
 }
 
 func emu32_ANDI(m *RV32, ins uint) {
@@ -155,27 +207,51 @@ func emu32_ANDI(m *RV32, ins uint) {
 }
 
 func emu32_SLLI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	shamt, rs1, rd := decodeIc(ins)
+	if shamt > 31 {
+		m.flag |= flagIllegal
+		return
+	}
+	m.wrX(rd, m.X[rs1]<<shamt)
+	m.PC += 4
 }
 
 func emu32_SRLI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	shamt, rs1, rd := decodeIc(ins)
+	if shamt > 31 {
+		m.flag |= flagIllegal
+		return
+	}
+	m.wrX(rd, m.X[rs1]>>shamt)
+	m.PC += 4
 }
 
 func emu32_SRAI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	shamt, rs1, rd := decodeIc(ins)
+	if shamt > 31 {
+		m.flag |= flagIllegal
+		return
+	}
+	m.wrX(rd, uint32(int(m.X[rs1])>>shamt))
+	m.PC += 4
 }
 
 func emu32_ADD(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, m.X[rs1]+m.X[rs2])
+	m.PC += 4
 }
 
 func emu32_SUB(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, m.X[rs1]-m.X[rs2])
+	m.PC += 4
 }
 
 func emu32_SLL(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, m.X[rs1]<<(m.X[rs2]&31))
+	m.PC += 4
 }
 
 func emu32_SLT(m *RV32, ins uint) {
@@ -276,19 +352,43 @@ func emu32_MULHU(m *RV32, ins uint) {
 }
 
 func emu32_DIV(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	result := -1
+	if m.X[rs2] != 0 {
+		result = int(m.X[rs1]) / int(m.X[rs2])
+	}
+	m.wrX(rd, uint32(result))
+	m.PC += 4
 }
 
 func emu32_DIVU(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	result := uint32((1 << 32) - 1)
+	if m.X[rs2] != 0 {
+		result = m.X[rs1] / m.X[rs2]
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 func emu32_REM(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	result := int(m.X[rs1])
+	if m.X[rs2] != 0 {
+		result %= int(m.X[rs2])
+	}
+	m.wrX(rd, uint32(result))
+	m.PC += 4
 }
 
 func emu32_REMU(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	result := m.X[rs1]
+	if m.X[rs2] != 0 {
+		result %= m.X[rs2]
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 //-----------------------------------------------------------------------------
@@ -592,11 +692,15 @@ func emu32_C_FSW(m *RV32, ins uint) {
 }
 
 func emu32_C_NOP(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	m.PC += 2
 }
 
 func emu32_C_ADDI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rd := decodeCIa(ins)
+	if rd != 0 {
+		m.X[rd] = uint32(int(m.X[rd]) + imm)
+	}
+	m.PC += 2
 }
 
 func emu32_C_JAL(m *RV32, ins uint) {
@@ -618,19 +722,41 @@ func emu32_C_ADDI16SP(m *RV32, ins uint) {
 }
 
 func emu32_C_LUI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rd := decodeCIf(ins)
+	if imm == 0 {
+		m.flag |= flagIllegal
+		return
+	}
+	if rd != 0 && rd != 2 {
+		m.X[rd] = uint32(imm << 12)
+	}
+	m.PC += 2
 }
 
 func emu32_C_SRLI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	shamt, rd := decodeCIc(ins)
+	if shamt > 31 {
+		m.flag |= flagIllegal
+		return
+	}
+	m.X[rd] = m.X[rd] >> shamt
+	m.PC += 2
 }
 
 func emu32_C_SRAI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	shamt, rd := decodeCIc(ins)
+	if shamt > 31 {
+		m.flag |= flagIllegal
+		return
+	}
+	m.X[rd] = uint32(int(m.X[rd]) >> shamt)
+	m.PC += 2
 }
 
 func emu32_C_ANDI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rd := decodeCIe(ins)
+	m.X[rd] = uint32(int(m.X[rd]) & imm)
+	m.PC += 2
 }
 
 func emu32_C_SUB(m *RV32, ins uint) {
@@ -650,20 +776,37 @@ func emu32_C_AND(m *RV32, ins uint) {
 }
 
 func emu32_C_J(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm := decodeCJb(ins)
+	m.PC = uint32(int(m.PC) + imm)
 }
 
 func emu32_C_BEQZ(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs := decodeCB(ins)
+	if m.X[rs] == 0 {
+		m.PC = uint32(int(m.PC) + imm)
+	} else {
+		m.PC += 2
+	}
 }
 
 func emu32_C_BNEZ(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	imm, rs := decodeCB(ins)
+	if m.X[rs] != 0 {
+		m.PC = uint32(int(m.PC) + imm)
+	} else {
+		m.PC += 2
+	}
 }
 
 func emu32_C_SLLI(m *RV32, ins uint) {
-	uimm, rd := decodeCId(ins)
-	m.wrX(rd, m.X[rd]<<uimm)
+	shamt, rd := decodeCId(ins)
+	if shamt > 31 {
+		m.flag |= flagIllegal
+		return
+	}
+	if rd != 0 && shamt != 0 {
+		m.X[rd] = m.X[rd] << shamt
+	}
 	m.PC += 2
 }
 
@@ -676,7 +819,16 @@ func emu32_C_FLDSP(m *RV32, ins uint) {
 }
 
 func emu32_C_LWSP(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	uimm, rd := decodeCSSa(ins)
+	if rd == 0 {
+		m.flag |= flagIllegal
+		return
+	}
+	adr := uint(m.X[regSp]) + uimm
+	val, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	m.X[rd] = val
+	m.PC += 2
 }
 
 func emu32_C_FLWSP(m *RV32, ins uint) {
@@ -684,7 +836,12 @@ func emu32_C_FLWSP(m *RV32, ins uint) {
 }
 
 func emu32_C_JR(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs1 := decodeCJa(ins)
+	if rs1 == 0 {
+		m.flag |= flagIllegal
+		return
+	}
+	m.PC = m.X[rs1]
 }
 
 func emu32_C_MV(m *RV32, ins uint) {
@@ -729,6 +886,9 @@ func emu32_C_FSWSP(m *RV32, ins uint) {
 
 // Reset the RV32 CPU.
 func (m *RV32) Reset() {
+	m.PC = 0
+	m.insCount = 0
+	m.lastPC = 0
 }
 
 // Run the RV32 CPU for a single instruction.
@@ -743,6 +903,7 @@ func (m *RV32) Run() error {
 	// lookup and emulate the instruction
 	im := m.isa.lookup(ins)
 	im.defn.emu32(m, ins)
+	m.insCount++
 
 	// check exception flags
 	if m.flag != 0 {
@@ -753,11 +914,19 @@ func (m *RV32) Run() error {
 			return fmt.Errorf("memory exception %s", m.mx)
 		}
 		if m.flag&flagExit != 0 {
-			return fmt.Errorf("exit at PC %08x, status %08x", m.PC, m.X[1])
+			return fmt.Errorf("exit at PC %08x, status %08x (%d instructions)", m.PC, m.X[1], m.insCount)
 		}
 		if m.flag&flagTodo != 0 {
 			return fmt.Errorf("unimplemented instruction at PC %08x", m.PC)
 		}
+		panic("unknown flag")
+	}
+
+	// stuck PC detection
+	if m.PC == m.lastPC {
+		return fmt.Errorf("PC is stuck at %08x (%d instructions)", m.PC, m.insCount)
+	} else {
+		m.lastPC = m.PC
 	}
 
 	return nil

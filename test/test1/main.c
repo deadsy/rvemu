@@ -81,5 +81,6 @@ int main(void) {
   eputs(hex8(tmp, 0xAB));
   eputs(hex16(tmp, 0xABCD));
   eputs(hex32(tmp, 0xDEADBEEF));
+  while(1);
   return 0;
 }

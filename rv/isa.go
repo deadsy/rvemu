@@ -208,7 +208,7 @@ var ISArv32c = ISAModule{
 		{"101 uimm[5:3] rs10 uimm[7:6] rs20 00 C.FSD", daNone, emu32_C_FSD, emu64_C_FSD},                     // CS
 		{"110 uimm[5:3] rs10 uimm[2|6] rs20 00 C.SW", daNone, emu32_C_SW, emu64_C_SW},                        // CS
 		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", daNone, emu32_C_FSW, emu64_C_FSW},                     // CS
-		{"000 nzimm[5] 00000 nzimm[4:0] 01 C.NOP", daNone, emu32_C_NOP, emu64_C_NOP},                         // CI (Quadrant 1)
+		{"000 nzimm[5] 00000 nzimm[4:0] 01 C.NOP", daNop, emu32_C_NOP, emu64_C_NOP},                          // CI (Quadrant 1)
 		{"000 nzimm[5] rs1/rd!=0 nzimm[4:0] 01 C.ADDI", daTypeCIc, emu32_C_ADDI, emu64_C_ADDI},               // CI
 		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", daTypeCJc, emu32_C_JAL, emu64_C_JAL},                     // CJ
 		{"010 imm[5] rd!=0 imm[4:0] 01 C.LI", daTypeCIa, emu32_C_LI, emu64_C_LI},                             // CI

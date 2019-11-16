@@ -138,6 +138,7 @@ func Test_RV32C(t *testing.T) {
 		{0, 0x67ad, "lui a5,0xb"},
 		{0x1d0, 0xf3e1, "bnez a5,190"},
 		{0x358, 0x3d7d, "jal ra,216"},
+		{0, 0x0001, "nop"},
 	}
 
 	for _, v := range daTest {
