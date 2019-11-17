@@ -1,7 +1,7 @@
 github.com/creack/termios v0.0.0-20160714173321-88d0029e36a1 h1:3ZFknr3UZk2E18CuCeA0NMRk226zM/slMEFOmJTtJjI=
 github.com/creack/termios v0.0.0-20160714173321-88d0029e36a1/go.mod h1:141QqpYDZtzU1VJMRHPU6ZWkn9K5cE6X8elajH9hJk4=
-github.com/deadsy/go-cli v0.0.0-20191109011753-c22d18a92a27 h1:XC5DDocXN5rI0rI7vumdL51toynnvlL+ZzEkU057Wxs=
-github.com/deadsy/go-cli v0.0.0-20191109011753-c22d18a92a27/go.mod h1:sVSSfdmbix8F1G8qF4bnB+fS8Y6iLZNhg8WUrXoQKWI=
+github.com/deadsy/go-cli v0.0.0-20191117003156-1fbe7fd20d78 h1:7DcDyt41iGityK/vgC8yBinaV/r8NnETh6E1Bj/biuY=
+github.com/deadsy/go-cli v0.0.0-20191117003156-1fbe7fd20d78/go.mod h1:sVSSfdmbix8F1G8qF4bnB+fS8Y6iLZNhg8WUrXoQKWI=
 github.com/deadsy/go-fdset v0.0.0-20171222151525-3483a2eedc50 h1:BaOf8+CjqVF5fyrURBopKjw8rkrn/3M6gljKOxnFHI0=
 github.com/deadsy/go-fdset v0.0.0-20171222151525-3483a2eedc50/go.mod h1:k4cs/s766EtemQo1eMCnPF18lSlNer6fJGTnsR7FG04=
 github.com/mattn/go-isatty v0.0.10 h1:qxFzApOv4WsAL965uUPIsXzAKCZxN2p9UqdhFS4ZW10=

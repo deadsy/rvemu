@@ -1,12 +1,19 @@
 //-----------------------------------------------------------------------------
 /*
 
-RISC-V 64-bit Emulator
+RISC-V 64-bit CPU Emulation
 
 */
 //-----------------------------------------------------------------------------
 
 package rv
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/deadsy/riscv/mem"
+)
 
 //-----------------------------------------------------------------------------
 // rv32i
@@ -1007,6 +1014,116 @@ func emu64_FCVT_D_LU(m *RV64, ins uint) {
 
 func emu64_FMV_D_X(m *RV64, ins uint) {
 	m.flag |= flagTodo
+}
+
+//-----------------------------------------------------------------------------
+// private methods
+
+func (m *RV64) wrX(i uint, val uint64) {
+	if i != 0 {
+		m.X[i] = val
+	}
+}
+
+func (m *RV64) checkMemory(adr uint, ex mem.Exception) {
+	if ex == 0 {
+		return
+	}
+	m.flag |= flagMemory
+	m.mx = memoryException{uint(m.PC), adr, ex}
+}
+
+//-----------------------------------------------------------------------------
+
+// RV64 is a 64-bit RISC-V CPU.
+type RV64 struct {
+	Mem      *mem.Memory     // memory of the target system
+	X        [32]uint64      // registers
+	F        [32]uint64      // float registers
+	PC       uint64          // program counter
+	insCount uint            // number of instructions run
+	lastPC   uint64          // stuck PC detection
+	flag     emuFlags        // event flags
+	mx       memoryException // memory exceptions
+	isa      *ISA            // ISA implemented for the CPU
+}
+
+// NewRV64 returns a 64-bit RISC-V CPU.
+func NewRV64(isa *ISA, mem *mem.Memory) *RV64 {
+	return &RV64{
+		Mem: mem,
+		isa: isa,
+	}
+}
+
+// Dump returns a display string for the CPU registers.
+func (m *RV64) Dump() string {
+	nregs := 32
+	s := make([]string, nregs+1)
+	for i := 0; i < nregs; i++ {
+		x := fmt.Sprintf("x%d", i)
+		s[i] = fmt.Sprintf("%-4s %-4s %08x", x, abiXName[i], m.X[i])
+	}
+	s[nregs] = fmt.Sprintf("%-9s %08x", "pc", m.PC)
+	return strings.Join(s, "\n")
+}
+
+// Exit sets a status code and exits the emulation
+func (m *RV64) Exit(status uint64) {
+	m.X[1] = status
+	m.flag |= flagExit
+}
+
+func (m *RV64) Disassemble(adr uint64) *Disassembly {
+	return m.isa.Disassemble(m.Mem, uint(adr))
+}
+
+// Reset the RV64 CPU.
+func (m *RV64) Reset() {
+	m.PC = 0
+	m.insCount = 0
+	m.lastPC = 0
+}
+
+// Run the RV64 CPU for a single instruction.
+func (m *RV64) Run() error {
+
+	// read the next instruction
+	ins, ex := m.Mem.RdIns(uint(m.PC))
+	if ex != 0 {
+		return fmt.Errorf("memory exception %s", m.mx)
+	}
+
+	// lookup and emulate the instruction
+	im := m.isa.lookup(ins)
+	im.defn.emu64(m, ins)
+	m.insCount++
+
+	// check exception flags
+	if m.flag != 0 {
+		if m.flag&flagIllegal != 0 {
+			return fmt.Errorf("illegal instruction at PC %016x", m.PC)
+		}
+		if m.flag&flagMemory != 0 {
+			return fmt.Errorf("memory exception %s", m.mx)
+		}
+		if m.flag&flagExit != 0 {
+			return fmt.Errorf("exit at PC %016x, status %016x (%d instructions)", m.PC, m.X[1], m.insCount)
+		}
+		if m.flag&flagTodo != 0 {
+			return fmt.Errorf("unimplemented instruction at PC %016x", m.PC)
+		}
+		panic("unknown flag")
+	}
+
+	// stuck PC detection
+	if m.PC == m.lastPC {
+		return fmt.Errorf("PC is stuck at %016x (%d instructions)", m.PC, m.insCount)
+	} else {
+		m.lastPC = m.PC
+	}
+
+	return nil
 }
 
 //-----------------------------------------------------------------------------

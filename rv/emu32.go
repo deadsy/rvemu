@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 /*
 
-RISC-V 32-bit Emulator
+RISC-V 32-bit CPU Emulation
 
 */
 //-----------------------------------------------------------------------------
@@ -10,6 +10,9 @@ package rv
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/deadsy/riscv/mem"
 )
 
 //-----------------------------------------------------------------------------
@@ -883,6 +886,66 @@ func emu32_C_FSWSP(m *RV32, ins uint) {
 }
 
 //-----------------------------------------------------------------------------
+// private methods
+
+func (m *RV32) wrX(i uint, val uint32) {
+	if i != 0 {
+		m.X[i] = val
+	}
+}
+
+func (m *RV32) checkMemory(adr uint, ex mem.Exception) {
+	if ex == 0 {
+		return
+	}
+	m.flag |= flagMemory
+	m.mx = memoryException{uint(m.PC), adr, ex}
+}
+
+//-----------------------------------------------------------------------------
+
+// RV32 is a 32-bit RISC-V CPU.
+type RV32 struct {
+	Mem      *mem.Memory     // memory of the target system
+	X        [32]uint32      // interger registers
+	F        [32]uint64      // float registers
+	PC       uint32          // program counter
+	insCount uint            // number of instructions run
+	lastPC   uint32          // stuck PC detection
+	flag     emuFlags        // event flags
+	mx       memoryException // memory exceptions
+	isa      *ISA            // ISA implemented for the CPU
+}
+
+// NewRV32 returns a 32-bit RISC-V CPU.
+func NewRV32(isa *ISA, mem *mem.Memory) *RV32 {
+	return &RV32{
+		Mem: mem,
+		isa: isa,
+	}
+}
+
+// Dump returns a display string for the CPU registers.
+func (m *RV32) Dump() string {
+	nregs := 32
+	s := make([]string, nregs+1)
+	for i := 0; i < nregs; i++ {
+		x := fmt.Sprintf("x%d", i)
+		s[i] = fmt.Sprintf("%-4s %-4s %08x", x, abiXName[i], m.X[i])
+	}
+	s[nregs] = fmt.Sprintf("%-9s %08x", "pc", m.PC)
+	return strings.Join(s, "\n")
+}
+
+// Exit sets a status code and exits the emulation
+func (m *RV32) Exit(status uint32) {
+	m.X[1] = status
+	m.flag |= flagExit
+}
+
+func (m *RV32) Disassemble(adr uint32) *Disassembly {
+	return m.isa.Disassemble(m.Mem, uint(adr))
+}
 
 // Reset the RV32 CPU.
 func (m *RV32) Reset() {

@@ -19,7 +19,7 @@ import (
 
 func main() {
 	// create the ISA
-	isa := rv.NewISA()
+	isa := rv.NewISA(32)
 	err := isa.Add(rv.ISArv32g)
 	if err != nil {
 		fmt.Printf("%s\n", err)

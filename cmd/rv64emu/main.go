@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 /*
 
-RISC-V 32-bit Emulator
+RISC-V 64-bit Emulator
 
 */
 //-----------------------------------------------------------------------------
@@ -21,22 +21,22 @@ import (
 
 //-----------------------------------------------------------------------------
 
-const historyPath = ".rv32emu_history"
+const historyPath = ".rv64emu_history"
 
 //-----------------------------------------------------------------------------
 
 // userApp is state associated with the user application.
 type userApp struct {
 	mem *mem.Memory
-	cpu *rv.RV32
+	cpu *rv.RV64
 }
 
 // newUserApp returns a user application.
 func newUserApp() (*userApp, error) {
 
 	// create the ISA
-	isa := rv.NewISA(32)
-	err := isa.Add(rv.ISArv32gc)
+	isa := rv.NewISA(64)
+	err := isa.Add(rv.ISArv64gc)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func newUserApp() (*userApp, error) {
 	m.Add(mem.NewEmpty(0, 1<<32, 0))                    // no access
 
 	// create the cpu
-	cpu := rv.NewRV32(isa, m)
+	cpu := rv.NewRV64(isa, m)
 
 	return &userApp{
 		mem: m,
@@ -78,7 +78,7 @@ func main() {
 	}
 
 	// load the file
-	status, err := app.mem.LoadELF(*fname, elf.ELFCLASS32)
+	status, err := app.mem.LoadELF(*fname, elf.ELFCLASS64)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
@@ -89,7 +89,7 @@ func main() {
 	c := cli.NewCLI(app)
 	c.HistoryLoad(historyPath)
 	c.SetRoot(menuRoot)
-	c.SetPrompt("rv32> ")
+	c.SetPrompt("rv64> ")
 
 	// reset the cpu
 	app.cpu.Reset()

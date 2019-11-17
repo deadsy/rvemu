@@ -2,6 +2,7 @@
 DIRS = gen \
        da \
        rv32emu \
+       rv64emu \
 
 all:
 	for dir in $(DIRS); do \

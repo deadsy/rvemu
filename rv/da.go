@@ -10,6 +10,8 @@ package rv
 
 import (
 	"fmt"
+
+	"github.com/deadsy/riscv/mem"
 )
 
 //-----------------------------------------------------------------------------
@@ -38,19 +40,19 @@ const regFp = 8   // frame pointer
 //-----------------------------------------------------------------------------
 // default decode
 
-func daNone(name string, pc uint32, ins uint) string {
+func daNone(name string, pc uint, ins uint) string {
 	return fmt.Sprintf("%s TODO", name)
 }
 
 //-----------------------------------------------------------------------------
 // Type I Decodes
 
-func daTypeIa(name string, pc uint32, ins uint) string {
+func daTypeIa(name string, pc uint, ins uint) string {
 	imm, rs1, rd := decodeIa(ins)
 	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], abiXName[rs1], imm)
 }
 
-func daTypeIb(name string, pc uint32, ins uint) string {
+func daTypeIb(name string, pc uint, ins uint) string {
 	imm, rs1, rd := decodeIa(ins)
 	if rs1 == 0 {
 		return fmt.Sprintf("li %s,%d", abiXName[rd], imm)
@@ -61,17 +63,17 @@ func daTypeIb(name string, pc uint32, ins uint) string {
 	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], abiXName[rs1], imm)
 }
 
-func daTypeIc(name string, pc uint32, ins uint) string {
+func daTypeIc(name string, pc uint, ins uint) string {
 	imm, rs1, rd := decodeIa(ins)
 	return fmt.Sprintf("%s %s,%d(%s)", name, abiXName[rd], imm, abiXName[rs1])
 }
 
-func daTypeId(name string, pc uint32, ins uint) string {
+func daTypeId(name string, pc uint, ins uint) string {
 	shamt, rs1, rd := decodeIc(ins)
 	return fmt.Sprintf("%s %s,%s,0x%x", name, abiXName[rd], abiXName[rs1], shamt)
 }
 
-func daTypeIe(name string, pc uint32, ins uint) string {
+func daTypeIe(name string, pc uint, ins uint) string {
 	imm, rs1, rd := decodeIa(ins)
 	if imm == 0 && rd == 0 && rs1 == 1 {
 		return "ret"
@@ -85,7 +87,7 @@ func daTypeIe(name string, pc uint32, ins uint) string {
 	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], abiXName[rs1], imm)
 }
 
-func daTypeIf(name string, pc uint32, ins uint) string {
+func daTypeIf(name string, pc uint, ins uint) string {
 	imm, rs1, rd := decodeIa(ins)
 	if imm == -1 {
 		return fmt.Sprintf("not %s,%s", abiXName[rd], abiXName[rs1])
@@ -93,12 +95,12 @@ func daTypeIf(name string, pc uint32, ins uint) string {
 	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], abiXName[rs1], imm)
 }
 
-func daTypeIg(name string, pc uint32, ins uint) string {
+func daTypeIg(name string, pc uint, ins uint) string {
 	imm, rs1, rd := decodeIa(ins)
 	return fmt.Sprintf("%s %s,%d(%s)", name, abiFName[rd], imm, abiXName[rs1])
 }
 
-func daTypeIh(name string, pc uint32, ins uint) string {
+func daTypeIh(name string, pc uint, ins uint) string {
 	csr, rs1, rd := decodeIb(ins)
 	if csr == csrFCSR {
 		if rd == 0 {
@@ -115,7 +117,7 @@ func daTypeIh(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type U Decodes
 
-func daTypeUa(name string, pc uint32, ins uint) string {
+func daTypeUa(name string, pc uint, ins uint) string {
 	imm, rd := decodeU(ins)
 	return fmt.Sprintf("%s %s,0x%x", name, abiXName[rd], uint(imm)&0xfffff)
 }
@@ -123,12 +125,12 @@ func daTypeUa(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type S Decodes
 
-func daTypeSa(name string, pc uint32, ins uint) string {
+func daTypeSa(name string, pc uint, ins uint) string {
 	imm, rs2, rs1 := decodeS(ins)
 	return fmt.Sprintf("%s %s,%d(%s)", name, abiXName[rs2], imm, abiXName[rs1])
 }
 
-func daTypeSb(name string, pc uint32, ins uint) string {
+func daTypeSb(name string, pc uint, ins uint) string {
 	imm, rs2, rs1 := decodeS(ins)
 	return fmt.Sprintf("%s %s,%d(%s)", name, abiFName[rs2], imm, abiXName[rs1])
 }
@@ -136,7 +138,7 @@ func daTypeSb(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type R Decodes
 
-func daTypeRa(name string, pc uint32, ins uint) string {
+func daTypeRa(name string, pc uint, ins uint) string {
 	rs2, rs1, rd := decodeR(ins)
 	if name == "sub" && rs1 == 0 {
 		return fmt.Sprintf("neg %s,%s", abiXName[rd], abiXName[rs2])
@@ -144,7 +146,7 @@ func daTypeRa(name string, pc uint32, ins uint) string {
 	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiXName[rs1], abiXName[rs2])
 }
 
-func daTypeRb(name string, pc uint32, ins uint) string {
+func daTypeRb(name string, pc uint, ins uint) string {
 	rs2, rs1, rd := decodeR(ins)
 	if rs2 == 0 {
 		return fmt.Sprintf("%s %s,(%s)", name, abiXName[rd], abiXName[rs1])
@@ -152,17 +154,17 @@ func daTypeRb(name string, pc uint32, ins uint) string {
 	return fmt.Sprintf("%s %s,%s,(%s)", name, abiXName[rd], abiXName[rs2], abiXName[rs1])
 }
 
-func daTypeRc(name string, pc uint32, ins uint) string {
+func daTypeRc(name string, pc uint, ins uint) string {
 	rs2, rs1, rd := decodeR(ins)
 	return fmt.Sprintf("%s %s,%s,%s", name, abiFName[rd], abiFName[rs1], abiFName[rs2])
 }
 
-func daTypeRd(name string, pc uint32, ins uint) string {
+func daTypeRd(name string, pc uint, ins uint) string {
 	_, rs1, rd := decodeR(ins)
 	return fmt.Sprintf("%s %s,%s", name, abiXName[rd], abiFName[rs1])
 }
 
-func daTypeRe(name string, pc uint32, ins uint) string {
+func daTypeRe(name string, pc uint, ins uint) string {
 	_, rs1, rd := decodeR(ins)
 	return fmt.Sprintf("%s %s,%s", name, abiFName[rd], abiXName[rs1])
 }
@@ -170,7 +172,7 @@ func daTypeRe(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type R4 Decodes
 
-func daTypeR4a(name string, pc uint32, ins uint) string {
+func daTypeR4a(name string, pc uint, ins uint) string {
 	rs3, rs2, rs1, _, rd := decodeR4(ins)
 	return fmt.Sprintf("%s %s,%s,%s,%s", name, abiFName[rd], abiFName[rs1], abiFName[rs2], abiFName[rs3])
 }
@@ -178,7 +180,7 @@ func daTypeR4a(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type B Decodes
 
-func daTypeBa(name string, pc uint32, ins uint) string {
+func daTypeBa(name string, pc uint, ins uint) string {
 	imm, rs2, rs1 := decodeB(ins)
 	adr := int(pc) + imm
 
@@ -195,7 +197,7 @@ func daTypeBa(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type J Decodes
 
-func daTypeJa(name string, pc uint32, ins uint) string {
+func daTypeJa(name string, pc uint, ins uint) string {
 	imm, rd := decodeJ(ins)
 	if rd == 0 {
 		return fmt.Sprintf("j %x", int(pc)+imm)
@@ -206,41 +208,41 @@ func daTypeJa(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type CI Decodes
 
-func daNop(name string, pc uint32, ins uint) string {
+func daNop(name string, pc uint, ins uint) string {
 	return "nop"
 }
 
-func daTypeCIa(name string, pc uint32, ins uint) string {
+func daTypeCIa(name string, pc uint, ins uint) string {
 	imm, rd := decodeCIa(ins)
 	return fmt.Sprintf("%s %s,%d", name, abiXName[rd], imm)
 }
 
-func daTypeCIb(name string, pc uint32, ins uint) string {
+func daTypeCIb(name string, pc uint, ins uint) string {
 	imm := decodeCIb(ins)
 	return fmt.Sprintf("%s sp,sp,%d", name, imm)
 }
 
-func daTypeCIc(name string, pc uint32, ins uint) string {
+func daTypeCIc(name string, pc uint, ins uint) string {
 	imm, rd := decodeCIa(ins)
 	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], abiXName[rd], imm)
 }
 
-func daTypeCId(name string, pc uint32, ins uint) string {
+func daTypeCId(name string, pc uint, ins uint) string {
 	uimm, rd := decodeCIc(ins)
 	return fmt.Sprintf("%s %s,%s,0x%x", name, abiXName[rd], abiXName[rd], uimm)
 }
 
-func daTypeCIe(name string, pc uint32, ins uint) string {
+func daTypeCIe(name string, pc uint, ins uint) string {
 	uimm, rd := decodeCId(ins)
 	return fmt.Sprintf("%s %s,%s,0x%x", name, abiXName[rd], abiXName[rd], uimm)
 }
 
-func daTypeCIf(name string, pc uint32, ins uint) string {
+func daTypeCIf(name string, pc uint, ins uint) string {
 	imm, rd := decodeCIe(ins)
 	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], abiXName[rd], imm)
 }
 
-func daTypeCIg(name string, pc uint32, ins uint) string {
+func daTypeCIg(name string, pc uint, ins uint) string {
 	imm, rd := decodeCIf(ins)
 	return fmt.Sprintf("%s %s,0x%x", name, abiXName[rd], imm)
 }
@@ -248,11 +250,11 @@ func daTypeCIg(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type CIW Decodes
 
-func daTypeCIWa(name string, pc uint32, ins uint) string {
+func daTypeCIWa(name string, pc uint, ins uint) string {
 	return "?"
 }
 
-func daTypeCIWb(name string, pc uint32, ins uint) string {
+func daTypeCIWb(name string, pc uint, ins uint) string {
 	uimm, rd := decodeCIW(ins)
 	return fmt.Sprintf("%s %s,sp,%d", name, abiXName[rd], uimm)
 }
@@ -260,7 +262,7 @@ func daTypeCIWb(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type CJ Decodes
 
-func daTypeCJa(name string, pc uint32, ins uint) string {
+func daTypeCJa(name string, pc uint, ins uint) string {
 	rs1 := decodeCJa(ins)
 	if rs1 == 1 {
 		return "ret"
@@ -268,12 +270,12 @@ func daTypeCJa(name string, pc uint32, ins uint) string {
 	return fmt.Sprintf("%s %s", name, abiXName[rs1])
 }
 
-func daTypeCJb(name string, pc uint32, ins uint) string {
+func daTypeCJb(name string, pc uint, ins uint) string {
 	imm := decodeCJb(ins)
 	return fmt.Sprintf("%s %x", name, int(pc)+imm)
 }
 
-func daTypeCJc(name string, pc uint32, ins uint) string {
+func daTypeCJc(name string, pc uint, ins uint) string {
 	imm := decodeCJb(ins)
 	return fmt.Sprintf("%s ra,%x", name, int(pc)+imm)
 }
@@ -281,12 +283,12 @@ func daTypeCJc(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type CR Decodes
 
-func daTypeCRa(name string, pc uint32, ins uint) string {
+func daTypeCRa(name string, pc uint, ins uint) string {
 	rd, rs := decodeCR(ins)
 	return fmt.Sprintf("%s %s,%s", name, abiXName[rd], abiXName[rs])
 }
 
-func daTypeCRb(name string, pc uint32, ins uint) string {
+func daTypeCRb(name string, pc uint, ins uint) string {
 	rd, rs := decodeCR(ins)
 	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiXName[rd], abiXName[rs])
 }
@@ -294,12 +296,12 @@ func daTypeCRb(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type CSS Decodes
 
-func daTypeCSSa(name string, pc uint32, ins uint) string {
+func daTypeCSSa(name string, pc uint, ins uint) string {
 	uimm, rd := decodeCSSa(ins)
 	return fmt.Sprintf("%s %s,%d(sp)", name, abiXName[rd], uimm)
 }
 
-func daTypeCSSb(name string, pc uint32, ins uint) string {
+func daTypeCSSb(name string, pc uint, ins uint) string {
 	imm, rs2 := decodeCSSb(ins)
 	return fmt.Sprintf("%s %s,%d(sp)", name, abiXName[rs2], imm)
 }
@@ -307,7 +309,7 @@ func daTypeCSSb(name string, pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 // Type CB Decodes
 
-func daTypeCBa(name string, pc uint32, ins uint) string {
+func daTypeCBa(name string, pc uint, ins uint) string {
 	imm, rs := decodeCB(ins)
 	return fmt.Sprintf("%s %s,%x", name, abiXName[rs], int(pc)+imm)
 }
@@ -331,23 +333,16 @@ func (da *Disassembly) String() string {
 
 //-----------------------------------------------------------------------------
 
-func daDump32(pc uint32, ins uint) string {
+func daDump32(pc uint, ins uint) string {
 	return fmt.Sprintf("%08x: %08x", pc, uint32(ins))
 }
 
-func daDump16(pc uint32, ins uint) string {
+func daDump16(pc uint, ins uint) string {
 	return fmt.Sprintf("%08x: %04x    ", pc, uint16(ins))
 }
 
-func daSymbol(adr uint32, st SymbolTable) string {
-	if st != nil {
-		return st[adr]
-	}
-	return ""
-}
-
 // daInstruction returns the disassembly for a 16/32-bit instruction.
-func (isa *ISA) daInstruction(pc uint32, ins uint) string {
+func (isa *ISA) daInstruction(pc uint, ins uint) string {
 	im := isa.lookup(ins)
 	if im != nil {
 		return im.defn.da(im.name, pc, ins)
@@ -358,17 +353,17 @@ func (isa *ISA) daInstruction(pc uint32, ins uint) string {
 //-----------------------------------------------------------------------------
 
 // Disassemble a RISC-V instruction at the address.
-func (m *RV32) Disassemble(adr uint32) *Disassembly {
-	ins, _ := m.Mem.RdIns(uint(adr))
+func (isa *ISA) Disassemble(m *mem.Memory, adr uint) *Disassembly {
+	ins, _ := m.RdIns(adr)
 	var da Disassembly
-	da.Symbol = m.Mem.Symbol(uint(adr))
+	da.Symbol = m.Symbol(adr)
 	if ins&3 == 3 {
 		da.Dump = daDump32(adr, ins)
-		da.Assembly = m.isa.daInstruction(adr, ins)
+		da.Assembly = isa.daInstruction(adr, ins)
 		da.Length = 4
 	} else {
 		da.Dump = daDump16(adr, ins)
-		da.Assembly = m.isa.daInstruction(adr, ins)
+		da.Assembly = isa.daInstruction(adr, ins)
 		da.Length = 2
 	}
 	return &da

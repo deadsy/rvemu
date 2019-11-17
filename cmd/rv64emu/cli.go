@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 /*
 
-RISC-V 32-bit Emulator CLI
+RISC-V Emulator
 
 */
 //-----------------------------------------------------------------------------
@@ -18,7 +18,7 @@ import (
 
 //-----------------------------------------------------------------------------
 
-const maxAdr = (1 << 32) - 1
+const maxAdr = (1 << 64) - 1
 
 //-----------------------------------------------------------------------------
 // cli related leaf functions
@@ -128,7 +128,7 @@ var cmdGo = cli.Leaf{
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		m.PC = uint32(adr)
+		m.PC = uint64(adr)
 		for true {
 			err := m.Run()
 			if err != nil {
@@ -148,7 +148,7 @@ var cmdTrace = cli.Leaf{
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		m.PC = uint32(adr)
+		m.PC = uint64(adr)
 		for true {
 			s := m.Disassemble(m.PC)
 			err := m.Run()
@@ -170,7 +170,7 @@ var cmdStep = cli.Leaf{
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		m.PC = uint32(adr)
+		m.PC = uint64(adr)
 		s := m.Disassemble(m.PC)
 		err = m.Run()
 		c.User.Put(fmt.Sprintf("%s\n", s))

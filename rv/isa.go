@@ -11,7 +11,7 @@ package rv
 //-----------------------------------------------------------------------------
 
 // daFunc is an instruction disassembly function
-type daFunc func(name string, pc uint32, ins uint) string
+type daFunc func(name string, pc, ins uint) string
 
 // emuFunc32 is 32-bit emulation function
 type emuFunc32 func(m *RV32, ins uint)
@@ -362,13 +362,15 @@ type insMeta struct {
 
 // ISA is an instruction set
 type ISA struct {
+	xlen  uint       // 32 or 64 bits
 	ins16 []*insMeta // the set of 16-bit instructions in the ISA
 	ins32 []*insMeta // the set of 32-bit instructions in the ISA
 }
 
 // NewISA creates an empty instruction set.
-func NewISA() *ISA {
+func NewISA(xlen uint) *ISA {
 	return &ISA{
+		xlen:  xlen,
 		ins16: make([]*insMeta, 0),
 		ins32: make([]*insMeta, 0),
 	}

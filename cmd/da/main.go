@@ -115,29 +115,26 @@ func main() {
 	}
 
 	// create the ISA
-	isa := rv.NewISA()
+	isa := rv.NewISA(32)
 	err = isa.Add(rv.ISArv32gc)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	}
 
-	// create the CPU
-	cpu := rv.NewRV32(isa, m)
-	adr := uint32(0)
-
 	// Disassemble
+	adr := uint(0)
 	for true {
-		da := cpu.Disassemble(adr)
+		da := isa.Disassemble(m, adr)
 		if da.Assembly == "?" {
 			break
 		}
-		if da.Assembly == m.Disassembly(uint(adr)) {
+		if da.Assembly == m.Disassembly(adr) {
 			fmt.Printf("%s\n", da.String())
 		} else {
-			fmt.Printf("%s should be: \"%s\"\n", da.String(), m.Disassembly(uint(adr)))
+			fmt.Printf("%s should be: \"%s\"\n", da.String(), m.Disassembly(adr))
 		}
-		adr += uint32(da.Length)
+		adr += uint(da.Length)
 	}
 
 	os.Exit(0)
