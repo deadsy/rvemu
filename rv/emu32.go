@@ -888,12 +888,14 @@ func emu32_C_FSWSP(m *RV32, ins uint) {
 //-----------------------------------------------------------------------------
 // private methods
 
+// wrX sets a register value (no writes to zero).
 func (m *RV32) wrX(i uint, val uint32) {
 	if i != 0 {
 		m.X[i] = val
 	}
 }
 
+// checkMemory records a memory exception.
 func (m *RV32) checkMemory(adr uint, ex mem.Exception) {
 	if ex == 0 {
 		return
@@ -943,8 +945,9 @@ func (m *RV32) Exit(status uint32) {
 	m.flag |= flagExit
 }
 
-func (m *RV32) Disassemble(adr uint32) *Disassembly {
-	return m.isa.Disassemble(m.Mem, uint(adr))
+// Disassemble the instruction at the address.
+func (m *RV32) Disassemble(adr uint) *Disassembly {
+	return m.isa.Disassemble(m.Mem, adr)
 }
 
 // Reset the RV32 CPU.
@@ -960,6 +963,7 @@ func (m *RV32) Run() error {
 	// read the next instruction
 	ins, ex := m.Mem.RdIns(uint(m.PC))
 	if ex != 0 {
+		m.checkMemory(uint(m.PC), ex)
 		return fmt.Errorf("memory exception %s", m.mx)
 	}
 

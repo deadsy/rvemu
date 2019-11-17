@@ -324,7 +324,7 @@ type Disassembly struct {
 	Dump     string // address and memory bytes
 	Symbol   string // symbol for the address (if any)
 	Assembly string // assembly instructions
-	Length   int    // length in bytes of decode
+	Length   uint   // length in bytes of decode
 }
 
 func (da *Disassembly) String() string {
@@ -356,7 +356,7 @@ func (isa *ISA) daInstruction(pc uint, ins uint) string {
 func (isa *ISA) Disassemble(m *mem.Memory, adr uint) *Disassembly {
 	ins, _ := m.RdIns(adr)
 	var da Disassembly
-	da.Symbol = m.Symbol(adr)
+	da.Symbol = m.SymbolByAddress(adr)
 	if ins&3 == 3 {
 		da.Dump = daDump32(adr, ins)
 		da.Assembly = isa.daInstruction(adr, ins)

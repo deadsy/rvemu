@@ -15,18 +15,20 @@ import (
 
 //-----------------------------------------------------------------------------
 
-type memRange struct {
-	adr, size uint
+// MemRange is a memory range.
+type MemRange struct {
+	Addr uint
+	Size uint
 }
 
 //-----------------------------------------------------------------------------
 
 // Memory is emulated target memory.
 type Memory struct {
-	segment   []Segment           // memory segments
-	symByAddr map[uint]string     // symbol table by address
-	symByName map[string]memRange // symbol table by name
-	da        map[uint]string     // reference disassembly
+	segment   []Segment            // memory segments
+	symByAddr map[uint]string      // symbol table by address
+	symByName map[string]*MemRange // symbol table by name
+	da        map[uint]string      // reference disassembly
 }
 
 // NewMemory returns a memory object.
@@ -34,7 +36,7 @@ func NewMemory() *Memory {
 	return &Memory{
 		segment:   make([]Segment, 0),
 		symByAddr: make(map[uint]string),
-		symByName: make(map[string]memRange),
+		symByName: make(map[string]*MemRange),
 		da:        make(map[uint]string),
 	}
 }
@@ -91,9 +93,14 @@ func (m *Memory) Wr8(adr uint, val uint8) Exception {
 	return m.find(adr, 1).Wr8(adr, val)
 }
 
-// Symbol returns a symbol for the memory address (if there is one).
-func (m *Memory) Symbol(adr uint) string {
+// SymbolByAddress returns a symbol for the memory address.
+func (m *Memory) SymbolByAddress(adr uint) string {
 	return m.symByAddr[adr]
+}
+
+// SymbolByName returns the memory range for a symbol.
+func (m *Memory) SymbolByName(s string) *MemRange {
+	return m.symByName[s]
 }
 
 // AddSymbol adds a symbol to the symbol table.
@@ -104,7 +111,7 @@ func (m *Memory) AddSymbol(s string, adr, size uint) error {
 	for i := range m.segment {
 		if m.segment[i].In(adr, size) {
 			m.symByAddr[adr] = s
-			m.symByName[s] = memRange{adr, size}
+			m.symByName[s] = &MemRange{adr, size}
 			return nil
 		}
 	}

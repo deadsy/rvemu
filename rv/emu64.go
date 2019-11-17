@@ -1019,12 +1019,14 @@ func emu64_FMV_D_X(m *RV64, ins uint) {
 //-----------------------------------------------------------------------------
 // private methods
 
+// wrX sets a register value (no writes to zero).
 func (m *RV64) wrX(i uint, val uint64) {
 	if i != 0 {
 		m.X[i] = val
 	}
 }
 
+// checkMemory records a memory exception.
 func (m *RV64) checkMemory(adr uint, ex mem.Exception) {
 	if ex == 0 {
 		return
@@ -1074,8 +1076,9 @@ func (m *RV64) Exit(status uint64) {
 	m.flag |= flagExit
 }
 
-func (m *RV64) Disassemble(adr uint64) *Disassembly {
-	return m.isa.Disassemble(m.Mem, uint(adr))
+// Disassemble the instruction at the address.
+func (m *RV64) Disassemble(adr uint) *Disassembly {
+	return m.isa.Disassemble(m.Mem, adr)
 }
 
 // Reset the RV64 CPU.
@@ -1091,6 +1094,7 @@ func (m *RV64) Run() error {
 	// read the next instruction
 	ins, ex := m.Mem.RdIns(uint(m.PC))
 	if ex != 0 {
+		m.checkMemory(uint(m.PC), ex)
 		return fmt.Errorf("memory exception %s", m.mx)
 	}
 

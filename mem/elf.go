@@ -70,7 +70,7 @@ func (m *Memory) LoadELF(filename string, class elf.Class) (string, error) {
 	}
 
 	if f.Class != class {
-		return "", fmt.Errorf("%s is not a %s file", filename, class)
+		return "", fmt.Errorf("%s is not an %s file", filename, class)
 	}
 
 	if f.Type != elf.ET_EXEC {

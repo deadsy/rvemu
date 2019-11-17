@@ -52,35 +52,10 @@ var helpMemDisplay = []cli.Help{
 	{"", "length (hex) - default is 0x40"},
 }
 
-// memArgs converts memory arguments to an (address, size) tuple.
-func memArgs(args []string) (uint, uint, error) {
-	err := cli.CheckArgc(args, []int{0, 1, 2})
-	if err != nil {
-		return 0, 0, err
-	}
-	// address
-	adr := 0
-	if len(args) >= 1 {
-		adr, err = cli.IntArg(args[0], [2]int{0, 0xffffffff}, 16)
-		if err != nil {
-			return 0, 0, err
-		}
-	}
-	// size
-	size := 0x80 // default size
-	if len(args) >= 2 {
-		size, err = cli.IntArg(args[1], [2]int{1, 0x100000000}, 16)
-		if err != nil {
-			return 0, 0, err
-		}
-	}
-	return uint(adr), uint(size), nil
-}
-
 var cmdMemDisplay = cli.Leaf{
 	Descr: "display memory",
 	F: func(c *cli.CLI, args []string) {
-		adr, size, err := memArgs(args)
+		adr, size, err := util.MemArg(0, maxAdr, args)
 		if err != nil {
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
@@ -123,7 +98,7 @@ var cmdGo = cli.Leaf{
 	Descr: "run the emulation (no tracing)",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*userApp).cpu
-		adr, err := util.AddressArg(uint(m.PC), maxAdr, args)
+		adr, err := util.AddrArg(uint(m.PC), maxAdr, args)
 		if err != nil {
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
@@ -143,14 +118,14 @@ var cmdTrace = cli.Leaf{
 	Descr: "run the emulation (with tracing)",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*userApp).cpu
-		adr, err := util.AddressArg(uint(m.PC), maxAdr, args)
+		adr, err := util.AddrArg(uint(m.PC), maxAdr, args)
 		if err != nil {
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
 		m.PC = uint64(adr)
 		for true {
-			s := m.Disassemble(m.PC)
+			s := m.Disassemble(uint(m.PC))
 			err := m.Run()
 			c.User.Put(fmt.Sprintf("%s\n", s))
 			if err != nil {
@@ -165,13 +140,13 @@ var cmdStep = cli.Leaf{
 	Descr: "single step the emulation",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*userApp).cpu
-		adr, err := util.AddressArg(uint(m.PC), maxAdr, args)
+		adr, err := util.AddrArg(uint(m.PC), maxAdr, args)
 		if err != nil {
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
 		m.PC = uint64(adr)
-		s := m.Disassemble(m.PC)
+		s := m.Disassemble(adr)
 		err = m.Run()
 		c.User.Put(fmt.Sprintf("%s\n", s))
 		if err != nil {
@@ -187,45 +162,21 @@ var helpDisassemble = []cli.Help{
 	{"", "length (hex) - default is 0x10"},
 }
 
-// daArgs converts disassembly arguments to an (address, size) tuple.
-func daArgs(pc uint32, args []string) (uint32, int, error) {
-	err := cli.CheckArgc(args, []int{0, 1, 2})
-	if err != nil {
-		return 0, 0, err
-	}
-	// address
-	adr := int(pc) // default address
-	if len(args) >= 1 {
-		adr, err = cli.IntArg(args[0], [2]int{0, 0xffffffff}, 16)
-		if err != nil {
-			return 0, 0, err
-		}
-	}
-	// size
-	size := 64 // default size
-	if len(args) >= 2 {
-		size, err = cli.IntArg(args[1], [2]int{1, 2048}, 16)
-		if err != nil {
-			return 0, 0, err
-		}
-	}
-	return uint32(adr), size, nil
-}
-
 var cmdDisassemble = cli.Leaf{
 	Descr: "disassemble memory",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*userApp).cpu
-		adr, size, err := daArgs(m.PC, args)
+		adr, size, err := util.MemArg(uint(m.PC), maxAdr, args)
 		if err != nil {
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		for size > 0 {
+		n := int(size)
+		for n > 0 {
 			da := m.Disassemble(adr)
 			c.User.Put(fmt.Sprintf("%s\n", da))
-			adr += uint32(da.Length)
-			size -= da.Length
+			adr += da.Length
+			n -= int(da.Length)
 		}
 	},
 }
