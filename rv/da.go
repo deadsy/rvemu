@@ -293,6 +293,19 @@ func daTypeCRb(name string, pc uint, ins uint) string {
 	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiXName[rd], abiXName[rs])
 }
 
+func daTypeCRc(name string, pc uint, ins uint) string {
+	rd, rs := decodeCRa(ins)
+	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiXName[rd], abiXName[rs])
+}
+
+//-----------------------------------------------------------------------------
+// Type CS Decodes
+
+func daTypeCSa(name string, pc uint, ins uint) string {
+	uimm, rs1, rs2 := decodeCS(ins)
+	return fmt.Sprintf("%s %s,%d(%s)", name, abiXName[rs2], uimm, abiXName[rs1])
+}
+
 //-----------------------------------------------------------------------------
 // Type CSS Decodes
 

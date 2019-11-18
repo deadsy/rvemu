@@ -25,7 +25,7 @@ func Test_RV32G(t *testing.T) {
 	}
 
 	daTest := []struct {
-		adr uint32 // program counter
+		adr uint   // program counter
 		ins uint   // instruction code
 		da  string // expected disassembly
 	}{
@@ -113,7 +113,7 @@ func Test_RV32C(t *testing.T) {
 	}
 
 	daTest := []struct {
-		adr uint32 // program counter
+		adr uint   // program counter
 		ins uint   // instruction code
 		da  string // expected disassembly
 	}{
@@ -139,6 +139,10 @@ func Test_RV32C(t *testing.T) {
 		{0x1d0, 0xf3e1, "bnez a5,190"},
 		{0x358, 0x3d7d, "jal ra,216"},
 		{0, 0x0001, "nop"},
+		{0, 0x8e09, "sub a2,a2,a0"},
+		{0, 0xc30c, "sw a1,0(a4)"},
+		{0, 0xc74c, "sw a1,12(a4)"},
+		{0, 0xc78c, "sw a1,8(a5)"},
 	}
 
 	for _, v := range daTest {

@@ -206,8 +206,8 @@ var ISArv32c = ISAModule{
 		{"010 uimm[5:3] rs10 uimm[2|6] rd0 00 C.LW", daNone, emu32_C_LW, emu64_C_LW},                         // CL
 		{"011 uimm[5:3] rs10 uimm[2|6] rd0 00 C.FLW", daNone, emu32_C_FLW, emu64_C_FLW},                      // CL
 		{"101 uimm[5:3] rs10 uimm[7:6] rs20 00 C.FSD", daNone, emu32_C_FSD, emu64_C_FSD},                     // CS
-		{"110 uimm[5:3] rs10 uimm[2|6] rs20 00 C.SW", daNone, emu32_C_SW, emu64_C_SW},                        // CS
-		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", daNone, emu32_C_FSW, emu64_C_FSW},                     // CS
+		{"110 uimm[5:3] rs10 uimm[2|6] rs20 00 C.SW", daTypeCSa, emu32_C_SW, emu64_C_SW},                     // CS
+		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", daTypeCSa, emu32_C_FSW, emu64_C_FSW},                  // CS
 		{"000 nzimm[5] 00000 nzimm[4:0] 01 C.NOP", daNop, emu32_C_NOP, emu64_C_NOP},                          // CI (Quadrant 1)
 		{"000 nzimm[5] rs1/rd!=0 nzimm[4:0] 01 C.ADDI", daTypeCIc, emu32_C_ADDI, emu64_C_ADDI},               // CI
 		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", daTypeCJc, emu32_C_JAL, emu64_C_JAL},                     // CJ
@@ -217,10 +217,10 @@ var ISArv32c = ISAModule{
 		{"100 nzuimm[5] 00 rs10/rd0 nzuimm[4:0] 01 C.SRLI", daTypeCId, emu32_C_SRLI, emu64_C_SRLI},           // CI
 		{"100 nzuimm[5] 01 rs10/rd0 nzuimm[4:0] 01 C.SRAI", daTypeCId, emu32_C_SRAI, emu64_C_SRAI},           // CI
 		{"100 imm[5] 10 rs10/rd0 imm[4:0] 01 C.ANDI", daTypeCIf, emu32_C_ANDI, emu64_C_ANDI},                 // CI
-		{"100 0 11 rs10/rd0 00 rs20 01 C.SUB", daNone, emu32_C_SUB, emu64_C_SUB},                             // CR
-		{"100 0 11 rs10/rd0 01 rs20 01 C.XOR", daNone, emu32_C_XOR, emu64_C_XOR},                             // CR
-		{"100 0 11 rs10/rd0 10 rs20 01 C.OR", daNone, emu32_C_OR, emu64_C_OR},                                // CR
-		{"100 0 11 rs10/rd0 11 rs20 01 C.AND", daNone, emu32_C_AND, emu64_C_AND},                             // CR
+		{"100 0 11 rs10/rd0 00 rs20 01 C.SUB", daTypeCRc, emu32_C_SUB, emu64_C_SUB},                          // CR
+		{"100 0 11 rs10/rd0 01 rs20 01 C.XOR", daTypeCRc, emu32_C_XOR, emu64_C_XOR},                          // CR
+		{"100 0 11 rs10/rd0 10 rs20 01 C.OR", daTypeCRc, emu32_C_OR, emu64_C_OR},                             // CR
+		{"100 0 11 rs10/rd0 11 rs20 01 C.AND", daTypeCRc, emu32_C_AND, emu64_C_AND},                          // CR
 		{"101 imm[11|4|9:8|10|6|7|3:1|5] 01 C.J", daTypeCJb, emu32_C_J, emu64_C_J},                           // CJ
 		{"110 imm[8|4:3] rs10 imm[7:6|2:1|5] 01 C.BEQZ", daTypeCBa, emu32_C_BEQZ, emu64_C_BEQZ},              // CB
 		{"111 imm[8|4:3] rs10 imm[7:6|2:1|5] 01 C.BNEZ", daTypeCBa, emu32_C_BNEZ, emu64_C_BNEZ},              // CB
@@ -324,6 +324,16 @@ var ISArv64d = ISAModule{
 	},
 }
 
+// ISArv64c Compressed
+var ISArv64c = ISAModule{
+	name: "rv64c",
+	ilen: 16,
+	defn: []insDefn{
+		{"100 1 11 rs10/rd0 00 rs20 01 C.SUBW", daTypeCRc, emu32_Illegal, emu64_C_SUBW}, // CR
+		{"100 1 11 rs10/rd0 01 rs20 01 C.ADDW", daTypeCRc, emu32_Illegal, emu64_C_ADDW}, // CR
+	},
+}
+
 //-----------------------------------------------------------------------------
 // pre-canned ISA module sets
 
@@ -346,7 +356,7 @@ var ISArv64g = []ISAModule{
 // ISArv64gc = RV64imafdc
 var ISArv64gc = []ISAModule{
 	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32c,
-	ISArv64i, ISArv64m, ISArv64a, ISArv64f, ISArv64d,
+	ISArv64i, ISArv64m, ISArv64a, ISArv64f, ISArv64d, ISArv64c,
 }
 
 //-----------------------------------------------------------------------------
@@ -368,9 +378,8 @@ type ISA struct {
 }
 
 // NewISA creates an empty instruction set.
-func NewISA(xlen uint) *ISA {
+func NewISA() *ISA {
 	return &ISA{
-		xlen:  xlen,
 		ins16: make([]*insMeta, 0),
 		ins32: make([]*insMeta, 0),
 	}

@@ -645,7 +645,11 @@ func emu64_C_FSD(m *RV64, ins uint) {
 }
 
 func emu64_C_SW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	uimm, rs1, rs2 := decodeCS(ins)
+	adr := uint(m.X[rs1]) + uimm
+	ex := m.Mem.Wr32(adr, uint32(m.X[rs2]))
+	m.checkMemory(adr, ex)
+	m.PC += 2
 }
 
 func emu64_C_FSW(m *RV64, ins uint) {
@@ -713,19 +717,27 @@ func emu64_C_ANDI(m *RV64, ins uint) {
 }
 
 func emu64_C_SUB(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rd, rs := decodeCRa(ins)
+	m.X[rd] -= m.X[rs]
+	m.PC += 2
 }
 
 func emu64_C_XOR(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rd, rs := decodeCRa(ins)
+	m.X[rd] ^= m.X[rs]
+	m.PC += 2
 }
 
 func emu64_C_OR(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rd, rs := decodeCRa(ins)
+	m.X[rd] |= m.X[rs]
+	m.PC += 2
 }
 
 func emu64_C_AND(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rd, rs := decodeCRa(ins)
+	m.X[rd] &= m.X[rs]
+	m.PC += 2
 }
 
 func emu64_C_J(m *RV64, ins uint) {
@@ -1017,6 +1029,17 @@ func emu64_FMV_D_X(m *RV64, ins uint) {
 }
 
 //-----------------------------------------------------------------------------
+// rv64c
+
+func emu64_C_SUBW(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu64_C_ADDW(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
+//-----------------------------------------------------------------------------
 // private methods
 
 // wrX sets a register value (no writes to zero).
@@ -1083,7 +1106,7 @@ func (m *RV64) Disassemble(adr uint) *Disassembly {
 
 // Reset the RV64 CPU.
 func (m *RV64) Reset() {
-	m.PC = 0
+	m.PC = uint64(m.Mem.Entry)
 	m.insCount = 0
 	m.lastPC = 0
 }

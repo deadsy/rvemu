@@ -15,8 +15,8 @@ import (
 
 //-----------------------------------------------------------------------------
 
-// MemRange is a memory range.
-type MemRange struct {
+// Range is a memory range.
+type Range struct {
 	Addr uint
 	Size uint
 }
@@ -25,10 +25,11 @@ type MemRange struct {
 
 // Memory is emulated target memory.
 type Memory struct {
-	segment   []Segment            // memory segments
-	symByAddr map[uint]string      // symbol table by address
-	symByName map[string]*MemRange // symbol table by name
-	da        map[uint]string      // reference disassembly
+	segment   []Segment         // memory segments
+	Entry     uint64            // entry point from ELF
+	symByAddr map[uint]string   // symbol table by address
+	symByName map[string]*Range // symbol table by name
+	da        map[uint]string   // reference disassembly
 }
 
 // NewMemory returns a memory object.
@@ -36,7 +37,7 @@ func NewMemory() *Memory {
 	return &Memory{
 		segment:   make([]Segment, 0),
 		symByAddr: make(map[uint]string),
-		symByName: make(map[string]*MemRange),
+		symByName: make(map[string]*Range),
 		da:        make(map[uint]string),
 	}
 }
@@ -57,6 +58,8 @@ func (m *Memory) find(adr, size uint) Segment {
 	// memory segment defined.
 	panic("where's the empty memory segment?")
 }
+
+//-----------------------------------------------------------------------------
 
 // RdIns reads a 32-bit instruction from memory.
 func (m *Memory) RdIns(adr uint) (uint, Exception) {
@@ -93,13 +96,15 @@ func (m *Memory) Wr8(adr uint, val uint8) Exception {
 	return m.find(adr, 1).Wr8(adr, val)
 }
 
+//-----------------------------------------------------------------------------
+
 // SymbolByAddress returns a symbol for the memory address.
 func (m *Memory) SymbolByAddress(adr uint) string {
 	return m.symByAddr[adr]
 }
 
 // SymbolByName returns the memory range for a symbol.
-func (m *Memory) SymbolByName(s string) *MemRange {
+func (m *Memory) SymbolByName(s string) *Range {
 	return m.symByName[s]
 }
 
@@ -111,12 +116,14 @@ func (m *Memory) AddSymbol(s string, adr, size uint) error {
 	for i := range m.segment {
 		if m.segment[i].In(adr, size) {
 			m.symByAddr[adr] = s
-			m.symByName[s] = &MemRange{adr, size}
+			m.symByName[s] = &Range{adr, size}
 			return nil
 		}
 	}
 	return fmt.Errorf("%s is not in a memory segment", s)
 }
+
+//-----------------------------------------------------------------------------
 
 // Disassembly returns the reference disassembly for the memory address (if there is any).
 func (m *Memory) Disassembly(adr uint) string {

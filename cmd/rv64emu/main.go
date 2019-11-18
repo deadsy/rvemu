@@ -35,7 +35,7 @@ type userApp struct {
 func newUserApp() (*userApp, error) {
 
 	// create the ISA
-	isa := rv.NewISA(64)
+	isa := rv.NewISA()
 	err := isa.Add(rv.ISArv64gc)
 	if err != nil {
 		return nil, err

@@ -50,7 +50,7 @@ func (m *Memory) loadSection(f *elf.File, name string) string {
 		m.Wr8(uint(s.Addr)+uint(i), v)
 	}
 	end := s.Addr + s.Size - 1
-	return fmt.Sprintf("%s %08x-%08x (%d bytes)", name, s.Addr, end, s.Size)
+	return fmt.Sprintf("%-16s %08x-%08x (%d bytes)", name, s.Addr, end, s.Size)
 }
 
 //-----------------------------------------------------------------------------
@@ -77,11 +77,18 @@ func (m *Memory) LoadELF(filename string, class elf.Class) (string, error) {
 		return "", fmt.Errorf("%s is not an executable ELF file", filename)
 	}
 
+	// set the program entry point
+	m.Entry = f.Entry
+
 	s := make([]string, 0)
 	s = append(s, m.loadSymbols(f))
 	s = append(s, m.loadSection(f, ".text"))
-	s = append(s, m.loadSection(f, ".rodata"))
+	s = append(s, m.loadSection(f, ".eh_frame"))
+	s = append(s, m.loadSection(f, ".init_array"))
+	s = append(s, m.loadSection(f, ".fini_array"))
 	s = append(s, m.loadSection(f, ".data"))
+	s = append(s, m.loadSection(f, ".sdata"))
+	s = append(s, fmt.Sprintf("%-16s %08x", "entry point", m.Entry))
 
 	return strings.Join(s, "\n"), nil
 }

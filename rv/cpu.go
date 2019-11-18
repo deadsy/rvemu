@@ -202,6 +202,21 @@ func decodeCR(ins uint) (uint, uint) {
 	return rd, rs
 }
 
+func decodeCRa(ins uint) (uint, uint) {
+	rd := bitUnsigned(ins, 9, 7, 0) + 8
+	rs := bitUnsigned(ins, 4, 2, 0) + 8
+	return rd, rs
+}
+
+func decodeCS(ins uint) (uint, uint, uint) {
+	uimm := bitUnsigned(ins, 12, 10, 3) // imm[5:3]
+	uimm += bitUnsigned(ins, 6, 6, 2)   // imm[2]
+	uimm += bitUnsigned(ins, 5, 5, 6)   // imm[6]
+	rs1 := bitUnsigned(ins, 9, 7, 0) + 8
+	rs2 := bitUnsigned(ins, 4, 2, 0) + 8
+	return uimm, rs1, rs2
+}
+
 func decodeCSSa(ins uint) (uint, uint) {
 	uimm := bitUnsigned(ins, 12, 12, 5) // imm[5]
 	uimm += bitUnsigned(ins, 6, 4, 2)   // imm[4:2]

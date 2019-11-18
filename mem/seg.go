@@ -66,6 +66,9 @@ const AttrRW = AttrR | AttrW
 // AttrRX = read/execute
 const AttrRX = AttrR | AttrX
 
+// AttrRWX = read/write/execute
+const AttrRWX = AttrR | AttrW | AttrX
+
 //-----------------------------------------------------------------------------
 // memory access exceptions
 

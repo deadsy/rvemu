@@ -35,7 +35,7 @@ type userApp struct {
 func newUserApp() (*userApp, error) {
 
 	// create the ISA
-	isa := rv.NewISA(32)
+	isa := rv.NewISA()
 	err := isa.Add(rv.ISArv32gc)
 	if err != nil {
 		return nil, err
@@ -43,9 +43,9 @@ func newUserApp() (*userApp, error) {
 
 	// create the memory
 	m := mem.NewMemory()
-	m.Add(mem.NewChunk(0, 256<<10, mem.AttrRX))         // rom
-	m.Add(mem.NewChunk(0x80000000, 64<<10, mem.AttrRW)) // ram
-	m.Add(mem.NewEmpty(0, 1<<32, 0))                    // no access
+	m.Add(mem.NewChunk(0, 256<<10, mem.AttrRWX))
+	//m.Add(mem.NewChunk(0x80000000, 64<<10, mem.AttrRW))
+	m.Add(mem.NewEmpty(0, 1<<32, 0)) // no access
 
 	// create the cpu
 	cpu := rv.NewRV32(isa, m)

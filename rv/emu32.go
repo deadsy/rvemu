@@ -687,7 +687,11 @@ func emu32_C_FSD(m *RV32, ins uint) {
 }
 
 func emu32_C_SW(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	uimm, rs1, rs2 := decodeCS(ins)
+	adr := uint(m.X[rs1]) + uimm
+	ex := m.Mem.Wr32(adr, m.X[rs2])
+	m.checkMemory(adr, ex)
+	m.PC += 2
 }
 
 func emu32_C_FSW(m *RV32, ins uint) {
@@ -763,19 +767,27 @@ func emu32_C_ANDI(m *RV32, ins uint) {
 }
 
 func emu32_C_SUB(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rd, rs := decodeCRa(ins)
+	m.X[rd] -= m.X[rs]
+	m.PC += 2
 }
 
 func emu32_C_XOR(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rd, rs := decodeCRa(ins)
+	m.X[rd] ^= m.X[rs]
+	m.PC += 2
 }
 
 func emu32_C_OR(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rd, rs := decodeCRa(ins)
+	m.X[rd] |= m.X[rs]
+	m.PC += 2
 }
 
 func emu32_C_AND(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rd, rs := decodeCRa(ins)
+	m.X[rd] &= m.X[rs]
+	m.PC += 2
 }
 
 func emu32_C_J(m *RV32, ins uint) {
@@ -952,7 +964,7 @@ func (m *RV32) Disassemble(adr uint) *Disassembly {
 
 // Reset the RV32 CPU.
 func (m *RV32) Reset() {
-	m.PC = 0
+	m.PC = uint32(m.Mem.Entry)
 	m.insCount = 0
 	m.lastPC = 0
 }
