@@ -62,8 +62,8 @@ func emu64_BNE(m *RV64, ins uint) {
 
 func emu64_BLT(m *RV64, ins uint) {
 	imm, rs2, rs1 := decodeB(ins)
-	x1 := bitSex(int(m.X[rs1]), 63)
-	x2 := bitSex(int(m.X[rs2]), 63)
+	x1 := int64(m.X[rs1])
+	x2 := int64(m.X[rs2])
 	if x1 < x2 {
 		m.PC = uint64(int(m.PC) + imm)
 	} else {
@@ -73,8 +73,8 @@ func emu64_BLT(m *RV64, ins uint) {
 
 func emu64_BGE(m *RV64, ins uint) {
 	imm, rs2, rs1 := decodeB(ins)
-	x1 := bitSex(int(m.X[rs1]), 63)
-	x2 := bitSex(int(m.X[rs2]), 63)
+	x1 := int64(m.X[rs1])
+	x2 := int64(m.X[rs2])
 	if x1 >= x2 {
 		m.PC = uint64(int(m.PC) + imm)
 	} else {
@@ -105,7 +105,7 @@ func emu64_LB(m *RV64, ins uint) {
 	adr := uint(int(m.X[rs1]) + imm)
 	val, ex := m.Mem.Rd8(adr)
 	m.checkMemory(adr, ex)
-	m.wrX(rd, uint64(bitSex(int(val), 7)))
+	m.wrX(rd, uint64(int8(val)))
 	m.PC += 4
 }
 
@@ -114,7 +114,7 @@ func emu64_LH(m *RV64, ins uint) {
 	adr := uint(int(m.X[rs1]) + imm)
 	val, ex := m.Mem.Rd16(adr)
 	m.checkMemory(adr, ex)
-	m.wrX(rd, uint64(bitSex(int(val), 15)))
+	m.wrX(rd, uint64(int16(val)))
 	m.PC += 4
 }
 
@@ -123,7 +123,7 @@ func emu64_LW(m *RV64, ins uint) {
 	adr := uint(int(m.X[rs1]) + imm)
 	val, ex := m.Mem.Rd32(adr)
 	m.checkMemory(adr, ex)
-	m.wrX(rd, uint64(bitSex(int(val), 31)))
+	m.wrX(rd, uint64(int(val)))
 	m.PC += 4
 }
 
@@ -633,7 +633,12 @@ func emu64_C_FLD(m *RV64, ins uint) {
 }
 
 func emu64_C_LW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	uimm, rs1, rd := decodeCS(ins)
+	adr := uint(m.X[rs1]) + uimm
+	val, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	m.X[rd] = uint64(int(val))
+	m.PC += 2
 }
 
 func emu64_C_FLW(m *RV64, ins uint) {
@@ -669,7 +674,7 @@ func emu64_C_ADDI(m *RV64, ins uint) {
 }
 
 func emu64_C_JAL(m *RV64, ins uint) {
-	imm := decodeCJb(ins)
+	imm := decodeCJ(ins)
 	m.X[regRa] = m.PC + 2
 	m.PC = uint64(int(m.PC) + imm)
 }
@@ -741,7 +746,7 @@ func emu64_C_AND(m *RV64, ins uint) {
 }
 
 func emu64_C_J(m *RV64, ins uint) {
-	imm := decodeCJb(ins)
+	imm := decodeCJ(ins)
 	m.PC = uint64(int(m.PC) + imm)
 }
 
@@ -788,7 +793,7 @@ func emu64_C_LWSP(m *RV64, ins uint) {
 	adr := uint(m.X[regSp]) + uimm
 	val, ex := m.Mem.Rd32(adr)
 	m.checkMemory(adr, ex)
-	m.X[rd] = uint64(val)
+	m.X[rd] = uint64(int(val))
 	m.PC += 2
 }
 
@@ -797,7 +802,7 @@ func emu64_C_FLWSP(m *RV64, ins uint) {
 }
 
 func emu64_C_JR(m *RV64, ins uint) {
-	rs1 := decodeCJa(ins)
+	rs1, _ := decodeCR(ins)
 	if rs1 == 0 {
 		m.flag |= flagIllegal
 		return
@@ -818,7 +823,14 @@ func emu64_C_EBREAK(m *RV64, ins uint) {
 }
 
 func emu64_C_JALR(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rs1, _ := decodeCR(ins)
+	if rs1 == 0 {
+		m.flag |= flagIllegal
+		return
+	}
+	t := m.PC + 2
+	m.PC = m.X[rs1]
+	m.X[regRa] = t
 }
 
 func emu64_C_ADD(m *RV64, ins uint) {

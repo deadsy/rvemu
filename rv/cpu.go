@@ -178,12 +178,7 @@ func decodeCIW(ins uint) (uint, uint) {
 	return uimm, rd
 }
 
-func decodeCJa(ins uint) uint {
-	rs1 := bitUnsigned(ins, 11, 7, 0)
-	return rs1
-}
-
-func decodeCJb(ins uint) int {
+func decodeCJ(ins uint) int {
 	uimm := bitUnsigned(ins, 12, 12, 11) // imm[11]
 	uimm += bitUnsigned(ins, 11, 11, 4)  // imm[4]
 	uimm += bitUnsigned(ins, 10, 9, 8)   // imm[9:8]
@@ -243,6 +238,15 @@ func decodeCB(ins uint) (int, uint) {
 	return imm, rs
 }
 
+func decodeCL(ins uint) (uint, uint, uint) {
+	uimm := bitUnsigned(ins, 12, 10, 3) // imm[5:3]
+	uimm += bitUnsigned(ins, 6, 6, 2)   // imm[2]
+	uimm += bitUnsigned(ins, 5, 5, 6)   // imm[6]
+	rs1 := bitUnsigned(ins, 9, 7, 0) + 8
+	rd := bitUnsigned(ins, 4, 2, 0) + 8
+	return uimm, rs1, rd
+}
+
 //-----------------------------------------------------------------------------
 
 // emuFlags stores emulation event flags.
@@ -254,6 +258,7 @@ const (
 	flagExit                         // exit from emulation
 	flagTodo                         // unimplemented instruction
 	flagMemory                       // memory exception
+	flagSyscall                      // unrecognised system call
 )
 
 //-----------------------------------------------------------------------------

@@ -70,8 +70,8 @@ func emu32_BNE(m *RV32, ins uint) {
 
 func emu32_BLT(m *RV32, ins uint) {
 	imm, rs2, rs1 := decodeB(ins)
-	x1 := bitSex(int(m.X[rs1]), 31)
-	x2 := bitSex(int(m.X[rs2]), 31)
+	x1 := int32(m.X[rs1])
+	x2 := int32(m.X[rs2])
 	if x1 < x2 {
 		m.PC = uint32(int(m.PC) + imm)
 	} else {
@@ -81,8 +81,8 @@ func emu32_BLT(m *RV32, ins uint) {
 
 func emu32_BGE(m *RV32, ins uint) {
 	imm, rs2, rs1 := decodeB(ins)
-	x1 := bitSex(int(m.X[rs1]), 31)
-	x2 := bitSex(int(m.X[rs2]), 31)
+	x1 := int32(m.X[rs1])
+	x2 := int32(m.X[rs2])
 	if x1 >= x2 {
 		m.PC = uint32(int(m.PC) + imm)
 	} else {
@@ -113,7 +113,7 @@ func emu32_LB(m *RV32, ins uint) {
 	adr := uint(int(m.X[rs1]) + imm)
 	val, ex := m.Mem.Rd8(adr)
 	m.checkMemory(adr, ex)
-	m.wrX(rd, uint32(bitSex(int(val), 7)))
+	m.wrX(rd, uint32(int8(val)))
 	m.PC += 4
 }
 
@@ -122,7 +122,7 @@ func emu32_LH(m *RV32, ins uint) {
 	adr := uint(int(m.X[rs1]) + imm)
 	val, ex := m.Mem.Rd16(adr)
 	m.checkMemory(adr, ex)
-	m.wrX(rd, uint32(bitSex(int(val), 15)))
+	m.wrX(rd, uint32(int16(val)))
 	m.PC += 4
 }
 
@@ -294,7 +294,13 @@ func emu32_FENCE_I(m *RV32, ins uint) {
 }
 
 func emu32_ECALL(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	switch m.X[regA7] {
+	case syscallExit:
+		m.flag |= flagExit
+	default:
+		m.flag |= flagSyscall
+	}
+	m.PC += 4
 }
 
 func emu32_EBREAK(m *RV32, ins uint) {
@@ -675,7 +681,12 @@ func emu32_C_FLD(m *RV32, ins uint) {
 }
 
 func emu32_C_LW(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	uimm, rs1, rd := decodeCS(ins)
+	adr := uint(m.X[rs1]) + uimm
+	val, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	m.X[rd] = val
+	m.PC += 2
 }
 
 func emu32_C_FLW(m *RV32, ins uint) {
@@ -711,7 +722,7 @@ func emu32_C_ADDI(m *RV32, ins uint) {
 }
 
 func emu32_C_JAL(m *RV32, ins uint) {
-	imm := decodeCJb(ins)
+	imm := decodeCJ(ins)
 	m.X[regRa] = m.PC + 2
 	m.PC = uint32(int(m.PC) + imm)
 }
@@ -791,7 +802,7 @@ func emu32_C_AND(m *RV32, ins uint) {
 }
 
 func emu32_C_J(m *RV32, ins uint) {
-	imm := decodeCJb(ins)
+	imm := decodeCJ(ins)
 	m.PC = uint32(int(m.PC) + imm)
 }
 
@@ -851,7 +862,7 @@ func emu32_C_FLWSP(m *RV32, ins uint) {
 }
 
 func emu32_C_JR(m *RV32, ins uint) {
-	rs1 := decodeCJa(ins)
+	rs1, _ := decodeCR(ins)
 	if rs1 == 0 {
 		m.flag |= flagIllegal
 		return
@@ -872,7 +883,14 @@ func emu32_C_EBREAK(m *RV32, ins uint) {
 }
 
 func emu32_C_JALR(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs1, _ := decodeCR(ins)
+	if rs1 == 0 {
+		m.flag |= flagIllegal
+		return
+	}
+	t := m.PC + 2
+	m.PC = m.X[rs1]
+	m.X[regRa] = t
 }
 
 func emu32_C_ADD(m *RV32, ins uint) {
@@ -994,6 +1012,9 @@ func (m *RV32) Run() error {
 		}
 		if m.flag&flagExit != 0 {
 			return fmt.Errorf("exit at PC %08x, status %08x (%d instructions)", m.PC, m.X[1], m.insCount)
+		}
+		if m.flag&flagSyscall != 0 {
+			return fmt.Errorf("unrecognised system call at PC %08x, %d", m.PC, m.X[regA7])
 		}
 		if m.flag&flagTodo != 0 {
 			return fmt.Errorf("unimplemented instruction at PC %08x", m.PC)

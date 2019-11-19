@@ -42,53 +42,53 @@ var ISArv32i = ISAModule{
 	name: "rv32i",
 	ilen: 32,
 	defn: []insDefn{
-		{"imm[31:12] rd 0110111 LUI", daTypeUa, emu32_LUI, emu64_LUI},                            // U
-		{"imm[31:12] rd 0010111 AUIPC", daTypeUa, emu32_AUIPC, emu64_AUIPC},                      // U
-		{"imm[20|10:1|11|19:12] rd 1101111 JAL", daTypeJa, emu32_JAL, emu64_JAL},                 // J
-		{"imm[11:0] rs1 000 rd 1100111 JALR", daTypeIe, emu32_JALR, emu64_JALR},                  // I
-		{"imm[12|10:5] rs2 rs1 000 imm[4:1|11] 1100011 BEQ", daTypeBa, emu32_BEQ, emu64_BEQ},     // B
-		{"imm[12|10:5] rs2 rs1 001 imm[4:1|11] 1100011 BNE", daTypeBa, emu32_BNE, emu64_BNE},     // B
-		{"imm[12|10:5] rs2 rs1 100 imm[4:1|11] 1100011 BLT", daTypeBa, emu32_BLT, emu64_BLT},     // B
-		{"imm[12|10:5] rs2 rs1 101 imm[4:1|11] 1100011 BGE", daTypeBa, emu32_BGE, emu64_BGE},     // B
-		{"imm[12|10:5] rs2 rs1 110 imm[4:1|11] 1100011 BLTU", daTypeBa, emu32_BLTU, emu64_BLTU},  // B
-		{"imm[12|10:5] rs2 rs1 111 imm[4:1|11] 1100011 BGEU", daTypeBa, emu32_BGEU, emu64_BGEU},  // B
-		{"imm[11:0] rs1 000 rd 0000011 LB", daTypeIc, emu32_LB, emu64_LB},                        // I
-		{"imm[11:0] rs1 001 rd 0000011 LH", daTypeIc, emu32_LH, emu64_LH},                        // I
-		{"imm[11:0] rs1 010 rd 0000011 LW", daTypeIc, emu32_LW, emu64_LW},                        // I
-		{"imm[11:0] rs1 100 rd 0000011 LBU", daTypeIc, emu32_LBU, emu64_LBU},                     // I
-		{"imm[11:0] rs1 101 rd 0000011 LHU", daTypeIc, emu32_LHU, emu64_LHU},                     // I
-		{"imm[11:5] rs2 rs1 000 imm[4:0] 0100011 SB", daTypeSa, emu32_SB, emu64_SB},              // S
-		{"imm[11:5] rs2 rs1 001 imm[4:0] 0100011 SH", daTypeSa, emu32_SH, emu64_SH},              // S
-		{"imm[11:5] rs2 rs1 010 imm[4:0] 0100011 SW", daTypeSa, emu32_SW, emu64_SW},              // S
-		{"imm[11:0] rs1 000 rd 0010011 ADDI", daTypeIb, emu32_ADDI, emu64_ADDI},                  // I
-		{"imm[11:0] rs1 010 rd 0010011 SLTI", daTypeIa, emu32_SLTI, emu64_SLTI},                  // I
-		{"imm[11:0] rs1 011 rd 0010011 SLTIU", daTypeIa, emu32_SLTIU, emu64_SLTIU},               // I
-		{"imm[11:0] rs1 100 rd 0010011 XORI", daTypeIf, emu32_XORI, emu64_XORI},                  // I
-		{"imm[11:0] rs1 110 rd 0010011 ORI", daTypeIa, emu32_ORI, emu64_ORI},                     // I
-		{"imm[11:0] rs1 111 rd 0010011 ANDI", daTypeIa, emu32_ANDI, emu64_ANDI},                  // I
-		{"0000000 shamt5 rs1 001 rd 0010011 SLLI", daTypeId, emu32_SLLI, emu64_SLLI},             // I
-		{"0000000 shamt5 rs1 101 rd 0010011 SRLI", daTypeId, emu32_SRLI, emu64_SRLI},             // I
-		{"0100000 shamt5 rs1 101 rd 0010011 SRAI", daTypeId, emu32_SRAI, emu64_SRAI},             // I
-		{"0000000 rs2 rs1 000 rd 0110011 ADD", daTypeRa, emu32_ADD, emu64_ADD},                   // R
-		{"0100000 rs2 rs1 000 rd 0110011 SUB", daTypeRa, emu32_SUB, emu64_SUB},                   // R
-		{"0000000 rs2 rs1 001 rd 0110011 SLL", daTypeRa, emu32_SLL, emu64_SLL},                   // R
-		{"0000000 rs2 rs1 010 rd 0110011 SLT", daTypeRa, emu32_SLT, emu64_SLT},                   // R
-		{"0000000 rs2 rs1 011 rd 0110011 SLTU", daTypeRa, emu32_SLTU, emu64_SLTU},                // R
-		{"0000000 rs2 rs1 100 rd 0110011 XOR", daTypeRa, emu32_XOR, emu64_XOR},                   // R
-		{"0000000 rs2 rs1 101 rd 0110011 SRL", daTypeRa, emu32_SRL, emu64_SRL},                   // R
-		{"0100000 rs2 rs1 101 rd 0110011 SRA", daTypeRa, emu32_SRA, emu64_SRA},                   // R
-		{"0000000 rs2 rs1 110 rd 0110011 OR", daTypeRa, emu32_OR, emu64_OR},                      // R
-		{"0000000 rs2 rs1 111 rd 0110011 AND", daTypeRa, emu32_AND, emu64_AND},                   // R
-		{"0000 pred succ 00000 000 00000 0001111 FENCE", daNone, emu32_FENCE, emu64_FENCE},       // I
-		{"0000 0000 0000 00000 001 00000 0001111 FENCE.I", daNone, emu32_FENCE_I, emu64_FENCE_I}, // I
-		{"000000000000 00000 000 00000 1110011 ECALL", daNone, emu32_ECALL, emu64_ECALL},         // I
-		{"000000000001 00000 000 00000 1110011 EBREAK", daNone, emu32_EBREAK, emu64_EBREAK},      // I
-		{"csr rs1 001 rd 1110011 CSRRW", daTypeIh, emu32_CSRRW, emu64_CSRRW},                     // I
-		{"csr rs1 010 rd 1110011 CSRRS", daTypeIh, emu32_CSRRS, emu64_CSRRS},                     // I
-		{"csr rs1 011 rd 1110011 CSRRC", daTypeIh, emu32_CSRRC, emu64_CSRRC},                     // I
-		{"csr zimm 101 rd 1110011 CSRRWI", daNone, emu32_CSRRWI, emu64_CSRRWI},                   // I
-		{"csr zimm 110 rd 1110011 CSRRSI", daNone, emu32_CSRRSI, emu64_CSRRSI},                   // I
-		{"csr zimm 111 rd 1110011 CSRRCI", daNone, emu32_CSRRCI, emu64_CSRRCI},                   // I
+		{"imm[31:12] rd 0110111 LUI", daTypeUa, emu32_LUI, emu64_LUI},                              // U
+		{"imm[31:12] rd 0010111 AUIPC", daTypeUa, emu32_AUIPC, emu64_AUIPC},                        // U
+		{"imm[20|10:1|11|19:12] rd 1101111 JAL", daTypeJa, emu32_JAL, emu64_JAL},                   // J
+		{"imm[11:0] rs1 000 rd 1100111 JALR", daTypeIe, emu32_JALR, emu64_JALR},                    // I
+		{"imm[12|10:5] rs2 rs1 000 imm[4:1|11] 1100011 BEQ", daTypeBa, emu32_BEQ, emu64_BEQ},       // B
+		{"imm[12|10:5] rs2 rs1 001 imm[4:1|11] 1100011 BNE", daTypeBa, emu32_BNE, emu64_BNE},       // B
+		{"imm[12|10:5] rs2 rs1 100 imm[4:1|11] 1100011 BLT", daTypeBa, emu32_BLT, emu64_BLT},       // B
+		{"imm[12|10:5] rs2 rs1 101 imm[4:1|11] 1100011 BGE", daTypeBa, emu32_BGE, emu64_BGE},       // B
+		{"imm[12|10:5] rs2 rs1 110 imm[4:1|11] 1100011 BLTU", daTypeBa, emu32_BLTU, emu64_BLTU},    // B
+		{"imm[12|10:5] rs2 rs1 111 imm[4:1|11] 1100011 BGEU", daTypeBa, emu32_BGEU, emu64_BGEU},    // B
+		{"imm[11:0] rs1 000 rd 0000011 LB", daTypeIc, emu32_LB, emu64_LB},                          // I
+		{"imm[11:0] rs1 001 rd 0000011 LH", daTypeIc, emu32_LH, emu64_LH},                          // I
+		{"imm[11:0] rs1 010 rd 0000011 LW", daTypeIc, emu32_LW, emu64_LW},                          // I
+		{"imm[11:0] rs1 100 rd 0000011 LBU", daTypeIc, emu32_LBU, emu64_LBU},                       // I
+		{"imm[11:0] rs1 101 rd 0000011 LHU", daTypeIc, emu32_LHU, emu64_LHU},                       // I
+		{"imm[11:5] rs2 rs1 000 imm[4:0] 0100011 SB", daTypeSa, emu32_SB, emu64_SB},                // S
+		{"imm[11:5] rs2 rs1 001 imm[4:0] 0100011 SH", daTypeSa, emu32_SH, emu64_SH},                // S
+		{"imm[11:5] rs2 rs1 010 imm[4:0] 0100011 SW", daTypeSa, emu32_SW, emu64_SW},                // S
+		{"imm[11:0] rs1 000 rd 0010011 ADDI", daTypeIb, emu32_ADDI, emu64_ADDI},                    // I
+		{"imm[11:0] rs1 010 rd 0010011 SLTI", daTypeIa, emu32_SLTI, emu64_SLTI},                    // I
+		{"imm[11:0] rs1 011 rd 0010011 SLTIU", daTypeIa, emu32_SLTIU, emu64_SLTIU},                 // I
+		{"imm[11:0] rs1 100 rd 0010011 XORI", daTypeIf, emu32_XORI, emu64_XORI},                    // I
+		{"imm[11:0] rs1 110 rd 0010011 ORI", daTypeIa, emu32_ORI, emu64_ORI},                       // I
+		{"imm[11:0] rs1 111 rd 0010011 ANDI", daTypeIa, emu32_ANDI, emu64_ANDI},                    // I
+		{"0000000 shamt5 rs1 001 rd 0010011 SLLI", daTypeId, emu32_SLLI, emu64_SLLI},               // I
+		{"0000000 shamt5 rs1 101 rd 0010011 SRLI", daTypeId, emu32_SRLI, emu64_SRLI},               // I
+		{"0100000 shamt5 rs1 101 rd 0010011 SRAI", daTypeId, emu32_SRAI, emu64_SRAI},               // I
+		{"0000000 rs2 rs1 000 rd 0110011 ADD", daTypeRa, emu32_ADD, emu64_ADD},                     // R
+		{"0100000 rs2 rs1 000 rd 0110011 SUB", daTypeRa, emu32_SUB, emu64_SUB},                     // R
+		{"0000000 rs2 rs1 001 rd 0110011 SLL", daTypeRa, emu32_SLL, emu64_SLL},                     // R
+		{"0000000 rs2 rs1 010 rd 0110011 SLT", daTypeRa, emu32_SLT, emu64_SLT},                     // R
+		{"0000000 rs2 rs1 011 rd 0110011 SLTU", daTypeRa, emu32_SLTU, emu64_SLTU},                  // R
+		{"0000000 rs2 rs1 100 rd 0110011 XOR", daTypeRa, emu32_XOR, emu64_XOR},                     // R
+		{"0000000 rs2 rs1 101 rd 0110011 SRL", daTypeRa, emu32_SRL, emu64_SRL},                     // R
+		{"0100000 rs2 rs1 101 rd 0110011 SRA", daTypeRa, emu32_SRA, emu64_SRA},                     // R
+		{"0000000 rs2 rs1 110 rd 0110011 OR", daTypeRa, emu32_OR, emu64_OR},                        // R
+		{"0000000 rs2 rs1 111 rd 0110011 AND", daTypeRa, emu32_AND, emu64_AND},                     // R
+		{"0000 pred succ 00000 000 00000 0001111 FENCE", daNone, emu32_FENCE, emu64_FENCE},         // I
+		{"0000 0000 0000 00000 001 00000 0001111 FENCE.I", daTypeIi, emu32_FENCE_I, emu64_FENCE_I}, // I
+		{"000000000000 00000 000 00000 1110011 ECALL", daTypeIi, emu32_ECALL, emu64_ECALL},         // I
+		{"000000000001 00000 000 00000 1110011 EBREAK", daTypeIi, emu32_EBREAK, emu64_EBREAK},      // I
+		{"csr rs1 001 rd 1110011 CSRRW", daTypeIh, emu32_CSRRW, emu64_CSRRW},                       // I
+		{"csr rs1 010 rd 1110011 CSRRS", daTypeIh, emu32_CSRRS, emu64_CSRRS},                       // I
+		{"csr rs1 011 rd 1110011 CSRRC", daTypeIh, emu32_CSRRC, emu64_CSRRC},                       // I
+		{"csr zimm 101 rd 1110011 CSRRWI", daNone, emu32_CSRRWI, emu64_CSRRWI},                     // I
+		{"csr zimm 110 rd 1110011 CSRRSI", daNone, emu32_CSRRSI, emu64_CSRRSI},                     // I
+		{"csr zimm 111 rd 1110011 CSRRCI", daNone, emu32_CSRRCI, emu64_CSRRCI},                     // I
 	},
 }
 
@@ -195,19 +195,15 @@ var ISArv32d = ISAModule{
 	},
 }
 
-// ISArv32c Compressed
-var ISArv32c = ISAModule{
-	name: "rv32c",
+// ISArv32ic Compressed
+var ISArv32ic = ISAModule{
+	name: "rv32ic",
 	ilen: 16,
 	defn: []insDefn{
 		{"000 00000000 000 00 C.ILLEGAL", daTypeCIWa, emu32_C_ILLEGAL, emu64_C_ILLEGAL},                      // CIW (Quadrant 0)
 		{"000 nzuimm[5:4|9:6|2|3] rd0 00 C.ADDI4SPN", daTypeCIWb, emu32_C_ADDI4SPN, emu64_C_ADDI4SPN},        // CIW
-		{"001 uimm[5:3] rs10 uimm[7:6] rd0 00 C.FLD", daNone, emu32_C_FLD, emu64_C_FLD},                      // CL
-		{"010 uimm[5:3] rs10 uimm[2|6] rd0 00 C.LW", daNone, emu32_C_LW, emu64_C_LW},                         // CL
-		{"011 uimm[5:3] rs10 uimm[2|6] rd0 00 C.FLW", daNone, emu32_C_FLW, emu64_C_FLW},                      // CL
-		{"101 uimm[5:3] rs10 uimm[7:6] rs20 00 C.FSD", daNone, emu32_C_FSD, emu64_C_FSD},                     // CS
+		{"010 uimm[5:3] rs10 uimm[2|6] rd0 00 C.LW", daTypeCLa, emu32_C_LW, emu64_C_LW},                      // CL
 		{"110 uimm[5:3] rs10 uimm[2|6] rs20 00 C.SW", daTypeCSa, emu32_C_SW, emu64_C_SW},                     // CS
-		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", daTypeCSa, emu32_C_FSW, emu64_C_FSW},                  // CS
 		{"000 nzimm[5] 00000 nzimm[4:0] 01 C.NOP", daNop, emu32_C_NOP, emu64_C_NOP},                          // CI (Quadrant 1)
 		{"000 nzimm[5] rs1/rd!=0 nzimm[4:0] 01 C.ADDI", daTypeCIc, emu32_C_ADDI, emu64_C_ADDI},               // CI
 		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", daTypeCJc, emu32_C_JAL, emu64_C_JAL},                     // CJ
@@ -226,17 +222,37 @@ var ISArv32c = ISAModule{
 		{"111 imm[8|4:3] rs10 imm[7:6|2:1|5] 01 C.BNEZ", daTypeCBa, emu32_C_BNEZ, emu64_C_BNEZ},              // CB
 		{"000 nzuimm[5] rs1/rd!=0 nzuimm[4:0] 10 C.SLLI", daTypeCIe, emu32_C_SLLI, emu64_C_SLLI},             // CI (Quadrant 2)
 		{"000 0 rs1/rd!=0 00000 10 C.SLLI64", daNone, emu32_C_SLLI64, emu64_C_SLLI64},                        // CI
-		{"001 uimm[5] rd uimm[4:3|8:6] 10 C.FLDSP", daNone, emu32_C_FLDSP, emu64_C_FLDSP},                    // CSS
 		{"010 uimm[5] rd!=0 uimm[4:2|7:6] 10 C.LWSP", daTypeCSSa, emu32_C_LWSP, emu64_C_LWSP},                // CSS
-		{"011 uimm[5] rd uimm[4:2|7:6] 10 C.FLWSP", daNone, emu32_C_FLWSP, emu64_C_FLWSP},                    // CSS
-		{"100 0 rs1!=0 00000 10 C.JR", daTypeCJa, emu32_C_JR, emu64_C_JR},                                    // CJ
+		{"100 0 rs1!=0 00000 10 C.JR", daTypeCRd, emu32_C_JR, emu64_C_JR},                                    // CR
 		{"100 0 rd!=0 rs2!=0 10 C.MV", daTypeCRa, emu32_C_MV, emu64_C_MV},                                    // CR
 		{"100 1 00000 00000 10 C.EBREAK", daNone, emu32_C_EBREAK, emu64_C_EBREAK},                            // CI
-		{"100 1 rs1!=0 00000 10 C.JALR", daNone, emu32_C_JALR, emu64_C_JALR},                                 // CJ
+		{"100 1 rs1!=0 00000 10 C.JALR", daTypeCRe, emu32_C_JALR, emu64_C_JALR},                              // CR
 		{"100 1 rs1/rd!=0 rs2!=0 10 C.ADD", daTypeCRb, emu32_C_ADD, emu64_C_ADD},                             // CR
-		{"101 uimm[5:3|8:6] rs2 10 C.FSDSP", daNone, emu32_C_FSDSP, emu64_C_FSDSP},                           // CSS
 		{"110 uimm[5:2|7:6] rs2 10 C.SWSP", daTypeCSSb, emu32_C_SWSP, emu64_C_SWSP},                          // CSS
-		{"111 uimm[5:2|7:6] rs2 10 C.FSWSP", daNone, emu32_C_FSWSP, emu64_C_FSWSP},                           // CSS
+	},
+}
+
+// ISArv32fc Compressed
+var ISArv32fc = ISAModule{
+	name: "rv32fc",
+	ilen: 16,
+	defn: []insDefn{
+		{"011 uimm[5:3] rs10 uimm[2|6] rd0 00 C.FLW", daNone, emu32_C_FLW, emu64_C_FLW},     // CL
+		{"011 uimm[5] rd uimm[4:2|7:6] 10 C.FLWSP", daNone, emu32_C_FLWSP, emu64_C_FLWSP},   // CSS
+		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", daTypeCSa, emu32_C_FSW, emu64_C_FSW}, // CS
+		{"111 uimm[5:2|7:6] rs2 10 C.FSWSP", daNone, emu32_C_FSWSP, emu64_C_FSWSP},          // CSS
+	},
+}
+
+// ISArv32dc Compressed
+var ISArv32dc = ISAModule{
+	name: "rv32dc",
+	ilen: 16,
+	defn: []insDefn{
+		{"001 uimm[5:3] rs10 uimm[7:6] rd0 00 C.FLD", daNone, emu32_C_FLD, emu64_C_FLD},   // CL
+		{"001 uimm[5] rd uimm[4:3|8:6] 10 C.FLDSP", daNone, emu32_C_FLDSP, emu64_C_FLDSP}, // CSS
+		{"101 uimm[5:3] rs10 uimm[7:6] rs20 00 C.FSD", daNone, emu32_C_FSD, emu64_C_FSD},  // CS
+		{"101 uimm[5:3|8:6] rs2 10 C.FSDSP", daNone, emu32_C_FSDSP, emu64_C_FSDSP},        // CSS
 	},
 }
 
@@ -324,9 +340,9 @@ var ISArv64d = ISAModule{
 	},
 }
 
-// ISArv64c Compressed
-var ISArv64c = ISAModule{
-	name: "rv64c",
+// ISArv64ic Compressed
+var ISArv64ic = ISAModule{
+	name: "rv64ic",
 	ilen: 16,
 	defn: []insDefn{
 		{"100 1 11 rs10/rd0 00 rs20 01 C.SUBW", daTypeCRc, emu32_Illegal, emu64_C_SUBW}, // CR
@@ -344,7 +360,7 @@ var ISArv32g = []ISAModule{
 
 // ISArv32gc = RV32imafdc
 var ISArv32gc = []ISAModule{
-	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32c,
+	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32ic, ISArv32fc, ISArv32dc,
 }
 
 // ISArv64g = RV64imafd
@@ -355,8 +371,8 @@ var ISArv64g = []ISAModule{
 
 // ISArv64gc = RV64imafdc
 var ISArv64gc = []ISAModule{
-	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32c,
-	ISArv64i, ISArv64m, ISArv64a, ISArv64f, ISArv64d, ISArv64c,
+	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32ic, ISArv32fc, ISArv32dc,
+	ISArv64i, ISArv64m, ISArv64a, ISArv64f, ISArv64d, ISArv64ic,
 }
 
 //-----------------------------------------------------------------------------

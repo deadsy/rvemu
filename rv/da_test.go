@@ -72,6 +72,8 @@ func Test_RV32G(t *testing.T) {
 		{0x118, 0xfeb42423, "sw a1,-24(s0)"},
 		{0x11c, 0xfe842783, "lw a5,-24(s0)"},
 		{0xfe, 0xfec42783, "lw a5,-20(s0)"},
+		{0, 0x00000073, "ecall"},
+
 		// rv32m
 		{0, 0x025535b3, "mulhu a1,a0,t0"},
 		// rv32a
@@ -106,7 +108,7 @@ func Test_RV32G(t *testing.T) {
 func Test_RV32C(t *testing.T) {
 
 	isa := NewISA()
-	err := isa.Add([]ISAModule{ISArv32c})
+	err := isa.Add([]ISAModule{ISArv32ic})
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		t.Error("FAIL")
@@ -143,6 +145,11 @@ func Test_RV32C(t *testing.T) {
 		{0, 0xc30c, "sw a1,0(a4)"},
 		{0, 0xc74c, "sw a1,12(a4)"},
 		{0, 0xc78c, "sw a1,8(a5)"},
+		{0, 0x4398, "lw a4,0(a5)"},
+		{0, 0x40d4, "lw a3,4(s1)"},
+		{0, 0x4388, "lw a0,0(a5)"},
+		{0, 0x9682, "jalr a3"},
+		{0, 0x9782, "jalr a5"},
 	}
 
 	for _, v := range daTest {

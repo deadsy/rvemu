@@ -200,7 +200,7 @@ var knownDecodes = map[string]decodeType{
 	"3b_uimm[5]_rd_uimm[4:3|8:6]_2b":          decodeTypeCSS,
 	"3b_uimm[5]_rd!=0_uimm[4:2|7:6]_2b":       decodeTypeCSS,
 	"3b_uimm[5]_rd_uimm[4:2|7:6]_2b":          decodeTypeCSS,
-	"3b_1b_rs1!=0_5b_2b":                      decodeTypeCJ,
+	"3b_1b_rs1!=0_5b_2b":                      decodeTypeCR,
 	"3b_1b_rd!=0_rs2!=0_2b":                   decodeTypeCR,
 	"3b_1b_5b_5b_2b":                          decodeTypeCI,
 	"3b_1b_rs1/rd!=0_rs2!=0_2b":               decodeTypeCR,
@@ -239,6 +239,7 @@ func nameRemap(name string) string {
 		"c.bnez":     "bnez",
 		"c.beqz":     "beqz",
 		"c.jal":      "jal",
+		"c.jalr":     "jalr",
 		"c.nop":      "nop",
 		"c.sub":      "sub",
 		"c.xor":      "xor",
@@ -247,6 +248,7 @@ func nameRemap(name string) string {
 		"c.subw":     "subw",
 		"c.addw":     "addw",
 		"c.sw":       "sw",
+		"c.lw":       "lw",
 	}
 	if s, ok := x[name]; ok {
 		return s
