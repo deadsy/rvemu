@@ -266,7 +266,9 @@ func emu32_SLTU(m *RV32, ins uint) {
 }
 
 func emu32_XOR(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, m.X[rs1]^m.X[rs2])
+	m.PC += 4
 }
 
 func emu32_SRL(m *RV32, ins uint) {
@@ -278,11 +280,15 @@ func emu32_SRA(m *RV32, ins uint) {
 }
 
 func emu32_OR(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, m.X[rs1]|m.X[rs2])
+	m.PC += 4
 }
 
 func emu32_AND(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, m.X[rs1]&m.X[rs2])
+	m.PC += 4
 }
 
 func emu32_FENCE(m *RV32, ins uint) {
@@ -296,7 +302,9 @@ func emu32_FENCE_I(m *RV32, ins uint) {
 func emu32_ECALL(m *RV32, ins uint) {
 	switch m.X[regA7] {
 	case syscallExit:
-		m.flag |= flagExit
+		m.scExit()
+	case syscallFstat:
+		m.scFstat()
 	default:
 		m.flag |= flagSyscall
 	}
@@ -916,6 +924,17 @@ func emu32_C_FSWSP(m *RV32, ins uint) {
 }
 
 //-----------------------------------------------------------------------------
+// system calls
+
+func (m *RV32) scExit() {
+	m.flag |= flagExit
+}
+
+func (m *RV32) scFstat() {
+	m.flag |= flagSyscall
+}
+
+//-----------------------------------------------------------------------------
 // private methods
 
 // wrX sets a register value (no writes to zero).
@@ -1025,9 +1044,8 @@ func (m *RV32) Run() error {
 	// stuck PC detection
 	if m.PC == m.lastPC {
 		return fmt.Errorf("PC is stuck at %08x (%d instructions)", m.PC, m.insCount)
-	} else {
-		m.lastPC = m.PC
 	}
+	m.lastPC = m.PC
 
 	return nil
 }

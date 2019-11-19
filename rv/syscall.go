@@ -3,6 +3,8 @@
 
 RISC-V POSIX System Calls
 
+See: https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/unistd.h
+
 */
 //-----------------------------------------------------------------------------
 
@@ -10,6 +12,7 @@ package rv
 
 //-----------------------------------------------------------------------------
 
+const syscallFstat = 80
 const syscallExit = 93
 
 //-----------------------------------------------------------------------------

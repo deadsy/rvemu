@@ -228,7 +228,9 @@ func emu64_SLTU(m *RV64, ins uint) {
 }
 
 func emu64_XOR(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, m.X[rs1]^m.X[rs2])
+	m.PC += 4
 }
 
 func emu64_SRL(m *RV64, ins uint) {
@@ -240,11 +242,15 @@ func emu64_SRA(m *RV64, ins uint) {
 }
 
 func emu64_OR(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, m.X[rs1]|m.X[rs2])
+	m.PC += 4
 }
 
 func emu64_AND(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, m.X[rs1]&m.X[rs2])
+	m.PC += 4
 }
 
 func emu64_FENCE(m *RV64, ins uint) {
@@ -256,7 +262,15 @@ func emu64_FENCE_I(m *RV64, ins uint) {
 }
 
 func emu64_ECALL(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	switch m.X[regA7] {
+	case syscallExit:
+		m.scExit()
+	case syscallFstat:
+		m.scFstat()
+	default:
+		m.flag |= flagSyscall
+	}
+	m.PC += 4
 }
 
 func emu64_EBREAK(m *RV64, ins uint) {
@@ -1052,6 +1066,17 @@ func emu64_C_ADDW(m *RV64, ins uint) {
 }
 
 //-----------------------------------------------------------------------------
+// system calls
+
+func (m *RV64) scExit() {
+	m.flag |= flagExit
+}
+
+func (m *RV64) scFstat() {
+	m.flag |= flagSyscall
+}
+
+//-----------------------------------------------------------------------------
 // private methods
 
 // wrX sets a register value (no writes to zero).
@@ -1149,6 +1174,9 @@ func (m *RV64) Run() error {
 		if m.flag&flagExit != 0 {
 			return fmt.Errorf("exit at PC %016x, status %016x (%d instructions)", m.PC, m.X[1], m.insCount)
 		}
+		if m.flag&flagSyscall != 0 {
+			return fmt.Errorf("unrecognised system call at PC %016x, %d", m.PC, m.X[regA7])
+		}
 		if m.flag&flagTodo != 0 {
 			return fmt.Errorf("unimplemented instruction at PC %016x", m.PC)
 		}
@@ -1158,9 +1186,8 @@ func (m *RV64) Run() error {
 	// stuck PC detection
 	if m.PC == m.lastPC {
 		return fmt.Errorf("PC is stuck at %016x (%d instructions)", m.PC, m.insCount)
-	} else {
-		m.lastPC = m.PC
 	}
+	m.lastPC = m.PC
 
 	return nil
 }
