@@ -16,12 +16,11 @@ INCLUDE =
 DEFINE =
 
 # compiler flags
-X_CFLAGS = -march=rv32gc -mabi=ilp32d
+#X_CFLAGS = -march=rv32gc -mabi=ilp32d
+X_CFLAGS = -march=rv64gc -mabi=lp64d
 X_CFLAGS += -Wall -Wstrict-prototypes -Werror
 
 # linker flags
-#LDSCRIPT = emu.ld
-#X_LDFLAGS = -T$(LDSCRIPT) -Wl,-Map,$(OUTPUT).map -Wl,--gc-sections -nostdlib
 X_LDFLAGS = -Wl,-Map,$(OUTPUT).map -Wl,--gc-sections
 
 .S.o:
