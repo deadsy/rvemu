@@ -224,6 +224,8 @@ func nameRemap(name string) string {
 		"c.ret":      "ret",
 		"c.lwsp":     "lw",
 		"c.swsp":     "sw",
+		"c.ldsp":     "ld",
+		"c.sdsp":     "sd",
 		"c.li":       "li",
 		"c.mv":       "mv",
 		"c.addi16sp": "addi",
@@ -250,6 +252,7 @@ func nameRemap(name string) string {
 		"c.sw":       "sw",
 		"c.lw":       "lw",
 		"c.sd":       "sd",
+		"c.ld":       "ld",
 	}
 	if s, ok := x[name]; ok {
 		return s

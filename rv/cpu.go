@@ -169,6 +169,14 @@ func decodeCIf(ins uint) (int, uint) {
 	return imm, rd
 }
 
+func decodeCIg(ins uint) (uint, uint) {
+	uimm := bitUnsigned(ins, 12, 12, 5) // imm[5]
+	uimm += bitUnsigned(ins, 6, 5, 3)   // imm[4:3]
+	uimm += bitUnsigned(ins, 4, 2, 6)   // imm[8:6]
+	rd := bitUnsigned(ins, 11, 7, 0)
+	return uimm, rd
+}
+
 func decodeCIW(ins uint) (uint, uint) {
 	uimm := bitUnsigned(ins, 12, 11, 4) // imm[5:4]
 	uimm += bitUnsigned(ins, 10, 7, 6)  // imm[9:6]

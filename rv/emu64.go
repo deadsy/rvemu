@@ -871,11 +871,20 @@ func emu64_LWU(m *RV64, ins uint) {
 }
 
 func emu64_LD(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	val, ex := m.Mem.Rd64(adr)
+	m.checkMemory(adr, ex)
+	m.wrX(rd, val)
+	m.PC += 4
 }
 
 func emu64_SD(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	imm, rs2, rs1 := decodeS(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	ex := m.Mem.Wr64(adr, m.X[rs2])
+	m.checkMemory(adr, ex)
+	m.PC += 4
 }
 
 func emu64_SLLI(m *RV64, ins uint) {
@@ -1051,6 +1060,32 @@ func emu64_FMV_D_X(m *RV64, ins uint) {
 //-----------------------------------------------------------------------------
 // rv64c
 
+func emu64_C_LDSP(m *RV64, ins uint) {
+	uimm, rd := decodeCIg(ins)
+	adr := uint(m.X[regSp]) + uimm
+	val, ex := m.Mem.Rd64(adr)
+	m.checkMemory(adr, ex)
+	if rd != 0 {
+		m.X[rd] = val
+	} else {
+		m.flag |= flagIllegal
+	}
+	m.PC += 2
+}
+
+func emu64_C_SDSP(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu64_C_LD(m *RV64, ins uint) {
+	uimm, rs1, rd := decodeCSa(ins)
+	adr := uint(m.X[rs1]) + uimm
+	val, ex := m.Mem.Rd64(adr)
+	m.checkMemory(adr, ex)
+	m.X[rd] = val
+	m.PC += 2
+}
+
 func emu64_C_SD(m *RV64, ins uint) {
 	uimm, rs1, rs2 := decodeCSa(ins)
 	adr := uint(m.X[rs1]) + uimm
@@ -1152,6 +1187,7 @@ func (m *RV64) Reset() {
 	m.PC = uint64(m.Mem.Entry)
 	m.insCount = 0
 	m.lastPC = 0
+	m.flag = 0
 }
 
 // Run the RV64 CPU for a single instruction.

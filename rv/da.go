@@ -279,6 +279,11 @@ func daTypeCIg(name string, pc uint, ins uint) string {
 	return fmt.Sprintf("%s %s,0x%x", name, abiXName[rd], imm)
 }
 
+func daTypeCIh(name string, pc uint, ins uint) string {
+	uimm, rd := decodeCIg(ins)
+	return fmt.Sprintf("%s %s,%d(sp)", name, abiXName[rd], uimm)
+}
+
 //-----------------------------------------------------------------------------
 // Type CIW Decodes
 

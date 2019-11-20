@@ -144,6 +144,10 @@ var rv64dTest = []daTest{}
 var rv64cTest = []daTest{
 	{0, 0xe30c, "sd a1,0(a4)"},
 	{0, 0xe70c, "sd a1,8(a4)"},
+	{0, 0x6398, "ld a4,0(a5)"},
+	{0, 0x60a6, "ld ra,72(sp)"},
+	{0, 0x6406, "ld s0,64(sp)"},
+	{0, 0x74e2, "ld s1,56(sp)"},
 }
 
 //-----------------------------------------------------------------------------
@@ -196,7 +200,23 @@ func Test_Disassembly(t *testing.T) {
 		module []ISAModule
 		tests  []daTest
 	}{
+		// rv32
 		{[]ISAModule{ISArv32i}, rv32iTest},
+		{[]ISAModule{ISArv32m}, rv32mTest},
+		{[]ISAModule{ISArv32a}, rv32aTest},
+		{[]ISAModule{ISArv32f}, rv32fTest},
+		{[]ISAModule{ISArv32d}, rv32dTest},
+		{[]ISAModule{ISArv32c}, rv32cTest},
+		{[]ISAModule{ISArv32fc}, rv32fcTest},
+		{[]ISAModule{ISArv32dc}, rv32dcTest},
+		// rv64
+		{[]ISAModule{ISArv64i}, rv64iTest},
+		{[]ISAModule{ISArv64m}, rv64mTest},
+		{[]ISAModule{ISArv64a}, rv64aTest},
+		{[]ISAModule{ISArv64f}, rv64fTest},
+		{[]ISAModule{ISArv64d}, rv64dTest},
+		{[]ISAModule{ISArv64c}, rv64cTest},
+		// together
 		{ISArv32gc, rv32Tests},
 		{ISArv64gc, rv64Tests},
 	}

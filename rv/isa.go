@@ -345,6 +345,9 @@ var ISArv64c = ISAModule{
 	name: "rv64c",
 	ilen: 16,
 	defn: []insDefn{
+		{"011 uimm[5] rd uimm[4:3|8:6] 10 C.LDSP", daTypeCIh, emu32_Illegal, emu64_C_LDSP},  // CI
+		{"111 uimm[5:3|8:6] rs2 10 C.SDSP", daNone, emu32_Illegal, emu64_C_SDSP},            // CSS
+		{"011 uimm[5:3] rs10 uimm[7:6] rd0 00 C.LD", daTypeCSb, emu32_Illegal, emu64_C_LD},  // CL
 		{"111 uimm[5:3] rs10 uimm[7:6] rs20 00 C.SD", daTypeCSb, emu32_Illegal, emu64_C_SD}, // CS
 		{"100 1 11 rs10/rd0 00 rs20 01 C.SUBW", daTypeCRc, emu32_Illegal, emu64_C_SUBW},     // CR
 		{"100 1 11 rs10/rd0 01 rs20 01 C.ADDW", daTypeCRc, emu32_Illegal, emu64_C_ADDW},     // CR
@@ -360,6 +363,7 @@ var ISArv128c = ISAModule{
 	defn: []insDefn{
 		// C.SQ
 		// C.LQ
+		// C.LQSP
 	},
 }
 

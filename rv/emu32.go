@@ -1006,6 +1006,7 @@ func (m *RV32) Reset() {
 	m.PC = uint32(m.Mem.Entry)
 	m.insCount = 0
 	m.lastPC = 0
+	m.flag = 0
 }
 
 // Run the RV32 CPU for a single instruction.
