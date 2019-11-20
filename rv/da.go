@@ -36,11 +36,11 @@ const (
 	regSp          // 2: stack pointer
 	regGp          // 3: global pointer
 	regTp          // 4: thread pointer
-	reg5           // 5:
-	reg6           // 6:
-	reg7           // 7:
-	regFp          // 8: frame pointer
-	reg9           // 9:
+	regT0          // 5:
+	regT1          // 6:
+	regT2          // 7:
+	regS0          // 8: frame pointer
+	regS1          // 9:
 	regA0          // 10: syscall 0
 	regA1          // 11: syscall 1
 	regA2          // 12: syscall 2
@@ -49,20 +49,20 @@ const (
 	regA5          // 15: syscall 5
 	regA6          // 16: syscall 6
 	regA7          // 17: syscall 7
-	reg18          // 18:
-	reg19          // 19:
-	reg20          // 20:
-	reg21          // 21:
-	reg22          // 22:
-	reg23          // 23:
-	reg24          // 24:
-	reg25          // 25:
-	reg26          // 26:
-	reg27          // 27:
-	reg28          // 28:
-	reg29          // 29:
-	reg30          // 30:
-	reg31          // 31:
+	regS2          // 18:
+	regS3          // 19:
+	regS4          // 20:
+	regS5          // 21:
+	regS6          // 22:
+	regS7          // 23:
+	regS8          // 24:
+	regS9          // 25:
+	regS10         // 26:
+	regS11         // 27:
+	regT3          // 28:
+	regT4          // 29:
+	regT5          // 30:
+	regT6          // 31:
 )
 
 //-----------------------------------------------------------------------------

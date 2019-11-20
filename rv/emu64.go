@@ -1118,15 +1118,19 @@ func NewRV64(isa *ISA, mem *mem.Memory) *RV64 {
 	}
 }
 
-// Dump returns a display string for the CPU registers.
-func (m *RV64) Dump() string {
+// IRegs returns a display string for the integer registers.
+func (m *RV64) IRegs() string {
 	nregs := 32
 	s := make([]string, nregs+1)
 	for i := 0; i < nregs; i++ {
 		x := fmt.Sprintf("x%d", i)
-		s[i] = fmt.Sprintf("%-4s %-4s %08x", x, abiXName[i], m.X[i])
+		r := "0"
+		if m.X[i] != 0 {
+			r = fmt.Sprintf("%016x", m.X[i])
+		}
+		s[i] = fmt.Sprintf("%-4s %-4s %s", x, abiXName[i], r)
 	}
-	s[nregs] = fmt.Sprintf("%-9s %08x", "pc", m.PC)
+	s[nregs] = fmt.Sprintf("%-9s %016x", "pc", m.PC)
 	return strings.Join(s, "\n")
 }
 
