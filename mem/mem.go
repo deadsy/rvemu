@@ -46,12 +46,12 @@ func newMemory(alen int) *Memory {
 
 // NewMem32 returns the memory for 32-bit processor.
 func NewMem32() *Memory {
-  return newMemory(32)
+	return newMemory(32)
 }
 
 // NewMem64 returns the memory for 64-bit processor.
 func NewMem64() *Memory {
-  return newMemory(64)
+	return newMemory(64)
 }
 
 // Add a memory segment to the memory.
@@ -78,6 +78,11 @@ func (m *Memory) RdIns(adr uint) (uint, Exception) {
 	return m.find(adr, 4).RdIns(adr)
 }
 
+// Rd64 reads a 64-bit data value from memory.
+func (m *Memory) Rd64(adr uint) (uint64, Exception) {
+	return m.find(adr, 8).Rd64(adr)
+}
+
 // Rd32 reads a 32-bit data value from memory.
 func (m *Memory) Rd32(adr uint) (uint32, Exception) {
 	return m.find(adr, 4).Rd32(adr)
@@ -91,6 +96,11 @@ func (m *Memory) Rd16(adr uint) (uint16, Exception) {
 // Rd8 reads an 8-bit data value from memory.
 func (m *Memory) Rd8(adr uint) (uint8, Exception) {
 	return m.find(adr, 1).Rd8(adr)
+}
+
+// Wr64 writes a 64-bit data value to memory.
+func (m *Memory) Wr64(adr uint, val uint64) Exception {
+	return m.find(adr, 8).Wr64(adr, val)
 }
 
 // Wr32 writes a 32-bit data value to memory.

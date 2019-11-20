@@ -16,10 +16,8 @@ import (
 )
 
 //-----------------------------------------------------------------------------
-// default emulation
 
 func emu32_Illegal(m *RV32, ins uint) {
-	// Trying to run an rv64 instruction on an rv32.
 	m.flag |= flagIllegal
 }
 
@@ -1022,8 +1020,12 @@ func (m *RV32) Run() error {
 
 	// lookup and emulate the instruction
 	im := m.isa.lookup(ins)
-	im.defn.emu32(m, ins)
-	m.insCount++
+	if im != nil {
+		im.defn.emu32(m, ins)
+		m.insCount++
+	} else {
+		m.flag |= flagIllegal
+	}
 
 	// check exception flags
 	if m.flag != 0 {

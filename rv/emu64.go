@@ -16,6 +16,12 @@ import (
 )
 
 //-----------------------------------------------------------------------------
+
+func emu64_Illegal(m *RV64, ins uint) {
+	m.flag |= flagIllegal
+}
+
+//-----------------------------------------------------------------------------
 // rv32i
 
 func emu64_LUI(m *RV64, ins uint) {
@@ -655,10 +661,6 @@ func emu64_C_LW(m *RV64, ins uint) {
 	m.PC += 2
 }
 
-func emu64_C_FLW(m *RV64, ins uint) {
-	m.flag |= flagTodo
-}
-
 func emu64_C_FSD(m *RV64, ins uint) {
 	m.flag |= flagTodo
 }
@@ -811,10 +813,6 @@ func emu64_C_LWSP(m *RV64, ins uint) {
 	m.PC += 2
 }
 
-func emu64_C_FLWSP(m *RV64, ins uint) {
-	m.flag |= flagTodo
-}
-
 func emu64_C_JR(m *RV64, ins uint) {
 	rs1, _ := decodeCR(ins)
 	if rs1 == 0 {
@@ -863,10 +861,6 @@ func emu64_C_SWSP(m *RV64, ins uint) {
 	ex := m.Mem.Wr32(adr, uint32(m.X[rs2]))
 	m.checkMemory(adr, ex)
 	m.PC += 2
-}
-
-func emu64_C_FSWSP(m *RV64, ins uint) {
-	m.flag |= flagTodo
 }
 
 //-----------------------------------------------------------------------------
@@ -1057,6 +1051,14 @@ func emu64_FMV_D_X(m *RV64, ins uint) {
 //-----------------------------------------------------------------------------
 // rv64c
 
+func emu64_C_SD(m *RV64, ins uint) {
+	uimm, rs1, rs2 := decodeCSa(ins)
+	adr := uint(m.X[rs1]) + uimm
+	ex := m.Mem.Wr64(adr, m.X[rs2])
+	m.checkMemory(adr, ex)
+	m.PC += 2
+}
+
 func emu64_C_SUBW(m *RV64, ins uint) {
 	m.flag |= flagTodo
 }
@@ -1164,8 +1166,12 @@ func (m *RV64) Run() error {
 
 	// lookup and emulate the instruction
 	im := m.isa.lookup(ins)
-	im.defn.emu64(m, ins)
-	m.insCount++
+	if im != nil {
+		im.defn.emu64(m, ins)
+		m.insCount++
+	} else {
+		m.flag |= flagIllegal
+	}
 
 	// check exception flags
 	if m.flag != 0 {

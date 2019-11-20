@@ -93,6 +93,15 @@ var knownFields = map[string]int{
 	"rs1":                        5,
 	"rs2":                        5,
 	"rs3":                        5,
+	"rs1/rd!=0":                  5,
+	"rd!=0":                      5,
+	"rs1!=0":                     5,
+	"rs2!=0":                     5,
+	"rd!={0,2}":                  5,
+	"rd0":                        3,
+	"rs10":                       3,
+	"rs20":                       3,
+	"rs10/rd0":                   3,
 	"rm":                         3,
 	"aq":                         1,
 	"rl":                         1,
@@ -117,15 +126,6 @@ var knownFields = map[string]int{
 	"nzuimm[5:4|9:6|2|3]":        8,
 	"nzuimm[5]":                  1,
 	"nzuimm[4:0]":                5,
-	"rd0":                        3,
-	"rs10":                       3,
-	"rs20":                       3,
-	"rs1/rd!=0":                  5,
-	"rd!=0":                      5,
-	"rs1!=0":                     5,
-	"rs2!=0":                     5,
-	"rd!={0,2}":                  5,
-	"rs10/rd0":                   3,
 }
 
 // isField returns the length of an instruction field.
@@ -249,6 +249,7 @@ func nameRemap(name string) string {
 		"c.addw":     "addw",
 		"c.sw":       "sw",
 		"c.lw":       "lw",
+		"c.sd":       "sd",
 	}
 	if s, ok := x[name]; ok {
 		return s

@@ -195,9 +195,9 @@ var ISArv32d = ISAModule{
 	},
 }
 
-// ISArv32ic Compressed
-var ISArv32ic = ISAModule{
-	name: "rv32ic",
+// ISArv32c Compressed
+var ISArv32c = ISAModule{
+	name: "rv32c",
 	ilen: 16,
 	defn: []insDefn{
 		{"000 00000000 000 00 C.ILLEGAL", daTypeCIWa, emu32_C_ILLEGAL, emu64_C_ILLEGAL},                      // CIW (Quadrant 0)
@@ -237,10 +237,10 @@ var ISArv32fc = ISAModule{
 	name: "rv32fc",
 	ilen: 16,
 	defn: []insDefn{
-		{"011 uimm[5:3] rs10 uimm[2|6] rd0 00 C.FLW", daNone, emu32_C_FLW, emu64_C_FLW},     // CL
-		{"011 uimm[5] rd uimm[4:2|7:6] 10 C.FLWSP", daNone, emu32_C_FLWSP, emu64_C_FLWSP},   // CSS
-		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", daTypeCSa, emu32_C_FSW, emu64_C_FSW}, // CS
-		{"111 uimm[5:2|7:6] rs2 10 C.FSWSP", daNone, emu32_C_FSWSP, emu64_C_FSWSP},          // CSS
+		{"011 uimm[5:3] rs10 uimm[2|6] rd0 00 C.FLW", daNone, emu32_C_FLW, emu64_Illegal},     // CL
+		{"011 uimm[5] rd uimm[4:2|7:6] 10 C.FLWSP", daNone, emu32_C_FLWSP, emu64_Illegal},     // CSS
+		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", daTypeCSa, emu32_C_FSW, emu64_Illegal}, // CS
+		{"111 uimm[5:2|7:6] rs2 10 C.FSWSP", daNone, emu32_C_FSWSP, emu64_Illegal},            // CSS
 	},
 }
 
@@ -340,13 +340,26 @@ var ISArv64d = ISAModule{
 	},
 }
 
-// ISArv64ic Compressed
-var ISArv64ic = ISAModule{
-	name: "rv64ic",
+// ISArv64c Compressed
+var ISArv64c = ISAModule{
+	name: "rv64c",
 	ilen: 16,
 	defn: []insDefn{
-		{"100 1 11 rs10/rd0 00 rs20 01 C.SUBW", daTypeCRc, emu32_Illegal, emu64_C_SUBW}, // CR
-		{"100 1 11 rs10/rd0 01 rs20 01 C.ADDW", daTypeCRc, emu32_Illegal, emu64_C_ADDW}, // CR
+		{"111 uimm[5:3] rs10 uimm[7:6] rs20 00 C.SD", daTypeCSb, emu32_Illegal, emu64_C_SD}, // CS
+		{"100 1 11 rs10/rd0 00 rs20 01 C.SUBW", daTypeCRc, emu32_Illegal, emu64_C_SUBW},     // CR
+		{"100 1 11 rs10/rd0 01 rs20 01 C.ADDW", daTypeCRc, emu32_Illegal, emu64_C_ADDW},     // CR
+	},
+}
+
+//-----------------------------------------------------------------------------
+
+// ISArv128c Compressed
+var ISArv128c = ISAModule{
+	name: "rv128c",
+	ilen: 16,
+	defn: []insDefn{
+		// C.SQ
+		// C.LQ
 	},
 }
 
@@ -360,7 +373,7 @@ var ISArv32g = []ISAModule{
 
 // ISArv32gc = RV32imafdc
 var ISArv32gc = []ISAModule{
-	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32ic, ISArv32fc, ISArv32dc,
+	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32c, ISArv32fc, ISArv32dc,
 }
 
 // ISArv64g = RV64imafd
@@ -371,8 +384,8 @@ var ISArv64g = []ISAModule{
 
 // ISArv64gc = RV64imafdc
 var ISArv64gc = []ISAModule{
-	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32ic, ISArv32fc, ISArv32dc,
-	ISArv64i, ISArv64m, ISArv64a, ISArv64f, ISArv64d, ISArv64ic,
+	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32c, ISArv32dc,
+	ISArv64i, ISArv64m, ISArv64a, ISArv64f, ISArv64d, ISArv64c,
 }
 
 //-----------------------------------------------------------------------------
