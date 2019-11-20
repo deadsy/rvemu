@@ -25,21 +25,33 @@ type Range struct {
 
 // Memory is emulated target memory.
 type Memory struct {
-	segment   []Segment         // memory segments
-	Entry     uint64            // entry point from ELF
-	symByAddr map[uint]string   // symbol table by address
-	symByName map[string]*Range // symbol table by name
-	da        map[uint]string   // reference disassembly
+	segment    []Segment         // memory segments
+	Entry      uint64            // entry point from ELF
+	AddrLength int               // address bit length
+	symByAddr  map[uint]string   // symbol table by address
+	symByName  map[string]*Range // symbol table by name
+	da         map[uint]string   // reference disassembly
 }
 
-// NewMemory returns a memory object.
-func NewMemory() *Memory {
+// newMemory returns a memory object.
+func newMemory(alen int) *Memory {
 	return &Memory{
-		segment:   make([]Segment, 0),
-		symByAddr: make(map[uint]string),
-		symByName: make(map[string]*Range),
-		da:        make(map[uint]string),
+		AddrLength: alen,
+		segment:    make([]Segment, 0),
+		symByAddr:  make(map[uint]string),
+		symByName:  make(map[string]*Range),
+		da:         make(map[uint]string),
 	}
+}
+
+// NewMem32 returns the memory for 32-bit processor.
+func NewMem32() *Memory {
+  return newMemory(32)
+}
+
+// NewMem64 returns the memory for 64-bit processor.
+func NewMem64() *Memory {
+  return newMemory(64)
 }
 
 // Add a memory segment to the memory.

@@ -18,7 +18,6 @@ import (
 //-----------------------------------------------------------------------------
 
 const maxAdr = (1 << 32) - 1
-const xLength = 32
 
 //-----------------------------------------------------------------------------
 // cli related leaf functions
@@ -60,7 +59,7 @@ var cmdMemDisplay = cli.Leaf{
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		c.User.Put(util.MemDisplay(c.User.(*userApp).mem, adr, size, xLength))
+		c.User.Put(util.MemDisplay(c.User.(*userApp).mem, adr, size))
 	},
 }
 

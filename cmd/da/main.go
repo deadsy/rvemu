@@ -104,7 +104,7 @@ func main() {
 	flag.Parse()
 
 	// create the memory
-	m := mem.NewMemory()
+	m := mem.NewMem32()
 	m.Add(mem.NewChunk(0, 64<<10, mem.AttrRW))
 
 	// load the memory
