@@ -45,7 +45,8 @@ func newUserApp() (*userApp, error) {
 	m := mem.NewMem64()
 	m.Add(mem.NewChunk(0, 256<<10, mem.AttrRWX))
 	m.Add(mem.NewChunk(0xfffc0000, 256<<10, mem.AttrRW))
-	m.Add(mem.NewEmpty(0, 1<<32, 0)) // no access
+	m.Add(mem.NewEmpty(0, 1<<63, 0))     // no access
+	m.Add(mem.NewEmpty(1<<63, 1<<63, 0)) // no access
 
 	// create the cpu
 	cpu := rv.NewRV64(isa, m)

@@ -272,21 +272,21 @@ var ISArv64i = ISAModule{
 	name: "rv64i",
 	ilen: 32,
 	defn: []insDefn{
-		{"imm[11:0] rs1 110 rd 0000011 LWU", daTypeIa, emu32_Illegal, emu64_LWU},         // I
-		{"imm[11:0] rs1 011 rd 0000011 LD", daTypeIa, emu32_Illegal, emu64_LD},           // I
-		{"imm[11:5] rs2 rs1 011 imm[4:0] 0100011 SD", daTypeSa, emu32_Illegal, emu64_SD}, // S
-		{"000000 shamt6 rs1 001 rd 0010011 SLLI", daNone, emu32_Illegal, emu64_SLLI},     // I
-		{"000000 shamt6 rs1 101 rd 0010011 SRLI", daNone, emu32_Illegal, emu64_SRLI},     // I
-		{"010000 shamt6 rs1 101 rd 0010011 SRAI", daNone, emu32_Illegal, emu64_SRAI},     // I
-		{"imm[11:0] rs1 000 rd 0011011 ADDIW", daTypeIa, emu32_Illegal, emu64_ADDIW},     // I
-		{"0000000 shamt5 rs1 001 rd 0011011 SLLIW", daNone, emu32_Illegal, emu64_SLLIW},  // I
-		{"0000000 shamt5 rs1 101 rd 0011011 SRLIW", daNone, emu32_Illegal, emu64_SRLIW},  // I
-		{"0100000 shamt5 rs1 101 rd 0011011 SRAIW", daNone, emu32_Illegal, emu64_SRAIW},  // I
-		{"0000000 rs2 rs1 000 rd 0111011 ADDW", daNone, emu32_Illegal, emu64_ADDW},       // R
-		{"0100000 rs2 rs1 000 rd 0111011 SUBW", daNone, emu32_Illegal, emu64_SUBW},       // R
-		{"0000000 rs2 rs1 001 rd 0111011 SLLW", daNone, emu32_Illegal, emu64_SLLW},       // R
-		{"0000000 rs2 rs1 101 rd 0111011 SRLW", daNone, emu32_Illegal, emu64_SRLW},       // R
-		{"0100000 rs2 rs1 101 rd 0111011 SRAW", daNone, emu32_Illegal, emu64_SRAW},       // R
+		{"imm[11:0] rs1 110 rd 0000011 LWU", daTypeIa, emu32_Illegal, emu64_LWU},          // I
+		{"imm[11:0] rs1 011 rd 0000011 LD", daTypeIa, emu32_Illegal, emu64_LD},            // I
+		{"imm[11:5] rs2 rs1 011 imm[4:0] 0100011 SD", daTypeSa, emu32_Illegal, emu64_SD},  // S
+		{"000000 shamt6 rs1 001 rd 0010011 SLLI", daTypeId, emu32_Illegal, emu64_SLLI},    // I
+		{"000000 shamt6 rs1 101 rd 0010011 SRLI", daTypeId, emu32_Illegal, emu64_SRLI},    // I
+		{"010000 shamt6 rs1 101 rd 0010011 SRAI", daTypeId, emu32_Illegal, emu64_SRAI},    // I
+		{"imm[11:0] rs1 000 rd 0011011 ADDIW", daTypeIa, emu32_Illegal, emu64_ADDIW},      // I
+		{"0000000 shamt5 rs1 001 rd 0011011 SLLIW", daTypeId, emu32_Illegal, emu64_SLLIW}, // I
+		{"0000000 shamt5 rs1 101 rd 0011011 SRLIW", daTypeId, emu32_Illegal, emu64_SRLIW}, // I
+		{"0100000 shamt5 rs1 101 rd 0011011 SRAIW", daTypeId, emu32_Illegal, emu64_SRAIW}, // I
+		{"0000000 rs2 rs1 000 rd 0111011 ADDW", daTypeRa, emu32_Illegal, emu64_ADDW},      // R
+		{"0100000 rs2 rs1 000 rd 0111011 SUBW", daTypeRa, emu32_Illegal, emu64_SUBW},      // R
+		{"0000000 rs2 rs1 001 rd 0111011 SLLW", daTypeRa, emu32_Illegal, emu64_SLLW},      // R
+		{"0000000 rs2 rs1 101 rd 0111011 SRLW", daNone, emu32_Illegal, emu64_SRLW},        // R
+		{"0100000 rs2 rs1 101 rd 0111011 SRAW", daNone, emu32_Illegal, emu64_SRAW},        // R
 	},
 }
 
@@ -295,11 +295,11 @@ var ISArv64m = ISAModule{
 	name: "rv64m",
 	ilen: 32,
 	defn: []insDefn{
-		{"0000001 rs2 rs1 000 rd 0111011 MULW", daNone, emu32_Illegal, emu64_MULW},   // R
-		{"0000001 rs2 rs1 100 rd 0111011 DIVW", daNone, emu32_Illegal, emu64_DIVW},   // R
-		{"0000001 rs2 rs1 101 rd 0111011 DIVUW", daNone, emu32_Illegal, emu64_DIVUW}, // R
-		{"0000001 rs2 rs1 110 rd 0111011 REMW", daNone, emu32_Illegal, emu64_REMW},   // R
-		{"0000001 rs2 rs1 111 rd 0111011 REMUW", daNone, emu32_Illegal, emu64_REMUW}, // R
+		{"0000001 rs2 rs1 000 rd 0111011 MULW", daTypeRa, emu32_Illegal, emu64_MULW},   // R
+		{"0000001 rs2 rs1 100 rd 0111011 DIVW", daTypeRa, emu32_Illegal, emu64_DIVW},   // R
+		{"0000001 rs2 rs1 101 rd 0111011 DIVUW", daTypeRa, emu32_Illegal, emu64_DIVUW}, // R
+		{"0000001 rs2 rs1 110 rd 0111011 REMW", daTypeRa, emu32_Illegal, emu64_REMW},   // R
+		{"0000001 rs2 rs1 111 rd 0111011 REMUW", daTypeRa, emu32_Illegal, emu64_REMUW}, // R
 	},
 }
 
@@ -353,13 +353,13 @@ var ISArv64c = ISAModule{
 	name: "rv64c",
 	ilen: 16,
 	defn: []insDefn{
-		{"001 imm[5] rd!=0 imm[4:0] 01 C.ADDIW", daNone, emu32_Illegal, emu64_C_ADDIW},      // CI
+		{"001 imm[5] rd!=0 imm[4:0] 01 C.ADDIW", daTypeCIc, emu32_Illegal, emu64_C_ADDIW},   // CI
 		{"011 uimm[5] rd uimm[4:3|8:6] 10 C.LDSP", daTypeCIh, emu32_Illegal, emu64_C_LDSP},  // CI
 		{"011 uimm[5:3] rs10 uimm[7:6] rd0 00 C.LD", daTypeCSb, emu32_Illegal, emu64_C_LD},  // CL
 		{"100 1 11 rs10/rd0 00 rs20 01 C.SUBW", daTypeCRc, emu32_Illegal, emu64_C_SUBW},     // CR
 		{"100 1 11 rs10/rd0 01 rs20 01 C.ADDW", daTypeCRc, emu32_Illegal, emu64_C_ADDW},     // CR
 		{"111 uimm[5:3] rs10 uimm[7:6] rs20 00 C.SD", daTypeCSb, emu32_Illegal, emu64_C_SD}, // CS
-		{"111 uimm[5:3|8:6] rs2 10 C.SDSP", daNone, emu32_Illegal, emu64_C_SDSP},            // CSS
+		{"111 uimm[5:3|8:6] rs2 10 C.SDSP", daTypeCSSc, emu32_Illegal, emu64_C_SDSP},        // CSS
 	},
 }
 

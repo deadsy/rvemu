@@ -61,17 +61,18 @@ var rv32iTest = []daTest{
 	{0, 0x0107d793, "srli a5,a5,0x10"},
 	{0, 0x00a60533, "add a0,a2,a0"},
 	{0, 0x40f007b3, "neg a5,a5"},
-	{0x40, 0x00301073, "fscsr zero"},
-	{0xce, 0xf1402573, "csrr a0,mhartid"},
-	{0x114, 0xfea42623, "sw a0,-20(s0)"},
-	{0x118, 0xfeb42423, "sw a1,-24(s0)"},
-	{0x11c, 0xfe842783, "lw a5,-24(s0)"},
-	{0xfe, 0xfec42783, "lw a5,-20(s0)"},
+	{0, 0x00301073, "fscsr zero"},
+	{0, 0xf1402573, "csrr a0,mhartid"},
+	{0, 0xfea42623, "sw a0,-20(s0)"},
+	{0, 0xfeb42423, "sw a1,-24(s0)"},
+	{0, 0xfe842783, "lw a5,-24(s0)"},
+	{0, 0xfec42783, "lw a5,-20(s0)"},
 	{0, 0x00000073, "ecall"},
 }
 
 var rv32mTest = []daTest{
 	{0, 0x025535b3, "mulhu a1,a0,t0"},
+	{0, 0x036484b3, "mul s1,s1,s6"},
 }
 
 var rv32aTest = []daTest{
@@ -81,12 +82,12 @@ var rv32aTest = []daTest{
 }
 
 var rv32fTest = []daTest{
-	{0x14, 0xfec42707, "flw fa4,-20(s0)"},
-	{0x18, 0xfe842787, "flw fa5,-24(s0)"},
-	{0x1c, 0x10f777d3, "fmul.s fa5,fa4,fa5"},
-	{0x20, 0xe0078553, "fmv.x.w a0,fa5"},
-	{0x4c, 0x18f777d3, "fdiv.s fa5,fa4,fa5"},
-	{0x44, 0xf0000053, "fmv.w.x ft0,zero"},
+	{0, 0xfec42707, "flw fa4,-20(s0)"},
+	{0, 0xfe842787, "flw fa5,-24(s0)"},
+	{0, 0x10f777d3, "fmul.s fa5,fa4,fa5"},
+	{0, 0xe0078553, "fmv.x.w a0,fa5"},
+	{0, 0x18f777d3, "fdiv.s fa5,fa4,fa5"},
+	{0, 0xf0000053, "fmv.w.x ft0,zero"},
 }
 
 var rv32dTest = []daTest{
@@ -138,8 +139,38 @@ var rv32dcTest = []daTest{}
 //-----------------------------------------------------------------------------
 // rv64
 
-var rv64iTest = []daTest{}
-var rv64mTest = []daTest{}
+var rv64iTest = []daTest{
+	{0, 0x008a16bb, "sllw a3,s4,s0"},
+	{0, 0x00e6163b, "sllw a2,a2,a4"},
+	{0, 0x41978cbb, "subw s9,a5,s9"},
+	{0, 0x40c989bb, "subw s3,s3,a2"},
+	{0, 0x419509bb, "subw s3,a0,s9"},
+	{0, 0x409786bb, "subw a3,a5,s1"},
+	{0, 0x014786bb, "addw a3,a5,s4"},
+	{0, 0x00d60bbb, "addw s7,a2,a3"},
+	{0, 0x0087d79b, "srliw a5,a5,0x8"},
+	{0, 0x0107d79b, "srliw a5,a5,0x10"},
+	{0, 0x01f6d49b, "srliw s1,a3,0x1f"},
+	{0, 0x0016169b, "slliw a3,a2,0x1"},
+	{0, 0x0015959b, "slliw a1,a1,0x1"},
+	{0, 0x4014d49b, "sraiw s1,s1,0x1"},
+	{0, 0x4026571b, "sraiw a4,a2,0x2"},
+	{0, 0x4027d69b, "sraiw a3,a5,0x2"},
+	{0, 0x00859693, "slli a3,a1,0x8"},
+	{0, 0x02059693, "slli a3,a1,0x20"},
+	{0, 0x00279693, "slli a3,a5,0x2"},
+	{0, 0x03279713, "slli a4,a5,0x32"},
+	{0, 0x0094d793, "srli a5,s1,0x9"},
+	{0, 0x0064d513, "srli a0,s1,0x6"},
+	{0, 0x4037d493, "srai s1,a5,0x3"},
+	{0, 0x40395913, "srai s2,s2,0x3"},
+}
+
+var rv64mTest = []daTest{
+	{0, 0x02f777bb, "remuw a5,a4,a5"},
+	{0, 0x02f757bb, "divuw a5,a4,a5"},
+}
+
 var rv64aTest = []daTest{}
 var rv64fTest = []daTest{}
 var rv64dTest = []daTest{}
@@ -154,6 +185,10 @@ var rv64cTest = []daTest{
 	{0, 0x2705, "addiw a4,a4,1"},
 	{0, 0x347d, "addiw s0,s0,-1"},
 	{0, 0x37fd, "addiw a5,a5,-1"},
+	{0, 0xe822, "sd s0,16(sp)"},
+	{0, 0xe04a, "sd s2,0(sp)"},
+	{0, 0xec06, "sd ra,24(sp)"},
+	{0, 0xe426, "sd s1,8(sp)"},
 }
 
 //-----------------------------------------------------------------------------

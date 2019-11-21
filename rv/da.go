@@ -371,6 +371,11 @@ func daTypeCSSb(name string, pc uint, ins uint) string {
 	return fmt.Sprintf("%s %s,%d(sp)", name, abiXName[rs2], imm)
 }
 
+func daTypeCSSc(name string, pc uint, ins uint) string {
+	uimm, rs2 := decodeCSSc(ins)
+	return fmt.Sprintf("%s %s,%d(sp)", name, abiXName[rs2], uimm)
+}
+
 //-----------------------------------------------------------------------------
 // Type CB Decodes
 

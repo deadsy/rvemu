@@ -243,6 +243,13 @@ func decodeCSSb(ins uint) (uint, uint) {
 	return uimm, rs2
 }
 
+func decodeCSSc(ins uint) (uint, uint) {
+	uimm := bitUnsigned(ins, 12, 10, 3) // imm[5:3]
+	uimm += bitUnsigned(ins, 9, 7, 6)   // imm[8:6]
+	rs2 := bitUnsigned(ins, 6, 2, 0)
+	return uimm, rs2
+}
+
 func decodeCB(ins uint) (int, uint) {
 	uimm := bitUnsigned(ins, 12, 12, 8) // imm[8]
 	uimm += bitUnsigned(ins, 11, 10, 3) // imm[4:3]

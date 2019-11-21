@@ -221,41 +221,18 @@ func getDecode(s string) (decodeType, error) {
 // nameRemap remaps instruction names (if needed).
 func nameRemap(name string) string {
 	x := map[string]string{
-		"c.ret":      "ret",
 		"c.lwsp":     "lw",
 		"c.swsp":     "sw",
 		"c.ldsp":     "ld",
 		"c.sdsp":     "sd",
-		"c.li":       "li",
-		"c.mv":       "mv",
 		"c.addi16sp": "addi",
 		"c.addi4spn": "addi",
-		"c.addi":     "addi",
-		"c.srli":     "srli",
-		"c.slli":     "slli",
-		"c.andi":     "andi",
-		"c.add":      "add",
-		"c.j":        "j",
-		"c.jr":       "jr",
-		"c.lui":      "lui",
-		"c.bnez":     "bnez",
-		"c.beqz":     "beqz",
-		"c.jal":      "jal",
-		"c.jalr":     "jalr",
-		"c.nop":      "nop",
-		"c.sub":      "sub",
-		"c.xor":      "xor",
-		"c.or":       "or",
-		"c.and":      "and",
-		"c.subw":     "subw",
-		"c.addw":     "addw",
-		"c.sw":       "sw",
-		"c.lw":       "lw",
-		"c.sd":       "sd",
-		"c.ld":       "ld",
 	}
 	if s, ok := x[name]; ok {
 		return s
+	}
+	if strings.HasPrefix(name, "c.") {
+		return name[2:]
 	}
 	return name
 }

@@ -351,7 +351,9 @@ func emu32_CSRRCI(m *RV32, ins uint) {
 // rv32m
 
 func emu32_MUL(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, m.X[rs1]*m.X[rs2])
+	m.PC += 4
 }
 
 func emu32_MULH(m *RV32, ins uint) {

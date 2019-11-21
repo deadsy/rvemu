@@ -317,7 +317,9 @@ func emu64_CSRRCI(m *RV64, ins uint) {
 // rv32m
 
 func emu64_MUL(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, m.X[rs1]*m.X[rs2])
+	m.PC += 4
 }
 
 func emu64_MULH(m *RV64, ins uint) {
@@ -900,31 +902,57 @@ func emu64_SRAI(m *RV64, ins uint) {
 }
 
 func emu64_ADDIW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	imm, rs1, rd := decodeIa(ins)
+	m.wrX(rd, uint64(int32(int(m.X[rs1])+imm)))
+	m.PC += 4
 }
 
 func emu64_SLLIW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	shamt, rs1, rd := decodeIc(ins)
+	if shamt&32 != 0 {
+		m.flag |= flagIllegal
+		return
+	}
+	m.wrX(rd, uint64(int32(m.X[rs1])<<shamt))
+	m.PC += 4
 }
 
 func emu64_SRLIW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	shamt, rs1, rd := decodeIc(ins)
+	if shamt&32 != 0 {
+		m.flag |= flagIllegal
+		return
+	}
+	m.wrX(rd, uint64(int32(uint32(m.X[rs1])>>shamt)))
+	m.PC += 4
 }
 
 func emu64_SRAIW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	shamt, rs1, rd := decodeIc(ins)
+	if shamt&32 != 0 {
+		m.flag |= flagIllegal
+		return
+	}
+	m.wrX(rd, uint64(int32(m.X[rs1])>>shamt))
+	m.PC += 4
 }
 
 func emu64_ADDW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, uint64(int32(m.X[rs1]+m.X[rs2])))
+	m.PC += 4
 }
 
 func emu64_SUBW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, uint64(int32(m.X[rs1]-m.X[rs2])))
+	m.PC += 4
 }
 
 func emu64_SLLW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, uint64(int32(m.X[rs1]<<m.X[rs2]&31)))
+	m.PC += 4
 }
 
 func emu64_SRLW(m *RV64, ins uint) {
@@ -947,7 +975,9 @@ func emu64_DIVW(m *RV64, ins uint) {
 }
 
 func emu64_DIVUW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, uint64(int32(uint32(m.X[rs1])/uint32(m.X[rs2]))))
+	m.PC += 4
 }
 
 func emu64_REMW(m *RV64, ins uint) {
@@ -955,7 +985,9 @@ func emu64_REMW(m *RV64, ins uint) {
 }
 
 func emu64_REMUW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	rs2, rs1, rd := decodeR(ins)
+	m.wrX(rd, uint64(int32(uint32(m.X[rs1])%uint32(m.X[rs2]))))
+	m.PC += 4
 }
 
 //-----------------------------------------------------------------------------
@@ -1055,7 +1087,13 @@ func emu64_FMV_D_X(m *RV64, ins uint) {
 // rv64c
 
 func emu64_C_ADDIW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	imm, rd := decodeCIa(ins)
+	if rd != 0 {
+		m.X[rd] = uint64(int32(int(m.X[rd]) + imm))
+	} else {
+		m.flag |= flagIllegal
+	}
+	m.PC += 2
 }
 
 func emu64_C_LDSP(m *RV64, ins uint) {
@@ -1072,7 +1110,11 @@ func emu64_C_LDSP(m *RV64, ins uint) {
 }
 
 func emu64_C_SDSP(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	uimm, rs2 := decodeCSSc(ins)
+	adr := uint(m.X[regSp]) + uimm
+	ex := m.Mem.Wr64(adr, m.X[rs2])
+	m.checkMemory(adr, ex)
+	m.PC += 2
 }
 
 func emu64_C_LD(m *RV64, ins uint) {
@@ -1183,6 +1225,7 @@ func (m *RV64) Disassemble(adr uint) *Disassembly {
 // Reset the RV64 CPU.
 func (m *RV64) Reset() {
 	m.PC = uint64(m.Mem.Entry)
+	m.X[regSp] = 0xfffc0000 + (128 << 10)
 	m.insCount = 0
 	m.lastPC = 0
 	m.flag = 0
