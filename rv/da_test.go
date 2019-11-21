@@ -116,7 +116,6 @@ var rv32cTest = []daTest{
 	{0x186, 0xa029, "j 190"},
 	{0, 0x67ad, "lui a5,0xb"},
 	{0x1d0, 0xf3e1, "bnez a5,190"},
-	{0x358, 0x3d7d, "jal ra,216"},
 	{0, 0x0001, "nop"},
 	{0, 0x8e09, "sub a2,a2,a0"},
 	{0, 0xc30c, "sw a1,0(a4)"},
@@ -127,6 +126,10 @@ var rv32cTest = []daTest{
 	{0, 0x4388, "lw a0,0(a5)"},
 	{0, 0x9682, "jalr a3"},
 	{0, 0x9782, "jalr a5"},
+}
+
+var rv32cOnlyTest = []daTest{
+	{0x358, 0x3d7d, "jal ra,216"},
 }
 
 var rv32fcTest = []daTest{}
@@ -181,6 +184,7 @@ func Test_Disassembly(t *testing.T) {
 	rv32Tests = append(rv32Tests, rv32fTest...)
 	rv32Tests = append(rv32Tests, rv32dTest...)
 	rv32Tests = append(rv32Tests, rv32cTest...)
+	rv32Tests = append(rv32Tests, rv32cOnlyTest...)
 	rv32Tests = append(rv32Tests, rv32fcTest...)
 	rv32Tests = append(rv32Tests, rv32dcTest...)
 
@@ -210,6 +214,7 @@ func Test_Disassembly(t *testing.T) {
 		{[]ISAModule{ISArv32f}, rv32fTest},
 		{[]ISAModule{ISArv32d}, rv32dTest},
 		{[]ISAModule{ISArv32c}, rv32cTest},
+		{[]ISAModule{ISArv32cOnly}, rv32cOnlyTest},
 		{[]ISAModule{ISArv32fc}, rv32fcTest},
 		{[]ISAModule{ISArv32dc}, rv32dcTest},
 		// rv64
