@@ -1040,7 +1040,11 @@ func (m *RV32) Run() error {
 			return fmt.Errorf("exit at PC %08x, status %08x (%d instructions)", m.PC, m.X[1], m.insCount)
 		}
 		if m.flag&flagSyscall != 0 {
-			return fmt.Errorf("unrecognised system call at PC %08x, %d", m.PC, m.X[regA7])
+			return fmt.Errorf("unrecognized system call at PC %08x, %d", m.PC, m.X[regA7])
+		}
+		if m.flag&flagBreak != 0 {
+			m.flag &= ^flagBreak
+			return fmt.Errorf("breakpoint at PC %08x", m.PC)
 		}
 		if m.flag&flagTodo != 0 {
 			return fmt.Errorf("unimplemented instruction at PC %08x", m.PC)

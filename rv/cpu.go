@@ -266,6 +266,7 @@ const (
 	flagTodo                         // unimplemented instruction
 	flagMemory                       // memory exception
 	flagSyscall                      // unrecognised system call
+	flagBreak                        // debug break point
 )
 
 //-----------------------------------------------------------------------------

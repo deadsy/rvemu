@@ -37,7 +37,7 @@ type ISAModule struct {
 //-----------------------------------------------------------------------------
 // RV32 instructions
 
-// ISArv32i Integer
+// ISArv32i integer instructions.
 var ISArv32i = ISAModule{
 	name: "rv32i",
 	ilen: 32,
@@ -92,7 +92,7 @@ var ISArv32i = ISAModule{
 	},
 }
 
-// ISArv32m Integer Multiplication and Division
+// ISArv32m integer multiplication/division instructions.
 var ISArv32m = ISAModule{
 	name: "rv32m",
 	ilen: 32,
@@ -108,7 +108,7 @@ var ISArv32m = ISAModule{
 	},
 }
 
-// ISArv32a Atomics
+// ISArv32a atomic operation instructions.
 var ISArv32a = ISAModule{
 	name: "rv32a",
 	ilen: 32,
@@ -127,7 +127,7 @@ var ISArv32a = ISAModule{
 	},
 }
 
-// ISArv32f Single-Precision Floating-Point
+// ISArv32f 32-bit floating point instructions.
 var ISArv32f = ISAModule{
 	name: "rv32f",
 	ilen: 32,
@@ -161,7 +161,7 @@ var ISArv32f = ISAModule{
 	},
 }
 
-// ISArv32d Double-Precision Floating-Point
+// ISArv32d 64-bit floating point instructions.
 var ISArv32d = ISAModule{
 	name: "rv32d",
 	ilen: 32,
@@ -195,7 +195,7 @@ var ISArv32d = ISAModule{
 	},
 }
 
-// ISArv32c Compressed
+// ISArv32c compressed instructions (subset of RV64C).
 var ISArv32c = ISAModule{
 	name: "rv32c",
 	ilen: 16,
@@ -206,7 +206,7 @@ var ISArv32c = ISAModule{
 		{"110 uimm[5:3] rs10 uimm[2|6] rs20 00 C.SW", daTypeCSa, emu32_C_SW, emu64_C_SW},                     // CS
 		{"000 nzimm[5] 00000 nzimm[4:0] 01 C.NOP", daNop, emu32_C_NOP, emu64_C_NOP},                          // CI (Quadrant 1)
 		{"000 nzimm[5] rs1/rd!=0 nzimm[4:0] 01 C.ADDI", daTypeCIc, emu32_C_ADDI, emu64_C_ADDI},               // CI
-		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", daTypeCJc, emu32_C_JAL, emu64_C_JAL},                     // CJ
+		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", daTypeCJc, emu32_C_JAL, emu64_Illegal},                   // CJ
 		{"010 imm[5] rd!=0 imm[4:0] 01 C.LI", daTypeCIa, emu32_C_LI, emu64_C_LI},                             // CI
 		{"011 nzimm[9] 00010 nzimm[4|6|8:7|5] 01 C.ADDI16SP", daTypeCIb, emu32_C_ADDI16SP, emu64_C_ADDI16SP}, // CI
 		{"011 nzimm[17] rd!={0,2} nzimm[16:12] 01 C.LUI", daTypeCIg, emu32_C_LUI, emu64_C_LUI},               // CI
@@ -232,7 +232,16 @@ var ISArv32c = ISAModule{
 	},
 }
 
-// ISArv32fc Compressed
+// ISArv32cOnly compressed instructions (not in RV64C).
+var ISArv32cOnly = ISAModule{
+	name: "rv32c-only",
+	ilen: 16,
+	defn: []insDefn{
+		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", daTypeCJc, emu32_C_JAL, emu64_Illegal}, // CJ
+	},
+}
+
+// ISArv32fc compressed 32-bit floating point instructions.
 var ISArv32fc = ISAModule{
 	name: "rv32fc",
 	ilen: 16,
@@ -244,7 +253,7 @@ var ISArv32fc = ISAModule{
 	},
 }
 
-// ISArv32dc Compressed
+// ISArv32dc compressed 64-bit floating point instructions.
 var ISArv32dc = ISAModule{
 	name: "rv32dc",
 	ilen: 16,
@@ -345,12 +354,13 @@ var ISArv64c = ISAModule{
 	name: "rv64c",
 	ilen: 16,
 	defn: []insDefn{
+		{"001 imm[5] rd!=0 imm[4:0] 01 C.ADDIW", daNone, emu32_Illegal, emu64_C_ADDIW},      // CI
 		{"011 uimm[5] rd uimm[4:3|8:6] 10 C.LDSP", daTypeCIh, emu32_Illegal, emu64_C_LDSP},  // CI
-		{"111 uimm[5:3|8:6] rs2 10 C.SDSP", daNone, emu32_Illegal, emu64_C_SDSP},            // CSS
 		{"011 uimm[5:3] rs10 uimm[7:6] rd0 00 C.LD", daTypeCSb, emu32_Illegal, emu64_C_LD},  // CL
-		{"111 uimm[5:3] rs10 uimm[7:6] rs20 00 C.SD", daTypeCSb, emu32_Illegal, emu64_C_SD}, // CS
 		{"100 1 11 rs10/rd0 00 rs20 01 C.SUBW", daTypeCRc, emu32_Illegal, emu64_C_SUBW},     // CR
 		{"100 1 11 rs10/rd0 01 rs20 01 C.ADDW", daTypeCRc, emu32_Illegal, emu64_C_ADDW},     // CR
+		{"111 uimm[5:3] rs10 uimm[7:6] rs20 00 C.SD", daTypeCSb, emu32_Illegal, emu64_C_SD}, // CS
+		{"111 uimm[5:3|8:6] rs2 10 C.SDSP", daNone, emu32_Illegal, emu64_C_SDSP},            // CSS
 	},
 }
 
@@ -377,7 +387,8 @@ var ISArv32g = []ISAModule{
 
 // ISArv32gc = RV32imafdc
 var ISArv32gc = []ISAModule{
-	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32c, ISArv32fc, ISArv32dc,
+	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d,
+	ISArv32c, ISArv32cOnly, ISArv32fc, ISArv32dc,
 }
 
 // ISArv64g = RV64imafd
@@ -388,8 +399,10 @@ var ISArv64g = []ISAModule{
 
 // ISArv64gc = RV64imafdc
 var ISArv64gc = []ISAModule{
-	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d, ISArv32c, ISArv32dc,
-	ISArv64i, ISArv64m, ISArv64a, ISArv64f, ISArv64d, ISArv64c,
+	ISArv32i, ISArv32m, ISArv32a, ISArv32f, ISArv32d,
+	ISArv32c, ISArv32dc,
+	ISArv64i, ISArv64m, ISArv64a, ISArv64f, ISArv64d,
+	ISArv64c,
 }
 
 //-----------------------------------------------------------------------------

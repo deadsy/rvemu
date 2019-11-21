@@ -689,12 +689,6 @@ func emu64_C_ADDI(m *RV64, ins uint) {
 	m.PC += 2
 }
 
-func emu64_C_JAL(m *RV64, ins uint) {
-	imm := decodeCJ(ins)
-	m.X[regRa] = m.PC + 2
-	m.PC = uint64(int(m.PC) + imm)
-}
-
 func emu64_C_LI(m *RV64, ins uint) {
 	imm, rd := decodeCIa(ins)
 	m.wrX(rd, uint64(imm))
@@ -1060,6 +1054,10 @@ func emu64_FMV_D_X(m *RV64, ins uint) {
 //-----------------------------------------------------------------------------
 // rv64c
 
+func emu64_C_ADDIW(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
 func emu64_C_LDSP(m *RV64, ins uint) {
 	uimm, rd := decodeCIg(ins)
 	adr := uint(m.X[regSp]) + uimm
@@ -1221,7 +1219,11 @@ func (m *RV64) Run() error {
 			return fmt.Errorf("exit at PC %016x, status %016x (%d instructions)", m.PC, m.X[1], m.insCount)
 		}
 		if m.flag&flagSyscall != 0 {
-			return fmt.Errorf("unrecognised system call at PC %016x, %d", m.PC, m.X[regA7])
+			return fmt.Errorf("unrecognized system call at PC %016x, %d", m.PC, m.X[regA7])
+		}
+		if m.flag&flagBreak != 0 {
+			m.flag &= ^flagBreak
+			return fmt.Errorf("breakpoint at PC %016x", m.PC)
 		}
 		if m.flag&flagTodo != 0 {
 			return fmt.Errorf("unimplemented instruction at PC %016x", m.PC)
