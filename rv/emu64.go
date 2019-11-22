@@ -268,14 +268,12 @@ func emu64_FENCE_I(m *RV64, ins uint) {
 }
 
 func emu64_ECALL(m *RV64, ins uint) {
-	switch m.X[regA7] {
-	case syscallExit:
-		m.scExit()
-	case syscallFstat:
-		m.scFstat()
-	default:
+	s := scLookup(int(m.X[regA7]))
+	if s == nil {
 		m.flag |= flagSyscall
+		return
 	}
+	s.sc64(m, s)
 	m.PC += 4
 }
 
@@ -1140,17 +1138,6 @@ func emu64_C_SUBW(m *RV64, ins uint) {
 
 func emu64_C_ADDW(m *RV64, ins uint) {
 	m.flag |= flagTodo
-}
-
-//-----------------------------------------------------------------------------
-// system calls
-
-func (m *RV64) scExit() {
-	m.flag |= flagExit
-}
-
-func (m *RV64) scFstat() {
-	m.flag |= flagSyscall
 }
 
 //-----------------------------------------------------------------------------

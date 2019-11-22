@@ -298,14 +298,12 @@ func emu32_FENCE_I(m *RV32, ins uint) {
 }
 
 func emu32_ECALL(m *RV32, ins uint) {
-	switch m.X[regA7] {
-	case syscallExit:
-		m.scExit()
-	case syscallFstat:
-		m.scFstat()
-	default:
+	s := scLookup(int(m.X[regA7]))
+	if s == nil {
 		m.flag |= flagSyscall
+		return
 	}
+	s.sc32(m, s)
 	m.PC += 4
 }
 
@@ -921,17 +919,6 @@ func emu32_C_SWSP(m *RV32, ins uint) {
 
 func emu32_C_FSWSP(m *RV32, ins uint) {
 	m.flag |= flagTodo
-}
-
-//-----------------------------------------------------------------------------
-// system calls
-
-func (m *RV32) scExit() {
-	m.flag |= flagExit
-}
-
-func (m *RV32) scFstat() {
-	m.flag |= flagSyscall
 }
 
 //-----------------------------------------------------------------------------
