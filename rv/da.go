@@ -12,6 +12,7 @@ import (
 	"fmt"
 
 	"github.com/deadsy/riscv/mem"
+	"github.com/deadsy/riscv/util"
 )
 
 //-----------------------------------------------------------------------------
@@ -398,17 +399,26 @@ type Disassembly struct {
 }
 
 func (da *Disassembly) String() string {
-	return fmt.Sprintf("%-16s %8s %-13s", da.Dump, da.Symbol, da.Assembly)
+	if da.Symbol != "" {
+		return fmt.Sprintf("%s    %-18s %s", da.Dump, da.Assembly, util.GreenString(da.Symbol))
+	}
+	return fmt.Sprintf("%s    %-18s", da.Dump, da.Assembly)
 }
 
 //-----------------------------------------------------------------------------
 
-func daDump32(pc uint, ins uint) string {
-	return fmt.Sprintf("%08x: %08x", pc, uint32(ins))
+func daDump32(pc uint, ins uint, alen int) string {
+	if alen == 32 {
+		return fmt.Sprintf("%08x: %08x", pc, uint32(ins))
+	}
+	return fmt.Sprintf("%016x: %08x", pc, uint32(ins))
 }
 
-func daDump16(pc uint, ins uint) string {
-	return fmt.Sprintf("%08x: %04x    ", pc, uint16(ins))
+func daDump16(pc uint, ins uint, alen int) string {
+	if alen == 32 {
+		return fmt.Sprintf("%08x: %04x    ", pc, uint16(ins))
+	}
+	return fmt.Sprintf("%016x: %04x    ", pc, uint16(ins))
 }
 
 // daInstruction returns the disassembly for a 16/32-bit instruction.
@@ -428,11 +438,11 @@ func (isa *ISA) Disassemble(m *mem.Memory, adr uint) *Disassembly {
 	var da Disassembly
 	da.Symbol = m.SymbolByAddress(adr)
 	if ins&3 == 3 {
-		da.Dump = daDump32(adr, ins)
+		da.Dump = daDump32(adr, ins, m.AddrLength)
 		da.Assembly = isa.daInstruction(adr, ins)
 		da.Length = 4
 	} else {
-		da.Dump = daDump16(adr, ins)
+		da.Dump = daDump16(adr, ins, m.AddrLength)
 		da.Assembly = isa.daInstruction(adr, ins)
 		da.Length = 2
 	}

@@ -17,6 +17,7 @@ import (
 
 //-----------------------------------------------------------------------------
 
+// MemDisplay returns a display string for a contiguous region of memory.
 func MemDisplay(m *mem.Memory, adr, size uint) string {
 	s := make([]string, 0)
 	// round down address to 16 byte boundary

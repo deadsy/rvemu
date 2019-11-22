@@ -202,7 +202,7 @@ func testSet(module []ISAModule, tests []daTest) error {
 	for _, v := range tests {
 		da := isa.daInstruction(v.pc, v.ins)
 		if v.da != da {
-			return fmt.Errorf("ins %08x \"%s\" (expected) \"%s\" (actual)\n", v.ins, v.da, da)
+			return fmt.Errorf("ins %08x \"%s\" (expected) \"%s\" (actual)", v.ins, v.da, da)
 		}
 	}
 	return nil

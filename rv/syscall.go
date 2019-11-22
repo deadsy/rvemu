@@ -8,9 +8,9 @@ See:
 linux/include/uapi/asm-generic/unistd.h
 glibc/sysdeps/unix/sysv/linux/riscv/sysdep.h
 
-glibc passes the system call number in a7.
-The arguments to the system call are passed in a0..a6
-The return value is passed in a0.
+glibc passes the syscall number in a7.
+Syscall arguments are passed in a0..a6.
+The syscall return value is passed in a0.
 
 */
 //-----------------------------------------------------------------------------
@@ -56,6 +56,7 @@ func sc32_fstat(m *RV32, s *scEntry) {
 }
 
 func sc32_exit(m *RV32, s *scEntry) {
+	m.X[regA0] = 0
 	m.flag |= flagExit
 }
 
@@ -63,8 +64,7 @@ func sc32_exit(m *RV32, s *scEntry) {
 // 64-bit system calls
 
 func sc64_close(m *RV64, s *scEntry) {
-	//m.flag |= flagBreak
-	m.X[regA0] = 0
+	m.flag |= flagBreak
 }
 
 func sc64_fstat(m *RV64, s *scEntry) {
@@ -72,6 +72,7 @@ func sc64_fstat(m *RV64, s *scEntry) {
 }
 
 func sc64_exit(m *RV64, s *scEntry) {
+	m.X[regA0] = 0
 	m.flag |= flagExit
 }
 
