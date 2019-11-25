@@ -106,8 +106,8 @@ func rdInsException(adr uint, attr Attribute) Exception {
 
 //-----------------------------------------------------------------------------
 
-// Segment is an interface to a contiguous region of memory.
-type Segment interface {
+// Region is an interface to a contiguous region of memory.
+type Region interface {
 	RdIns(adr uint) (uint, Exception)
 	Rd64(adr uint) (uint64, Exception)
 	Rd32(adr uint) (uint32, Exception)
@@ -122,21 +122,21 @@ type Segment interface {
 
 //-----------------------------------------------------------------------------
 
-// Chunk is a contiguous chunk of memory.
-type Chunk struct {
+// Section is a contiguous region of real memory.
+type Section struct {
 	attr       Attribute // bitmask of attributes
 	start, end uint      // address range
 	mem        []uint8   // memory array
 }
 
-// NewChunk allocates and returns a memory chunk.
-func NewChunk(start, size uint, attr Attribute) *Chunk {
+// NewSection allocates and returns a memory chunk.
+func NewSection(start, size uint, attr Attribute) *Section {
 	// allocate the memory and set it to all ones
 	mem := make([]uint8, size)
 	for i := range mem {
 		mem[i] = 0xff
 	}
-	return &Chunk{
+	return &Section{
 		attr:  attr,
 		start: start,
 		end:   start + size - 1,
@@ -145,56 +145,56 @@ func NewChunk(start, size uint, attr Attribute) *Chunk {
 }
 
 // In returns true if the adr, size is entirely within the memory chunk.
-func (m *Chunk) In(adr, size uint) bool {
+func (m *Section) In(adr, size uint) bool {
 	end := adr + size - 1
 	return (adr >= m.start) && (end <= m.end)
 }
 
 // RdIns reads a 32-bit instruction from memory.
-func (m *Chunk) RdIns(adr uint) (uint, Exception) {
+func (m *Section) RdIns(adr uint) (uint, Exception) {
 	return uint(binary.LittleEndian.Uint32(m.mem[adr-m.start:])), rdInsException(adr, m.attr)
 }
 
 // Rd64 reads a 64-bit data value from memory.
-func (m *Chunk) Rd64(adr uint) (uint64, Exception) {
+func (m *Section) Rd64(adr uint) (uint64, Exception) {
 	return binary.LittleEndian.Uint64(m.mem[adr-m.start:]), rdException(adr, m.attr, 8)
 }
 
 // Rd32 reads a 32-bit data value from memory.
-func (m *Chunk) Rd32(adr uint) (uint32, Exception) {
+func (m *Section) Rd32(adr uint) (uint32, Exception) {
 	return binary.LittleEndian.Uint32(m.mem[adr-m.start:]), rdException(adr, m.attr, 4)
 }
 
 // Rd16 reads a 16-bit data value from memory.
-func (m *Chunk) Rd16(adr uint) (uint16, Exception) {
+func (m *Section) Rd16(adr uint) (uint16, Exception) {
 	return binary.LittleEndian.Uint16(m.mem[adr-m.start:]), rdException(adr, m.attr, 2)
 }
 
 // Rd8 reads an 8-bit data value from memory.
-func (m *Chunk) Rd8(adr uint) (uint8, Exception) {
+func (m *Section) Rd8(adr uint) (uint8, Exception) {
 	return m.mem[adr-m.start], rdException(adr, m.attr, 1)
 }
 
 // Wr64 writes a 64-bit data value to memory.
-func (m *Chunk) Wr64(adr uint, val uint64) Exception {
+func (m *Section) Wr64(adr uint, val uint64) Exception {
 	binary.LittleEndian.PutUint64(m.mem[adr-m.start:], val)
 	return wrException(adr, m.attr, 8)
 }
 
 // Wr32 writes a 32-bit data value to memory.
-func (m *Chunk) Wr32(adr uint, val uint32) Exception {
+func (m *Section) Wr32(adr uint, val uint32) Exception {
 	binary.LittleEndian.PutUint32(m.mem[adr-m.start:], val)
 	return wrException(adr, m.attr, 4)
 }
 
 // Wr16 writes a 16-bit data value to memory.
-func (m *Chunk) Wr16(adr uint, val uint16) Exception {
+func (m *Section) Wr16(adr uint, val uint16) Exception {
 	binary.LittleEndian.PutUint16(m.mem[adr-m.start:], val)
 	return wrException(adr, m.attr, 2)
 }
 
 // Wr8 writes an 8-bit data value to memory.
-func (m *Chunk) Wr8(adr uint, val uint8) Exception {
+func (m *Section) Wr8(adr uint, val uint8) Exception {
 	m.mem[adr-m.start] = val
 	return wrException(adr, m.attr, 1)
 }

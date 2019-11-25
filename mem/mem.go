@@ -25,7 +25,7 @@ type Range struct {
 
 // Memory is emulated target memory.
 type Memory struct {
-	segment    []Segment         // memory segments
+	region     []Region          // memory regions
 	Entry      uint64            // entry point from ELF
 	AddrLength int               // address bit length
 	symByAddr  map[uint]string   // symbol table by address
@@ -37,7 +37,7 @@ type Memory struct {
 func newMemory(alen int) *Memory {
 	return &Memory{
 		AddrLength: alen,
-		segment:    make([]Segment, 0),
+		region:     make([]Region, 0),
 		symByAddr:  make(map[uint]string),
 		symByName:  make(map[string]*Range),
 		da:         make(map[uint]string),
@@ -54,21 +54,19 @@ func NewMem64() *Memory {
 	return newMemory(64)
 }
 
-// Add a memory segment to the memory.
-func (m *Memory) Add(s Segment) {
-	m.segment = append(m.segment, s)
+// Add a memory region to the memory.
+func (m *Memory) Add(r Region) {
+	m.region = append(m.region, r)
 }
 
-// find returns the segment
-func (m *Memory) find(adr, size uint) Segment {
-	for _, s := range m.segment {
-		if s.In(adr, size) {
-			return s
+// find returns the memory region
+func (m *Memory) find(adr, size uint) Region {
+	for _, r := range m.region {
+		if r.In(adr, size) {
+			return r
 		}
 	}
-	// It's expected there will be a catch-all empty
-	// memory segment defined.
-	panic("where's the empty memory segment?")
+	return nil
 }
 
 //-----------------------------------------------------------------------------
@@ -135,12 +133,10 @@ func (m *Memory) AddSymbol(s string, adr, size uint) error {
 	if len(s) == 0 {
 		return errors.New("zero length symbol")
 	}
-	for i := range m.segment {
-		if m.segment[i].In(adr, size) {
-			m.symByAddr[adr] = s
-			m.symByName[s] = &Range{adr, size}
-			return nil
-		}
+	if m.find(adr, size) != nil {
+		m.symByAddr[adr] = s
+		m.symByName[s] = &Range{adr, size}
+		return nil
 	}
 	return fmt.Errorf("%s is not in a memory segment", s)
 }

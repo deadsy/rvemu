@@ -37,20 +37,37 @@ func (m *Memory) loadSymbols(f *elf.File) string {
 
 //-----------------------------------------------------------------------------
 
-func (m *Memory) loadSection(f *elf.File, name string) string {
-	s := f.Section(name)
-	if s == nil || s.Size == 0 {
-		return fmt.Sprintf("%s (0 bytes)", name)
+func makeSection(f *elf.File, s *elf.Section) (*Section, string) {
+
+	if s.Size == 0 {
+		return nil, fmt.Sprintf("%s (0 bytes)", s.Name)
 	}
+
+	// work out the memory attribute
+	attr := AttrR
+	if s.Flags&elf.SHF_WRITE != 0 {
+		attr |= AttrW
+	}
+	if s.Flags&elf.SHF_EXECINSTR != 0 {
+		attr |= AttrX
+	}
+
+	// create the memory section
+	ms := NewSection(uint(s.Addr), uint(s.Size), attr)
+
+	// read the section data from the ELF file
 	data, err := s.Data()
 	if err != nil {
-		return fmt.Sprintf("%s can't read section: %s", name, err)
+		return nil, fmt.Sprintf("%s can't read section: %s", s.Name, err)
 	}
+
+	// write the data to the memory section
 	for i, v := range data {
-		m.Wr8(uint(s.Addr)+uint(i), v)
+		ms.Wr8(uint(s.Addr)+uint(i), v)
 	}
+
 	end := s.Addr + s.Size - 1
-	return fmt.Sprintf("%-16s %08x-%08x (%d bytes)", name, s.Addr, end, s.Size)
+	return ms, fmt.Sprintf("%-16s %08x-%08x (%d bytes)", s.Name, s.Addr, end, s.Size)
 }
 
 //-----------------------------------------------------------------------------
@@ -77,18 +94,25 @@ func (m *Memory) LoadELF(filename string, class elf.Class) (string, error) {
 		return "", fmt.Errorf("%s is not an executable ELF file", filename)
 	}
 
+	s := make([]string, 0)
+
+  // load the sections
+	for _, fs := range f.Sections {
+		if fs.Flags&elf.SHF_ALLOC != 0 {
+			ms, status := makeSection(f, fs)
+			if ms != nil {
+				m.Add(ms)
+			}
+			s = append(s, status)
+		}
+	}
+
 	// set the program entry point
 	m.Entry = f.Entry
-
-	s := make([]string, 0)
-	s = append(s, m.loadSymbols(f))
-	s = append(s, m.loadSection(f, ".text"))
-	s = append(s, m.loadSection(f, ".eh_frame"))
-	s = append(s, m.loadSection(f, ".init_array"))
-	s = append(s, m.loadSection(f, ".fini_array"))
-	s = append(s, m.loadSection(f, ".data"))
-	s = append(s, m.loadSection(f, ".sdata"))
 	s = append(s, fmt.Sprintf("%-16s %08x", "entry point", m.Entry))
+
+	// load the symbols
+	s = append(s, m.loadSymbols(f))
 
 	return strings.Join(s, "\n"), nil
 }

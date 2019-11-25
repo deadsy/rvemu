@@ -105,7 +105,7 @@ func main() {
 
 	// create the memory
 	m := mem.NewMem32()
-	m.Add(mem.NewChunk(0, 64<<10, mem.AttrRW))
+	m.Add(mem.NewSection(0, 64<<10, mem.AttrRW))
 
 	// load the memory
 	err := loadDump(m, *fname)
