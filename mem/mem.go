@@ -30,28 +30,31 @@ type Memory struct {
 	AddrLength int               // address bit length
 	symByAddr  map[uint]string   // symbol table by address
 	symByName  map[string]*Range // symbol table by name
+	noMemory   Region            // empty memory region
 	da         map[uint]string   // reference disassembly
+
 }
 
 // newMemory returns a memory object.
-func newMemory(alen int) *Memory {
+func newMemory(alen int, empty Attribute) *Memory {
 	return &Memory{
 		AddrLength: alen,
 		region:     make([]Region, 0),
 		symByAddr:  make(map[uint]string),
 		symByName:  make(map[string]*Range),
+		noMemory:   newEmpty(empty),
 		da:         make(map[uint]string),
 	}
 }
 
 // NewMem32 returns the memory for 32-bit processor.
-func NewMem32() *Memory {
-	return newMemory(32)
+func NewMem32(empty Attribute) *Memory {
+	return newMemory(32, empty)
 }
 
 // NewMem64 returns the memory for 64-bit processor.
-func NewMem64() *Memory {
-	return newMemory(64)
+func NewMem64(empty Attribute) *Memory {
+	return newMemory(64, empty)
 }
 
 // Add a memory region to the memory.
@@ -66,7 +69,7 @@ func (m *Memory) find(adr, size uint) Region {
 			return r
 		}
 	}
-	return nil
+	return m.noMemory
 }
 
 //-----------------------------------------------------------------------------

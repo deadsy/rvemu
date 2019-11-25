@@ -104,8 +104,8 @@ func main() {
 	flag.Parse()
 
 	// create the memory
-	m := mem.NewMem32()
-	m.Add(mem.NewSection(0, 64<<10, mem.AttrRW))
+	m := mem.NewMem32(0)
+	m.Add(mem.NewSection("ram", 0, 64<<10, mem.AttrRW))
 
 	// load the memory
 	err := loadDump(m, *fname)

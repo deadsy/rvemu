@@ -124,19 +124,21 @@ type Region interface {
 
 // Section is a contiguous region of real memory.
 type Section struct {
+	name       string    // section name
 	attr       Attribute // bitmask of attributes
 	start, end uint      // address range
 	mem        []uint8   // memory array
 }
 
 // NewSection allocates and returns a memory chunk.
-func NewSection(start, size uint, attr Attribute) *Section {
+func NewSection(name string, start, size uint, attr Attribute) *Section {
 	// allocate the memory and set it to all ones
 	mem := make([]uint8, size)
 	for i := range mem {
 		mem[i] = 0xff
 	}
 	return &Section{
+		name:  name,
 		attr:  attr,
 		start: start,
 		end:   start + size - 1,
@@ -200,70 +202,68 @@ func (m *Section) Wr8(adr uint, val uint8) Exception {
 }
 
 //-----------------------------------------------------------------------------
+// If a memory access does not correspond to a defined memory Region the
+// empty memory region will be used.
 
-// Empty is an empty memory region.
-type Empty struct {
-	attr       Attribute // bitmask of attributes
-	start, end uint      // address range
+// empty memory region.
+type empty struct {
+	attr Attribute // bitmask of attributes
 }
 
-// NewEmpty allocates and returns an empty memory region.
-func NewEmpty(start, size uint, attr Attribute) *Empty {
-	return &Empty{
-		attr:  attr,
-		start: start,
-		end:   start + size - 1,
+// newEmpty allocates and returns the empty memory region.
+func newEmpty(attr Attribute) *empty {
+	return &empty{
+		attr: attr,
 	}
 }
 
 // In returns true if the adr, size is entirely within the empty region.
-func (m *Empty) In(adr, size uint) bool {
-	end := adr + size - 1
-	return (adr >= m.start) && (end <= m.end)
+func (m *empty) In(adr, size uint) bool {
+	return true
 }
 
 // RdIns reads a 32-bit instruction from memory.
-func (m *Empty) RdIns(adr uint) (uint, Exception) {
+func (m *empty) RdIns(adr uint) (uint, Exception) {
 	return math.MaxUint32, rdInsException(adr, m.attr) | ExEmpty
 }
 
 // Rd64 reads a 64-bit data value from memory.
-func (m *Empty) Rd64(adr uint) (uint64, Exception) {
+func (m *empty) Rd64(adr uint) (uint64, Exception) {
 	return math.MaxUint64, rdException(adr, m.attr, 8) | ExEmpty
 }
 
 // Rd32 reads a 32-bit data value from memory.
-func (m *Empty) Rd32(adr uint) (uint32, Exception) {
+func (m *empty) Rd32(adr uint) (uint32, Exception) {
 	return math.MaxUint32, rdException(adr, m.attr, 4) | ExEmpty
 }
 
 // Rd16 reads a 16-bit data value from memory.
-func (m *Empty) Rd16(adr uint) (uint16, Exception) {
+func (m *empty) Rd16(adr uint) (uint16, Exception) {
 	return math.MaxUint16, rdException(adr, m.attr, 2) | ExEmpty
 }
 
 // Rd8 reads an 8-bit data value from memory.
-func (m *Empty) Rd8(adr uint) (uint8, Exception) {
+func (m *empty) Rd8(adr uint) (uint8, Exception) {
 	return math.MaxUint8, rdException(adr, m.attr, 1) | ExEmpty
 }
 
 // Wr64 writes a 64-bit data value to memory.
-func (m *Empty) Wr64(adr uint, val uint64) Exception {
+func (m *empty) Wr64(adr uint, val uint64) Exception {
 	return wrException(adr, m.attr, 8) | ExEmpty
 }
 
 // Wr32 writes a 32-bit data value to memory.
-func (m *Empty) Wr32(adr uint, val uint32) Exception {
+func (m *empty) Wr32(adr uint, val uint32) Exception {
 	return wrException(adr, m.attr, 4) | ExEmpty
 }
 
 // Wr16 writes a 16-bit data value to memory.
-func (m *Empty) Wr16(adr uint, val uint16) Exception {
+func (m *empty) Wr16(adr uint, val uint16) Exception {
 	return wrException(adr, m.attr, 2) | ExEmpty
 }
 
 // Wr8 writes an 8-bit data value to memory.
-func (m *Empty) Wr8(adr uint, val uint8) Exception {
+func (m *empty) Wr8(adr uint, val uint8) Exception {
 	return wrException(adr, m.attr, 1) | ExEmpty
 }
 
