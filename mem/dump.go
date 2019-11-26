@@ -1,24 +1,52 @@
 //-----------------------------------------------------------------------------
 /*
 
-Utilities for Memory Display
+Dump strings for memory.
 
 */
 //-----------------------------------------------------------------------------
 
-package util
+package mem
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
-	"github.com/deadsy/riscv/mem"
+	"github.com/deadsy/go-cli"
+	"github.com/deadsy/riscv/util"
 )
 
 //-----------------------------------------------------------------------------
 
-// MemDisplay returns a display string for a contiguous region of memory.
-func MemDisplay(m *mem.Memory, adr, size uint) string {
+// Symbols returns an address sorted string of memory symbols.
+func (m *Memory) Symbols() string {
+	// list of symbols
+	symbols := []*Symbol{}
+	for _, v := range m.symByName {
+		symbols = append(symbols, v)
+	}
+	// sort by address
+	sort.Sort(byAddr(symbols))
+	// display string
+	s := make([][]string, len(symbols))
+	for i, se := range symbols {
+		var addrStr string
+		if m.AddrLength == 32 {
+			addrStr = fmt.Sprintf("%08x", se.Addr)
+		} else {
+			addrStr = fmt.Sprintf("%016x", se.Addr)
+		}
+		sizeStr := fmt.Sprintf("(%d)", se.Size)
+		s[i] = []string{addrStr, sizeStr, util.GreenString(se.Name)}
+	}
+	return cli.TableString(s, []int{0, 0, 0}, 1)
+}
+
+//-----------------------------------------------------------------------------
+
+// Display returns a string for a contiguous region of memory.
+func (m *Memory) Display(adr, size uint) string {
 	s := make([]string, 0)
 	// round down address to 16 byte boundary
 	adr &= ^uint(15)

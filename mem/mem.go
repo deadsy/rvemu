@@ -15,23 +15,31 @@ import (
 
 //-----------------------------------------------------------------------------
 
-// Range is a memory range.
-type Range struct {
+// Symbol is a memory symbol.
+type Symbol struct {
+	Name string
 	Addr uint
 	Size uint
 }
+
+// sort symbols by address
+type byAddr []*Symbol
+
+func (a byAddr) Len() int           { return len(a) }
+func (a byAddr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byAddr) Less(i, j int) bool { return a[i].Addr < a[j].Addr }
 
 //-----------------------------------------------------------------------------
 
 // Memory is emulated target memory.
 type Memory struct {
-	region     []Region          // memory regions
-	Entry      uint64            // entry point from ELF
-	AddrLength int               // address bit length
-	symByAddr  map[uint]string   // symbol table by address
-	symByName  map[string]*Range // symbol table by name
-	noMemory   Region            // empty memory region
-	da         map[uint]string   // reference disassembly
+	region     []Region           // memory regions
+	Entry      uint64             // entry point from ELF
+	AddrLength int                // address bit length
+	symByAddr  map[uint]*Symbol   // symbol table by address
+	symByName  map[string]*Symbol // symbol table by name
+	noMemory   Region             // empty memory region
+	da         map[uint]string    // reference disassembly
 
 }
 
@@ -40,8 +48,8 @@ func newMemory(alen int, empty Attribute) *Memory {
 	return &Memory{
 		AddrLength: alen,
 		region:     make([]Region, 0),
-		symByAddr:  make(map[uint]string),
-		symByName:  make(map[string]*Range),
+		symByAddr:  make(map[uint]*Symbol),
+		symByName:  make(map[string]*Symbol),
 		noMemory:   newEmpty(empty),
 		da:         make(map[uint]string),
 	}
@@ -122,12 +130,12 @@ func (m *Memory) Wr8(adr uint, val uint8) Exception {
 //-----------------------------------------------------------------------------
 
 // SymbolByAddress returns a symbol for the memory address.
-func (m *Memory) SymbolByAddress(adr uint) string {
+func (m *Memory) SymbolByAddress(adr uint) *Symbol {
 	return m.symByAddr[adr]
 }
 
-// SymbolByName returns the memory range for a symbol.
-func (m *Memory) SymbolByName(s string) *Range {
+// SymbolByName returns the symbol for a symbol name.
+func (m *Memory) SymbolByName(s string) *Symbol {
 	return m.symByName[s]
 }
 
@@ -137,8 +145,9 @@ func (m *Memory) AddSymbol(s string, adr, size uint) error {
 		return errors.New("zero length symbol")
 	}
 	if m.find(adr, size) != nil {
-		m.symByAddr[adr] = s
-		m.symByName[s] = &Range{adr, size}
+		symbol := Symbol{s, adr, size}
+		m.symByAddr[adr] = &symbol
+		m.symByName[s] = &symbol
 		return nil
 	}
 	return fmt.Errorf("%s is not in a memory segment", s)

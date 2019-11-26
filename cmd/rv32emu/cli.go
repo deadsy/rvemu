@@ -59,7 +59,8 @@ var cmdMemDisplay = cli.Leaf{
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		c.User.Put(util.MemDisplay(c.User.(*userApp).mem, adr, size))
+		m := c.User.(*userApp).mem
+		c.User.Put(m.Display(adr, size))
 	},
 }
 
@@ -178,6 +179,16 @@ var cmdReset = cli.Leaf{
 
 //-----------------------------------------------------------------------------
 
+var cmdSymbol = cli.Leaf{
+	Descr: "display the symbol table",
+	F: func(c *cli.CLI, args []string) {
+		m := c.User.(*userApp).mem
+		c.User.Put(fmt.Sprintf("%s\n", m.Symbols()))
+	},
+}
+
+//-----------------------------------------------------------------------------
+
 // root menu
 var menuRoot = cli.Menu{
 	{"da", cmdDisassemble, helpDisassemble},
@@ -189,6 +200,7 @@ var menuRoot = cli.Menu{
 	{"md", cmdMemDisplay, helpMemDisplay},
 	{"reset", cmdReset},
 	{"step", cmdStep, helpGo},
+	{"sym", cmdSymbol},
 	{"trace", cmdTrace, helpGo},
 }
 

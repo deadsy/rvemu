@@ -59,7 +59,8 @@ var cmdMemDisplay = cli.Leaf{
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		c.User.Put(util.MemDisplay(c.User.(*userApp).mem, adr, size))
+		m := c.User.(*userApp).mem
+		c.User.Put(m.Display(adr, size))
 	},
 }
 
