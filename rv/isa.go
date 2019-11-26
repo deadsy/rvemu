@@ -83,12 +83,13 @@ var ISArv32i = ISAModule{
 		{"0000 0000 0000 00000 001 00000 0001111 FENCE.I", daTypeIi, emu32_FENCE_I, emu64_FENCE_I}, // I
 		{"000000000000 00000 000 00000 1110011 ECALL", daTypeIi, emu32_ECALL, emu64_ECALL},         // I
 		{"000000000001 00000 000 00000 1110011 EBREAK", daTypeIi, emu32_EBREAK, emu64_EBREAK},      // I
+		{"001100000010 00000 000 00000 1110011 MRET", daTypeIi, emu32_MRET, emu64_MRET},            // I
 		{"csr rs1 001 rd 1110011 CSRRW", daTypeIh, emu32_CSRRW, emu64_CSRRW},                       // I
 		{"csr rs1 010 rd 1110011 CSRRS", daTypeIh, emu32_CSRRS, emu64_CSRRS},                       // I
 		{"csr rs1 011 rd 1110011 CSRRC", daTypeIh, emu32_CSRRC, emu64_CSRRC},                       // I
-		{"csr zimm 101 rd 1110011 CSRRWI", daNone, emu32_CSRRWI, emu64_CSRRWI},                     // I
-		{"csr zimm 110 rd 1110011 CSRRSI", daNone, emu32_CSRRSI, emu64_CSRRSI},                     // I
-		{"csr zimm 111 rd 1110011 CSRRCI", daNone, emu32_CSRRCI, emu64_CSRRCI},                     // I
+		{"csr zimm 101 rd 1110011 CSRRWI", daTypeIj, emu32_CSRRWI, emu64_CSRRWI},                   // I
+		{"csr zimm 110 rd 1110011 CSRRSI", daTypeIj, emu32_CSRRSI, emu64_CSRRSI},                   // I
+		{"csr zimm 111 rd 1110011 CSRRCI", daTypeIj, emu32_CSRRCI, emu64_CSRRCI},                   // I
 	},
 }
 

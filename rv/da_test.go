@@ -62,12 +62,17 @@ var rv32iTest = []daTest{
 	{0, 0x00a60533, "add a0,a2,a0"},
 	{0, 0x40f007b3, "neg a5,a5"},
 	{0, 0x00301073, "fscsr zero"},
-	{0, 0xf1402573, "csrr a0,mhartid"},
 	{0, 0xfea42623, "sw a0,-20(s0)"},
 	{0, 0xfeb42423, "sw a1,-24(s0)"},
 	{0, 0xfe842783, "lw a5,-24(s0)"},
 	{0, 0xfec42783, "lw a5,-20(s0)"},
 	{0, 0x00000073, "ecall"},
+	{0, 0x30529073, "csrw mtvec,t0"},
+	{0, 0x3b029073, "csrw pmpaddr0,t0"},
+	{0, 0x34202f73, "csrr t5,mcause"},
+	{0, 0xf1402573, "csrr a0,mhartid"},
+	{0, 0x18005073, "csrwi satp,0"},
+	{0, 0x30200073, "mret"},
 }
 
 var rv32mTest = []daTest{

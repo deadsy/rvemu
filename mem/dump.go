@@ -80,6 +80,7 @@ func (m *Memory) Display(adr, size uint) string {
 			s = append(s, fmt.Sprintf("%016x  %s  %s", adr, dataStr, asciiStr))
 		}
 		adr += 16
+		adr &= (1 << m.AddrLength) - 1
 	}
 	return strings.Join(s, "\n")
 }

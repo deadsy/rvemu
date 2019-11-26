@@ -137,14 +137,28 @@ func daTypeIh(name string, pc uint, ins uint) string {
 		}
 		return fmt.Sprintf("fscsr %s,%s", abiXName[rd], abiXName[rs1])
 	}
-	if name == "csrrs" && rs1 == 0 {
-		return fmt.Sprintf("csrr %s,%s", abiXName[rd], csrName(csr))
+
+	if rs1 == 0 {
+		return fmt.Sprintf("%s %s,%s", name, abiXName[rd], csrName(csr))
 	}
+
+	if rd == 0 {
+		return fmt.Sprintf("%s %s,%s", name, csrName(csr), abiXName[rs1])
+	}
+
 	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], csrName(csr), abiXName[rs1])
 }
 
 func daTypeIi(name string, pc uint, ins uint) string {
 	return fmt.Sprintf("%s", name)
+}
+
+func daTypeIj(name string, pc uint, ins uint) string {
+	csr, uimm, rd := decodeIb(ins)
+	if rd == 0 {
+		return fmt.Sprintf("%s %s,%d", name, csrName(csr), uimm)
+	}
+	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], csrName(csr), uimm)
 }
 
 //-----------------------------------------------------------------------------
@@ -434,9 +448,14 @@ func (isa *ISA) daInstruction(pc uint, ins uint) string {
 
 // Disassemble a RISC-V instruction at the address.
 func (isa *ISA) Disassemble(m *mem.Memory, adr uint) *Disassembly {
-	ins, _ := m.RdIns(adr)
 	var da Disassembly
-	da.Symbol = m.SymbolByAddress(adr).Name
+	// symbol
+	s := m.SymbolByAddress(adr)
+	if s != nil {
+		da.Symbol = s.Name
+	}
+	// instruction
+	ins, _ := m.RdIns(adr)
 	if ins&3 == 3 {
 		da.Dump = daDump32(adr, ins, m.AddrLength)
 		da.Assembly = isa.daInstruction(adr, ins)

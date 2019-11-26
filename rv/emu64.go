@@ -281,6 +281,10 @@ func emu64_EBREAK(m *RV64, ins uint) {
 	m.flag |= flagTodo
 }
 
+func emu64_MRET(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
 func emu64_CSRRW(m *RV64, ins uint) {
 	m.flag |= flagTodo
 }
@@ -300,7 +304,14 @@ func emu64_CSRRC(m *RV64, ins uint) {
 }
 
 func emu64_CSRRWI(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	csr, zimm, rd := decodeIb(ins)
+	if rd != 0 {
+		m.X[rd] = m.rdCSR(csr)
+	}
+	if zimm != 0 {
+		m.wrCSR(csr, uint64(zimm))
+	}
+	m.PC += 4
 }
 
 func emu64_CSRRSI(m *RV64, ins uint) {
@@ -1212,7 +1223,7 @@ func (m *RV64) Disassemble(adr uint) *Disassembly {
 // Reset the RV64 CPU.
 func (m *RV64) Reset() {
 	m.PC = uint64(m.Mem.Entry)
-	m.X[regSp] = 0xfffc0000 + (128 << 10)
+	m.X[regSp] = uint64(uint(1<<32) - 16)
 	m.insCount = 0
 	m.lastPC = 0
 	m.flag = 0

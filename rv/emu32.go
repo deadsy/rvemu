@@ -311,6 +311,10 @@ func emu32_EBREAK(m *RV32, ins uint) {
 	m.flag |= flagTodo
 }
 
+func emu32_MRET(m *RV32, ins uint) {
+	m.flag |= flagTodo
+}
+
 func emu32_CSRRW(m *RV32, ins uint) {
 	csr, rs1, rd := decodeIb(ins)
 	t := m.rdCSR(csr)
@@ -334,7 +338,14 @@ func emu32_CSRRC(m *RV32, ins uint) {
 }
 
 func emu32_CSRRWI(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	csr, zimm, rd := decodeIb(ins)
+	if rd != 0 {
+		m.X[rd] = m.rdCSR(csr)
+	}
+	if zimm != 0 {
+		m.wrCSR(csr, uint32(zimm))
+	}
+	m.PC += 4
 }
 
 func emu32_CSRRSI(m *RV32, ins uint) {
@@ -993,6 +1004,7 @@ func (m *RV32) Disassemble(adr uint) *Disassembly {
 // Reset the RV32 CPU.
 func (m *RV32) Reset() {
 	m.PC = uint32(m.Mem.Entry)
+	m.X[regSp] = uint32(uint(1<<32) - 16)
 	m.insCount = 0
 	m.lastPC = 0
 	m.flag = 0

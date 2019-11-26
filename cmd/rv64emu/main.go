@@ -22,6 +22,7 @@ import (
 //-----------------------------------------------------------------------------
 
 const historyPath = ".rv64emu_history"
+const stackSize = 8 << 10
 
 //-----------------------------------------------------------------------------
 
@@ -43,7 +44,7 @@ func newUserApp() (*userApp, error) {
 
 	// create the memory
 	m := mem.NewMem64(0)
-	m.Add(mem.NewSection("heap", 0xfffc0000, 256<<10, mem.AttrRW))
+	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
 	// create the cpu
 	cpu := rv.NewRV64(isa, m)

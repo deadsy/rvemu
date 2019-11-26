@@ -227,6 +227,12 @@ func nameRemap(name string) string {
 		"c.sdsp":     "sd",
 		"c.addi16sp": "addi",
 		"c.addi4spn": "addi",
+		"csrrs":      "csrr",
+		"csrrw":      "csrw",
+		"csrrwi":     "csrwi",
+		//"csrrc":      "",
+		//"csrrsi":     "",
+		//"csrrci":     "",
 	}
 	if s, ok := x[name]; ok {
 		return s

@@ -159,8 +159,8 @@ var cmdDisassemble = cli.Leaf{
 
 //-----------------------------------------------------------------------------
 
-var cmdIntRegisters = cli.Leaf{
-	Descr: "display integer registers",
+var cmdRegisters = cli.Leaf{
+	Descr: "display registers",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*userApp).cpu
 		c.User.Put(fmt.Sprintf("%s\n", m.IRegs()))
@@ -196,7 +196,7 @@ var menuRoot = cli.Menu{
 	{"go", cmdGo, helpGo},
 	{"help", cmdHelp},
 	{"history", cmdHistory, cli.HistoryHelp},
-	{"ireg", cmdIntRegisters},
+	{"reg", cmdRegisters},
 	{"md", cmdMemDisplay, helpMemDisplay},
 	{"reset", cmdReset},
 	{"step", cmdStep, helpGo},
