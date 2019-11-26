@@ -70,15 +70,18 @@ const AttrRX = AttrR | AttrX
 const AttrRWX = AttrR | AttrW | AttrX
 
 func (a Attribute) String() string {
-	s := make([]string, 0)
+	s := make([]string, 3)
+	for i := range s {
+		s[i] = "-"
+	}
 	if a&AttrR != 0 {
-		s = append(s, "r")
+		s[0] = "r"
 	}
 	if a&AttrW != 0 {
-		s = append(s, "w")
+		s[1] = "w"
 	}
 	if a&AttrX != 0 {
-		s = append(s, "x")
+		s[2] = "x"
 	}
 	return strings.Join(s, "")
 }

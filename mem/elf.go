@@ -68,7 +68,7 @@ func makeSection(f *elf.File, s *elf.Section) (*Section, string) {
 	}
 
 	end := s.Addr + s.Size - 1
-	return ms, fmt.Sprintf("%-16s %08x-%08x %-3s (%d bytes)", s.Name, s.Addr, end, attr.String(), s.Size)
+	return ms, fmt.Sprintf("%-16s %08x-%08x %s (%d bytes)", s.Name, s.Addr, end, attr.String(), s.Size)
 }
 
 //-----------------------------------------------------------------------------
