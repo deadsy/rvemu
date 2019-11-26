@@ -69,6 +69,20 @@ const AttrRX = AttrR | AttrX
 // AttrRWX = read/write/execute
 const AttrRWX = AttrR | AttrW | AttrX
 
+func (a Attribute) String() string {
+	s := make([]string, 0)
+	if a&AttrR != 0 {
+		s = append(s, "r")
+	}
+	if a&AttrW != 0 {
+		s = append(s, "w")
+	}
+	if a&AttrX != 0 {
+		s = append(s, "x")
+	}
+	return strings.Join(s, "")
+}
+
 //-----------------------------------------------------------------------------
 // memory access exceptions
 

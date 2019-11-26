@@ -55,19 +55,20 @@ func makeSection(f *elf.File, s *elf.Section) (*Section, string) {
 	// create the memory section
 	ms := NewSection(s.Name, uint(s.Addr), uint(s.Size), attr)
 
-	// read the section data from the ELF file
-	data, err := s.Data()
-	if err != nil {
-		return nil, fmt.Sprintf("can't read section %s (%s)", s.Name, err)
-	}
-
-	// write the data to the memory section
-	for i, v := range data {
-		ms.Wr8(uint(s.Addr)+uint(i), v)
+	if s.Type&elf.SHT_PROGBITS != 0 {
+		// read the section data from the ELF file
+		data, err := s.Data()
+		if err != nil {
+			return nil, fmt.Sprintf("can't read section %s (%s)", s.Name, err)
+		}
+		// write the data to the memory section
+		for i, v := range data {
+			ms.Wr8(uint(s.Addr)+uint(i), v)
+		}
 	}
 
 	end := s.Addr + s.Size - 1
-	return ms, fmt.Sprintf("%-16s %08x-%08x (%d bytes)", s.Name, s.Addr, end, s.Size)
+	return ms, fmt.Sprintf("%-16s %08x-%08x %-3s (%d bytes)", s.Name, s.Addr, end, attr.String(), s.Size)
 }
 
 //-----------------------------------------------------------------------------
