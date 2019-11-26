@@ -311,10 +311,6 @@ func emu32_EBREAK(m *RV32, ins uint) {
 	m.flag |= flagTodo
 }
 
-func emu32_MRET(m *RV32, ins uint) {
-	m.flag |= flagTodo
-}
-
 func emu32_CSRRW(m *RV32, ins uint) {
 	csr, rs1, rd := decodeIb(ins)
 	t := m.rdCSR(csr)
@@ -353,6 +349,37 @@ func emu32_CSRRSI(m *RV32, ins uint) {
 }
 
 func emu32_CSRRCI(m *RV32, ins uint) {
+	m.flag |= flagTodo
+}
+
+//-----------------------------------------------------------------------------
+// rv32i privileged
+
+func emu32_URET(m *RV32, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu32_SRET(m *RV32, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu32_MRET(m *RV32, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu32_WFI(m *RV32, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu32_SFENCE_VMA(m *RV32, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu32_HFENCE_BVMA(m *RV32, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu32_HFENCE_GVMA(m *RV32, ins uint) {
 	m.flag |= flagTodo
 }
 

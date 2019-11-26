@@ -281,10 +281,6 @@ func emu64_EBREAK(m *RV64, ins uint) {
 	m.flag |= flagTodo
 }
 
-func emu64_MRET(m *RV64, ins uint) {
-	m.flag |= flagTodo
-}
-
 func emu64_CSRRW(m *RV64, ins uint) {
 	m.flag |= flagTodo
 }
@@ -319,6 +315,37 @@ func emu64_CSRRSI(m *RV64, ins uint) {
 }
 
 func emu64_CSRRCI(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
+//-----------------------------------------------------------------------------
+// rv32i privileged
+
+func emu64_URET(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu64_SRET(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu64_MRET(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu64_WFI(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu64_SFENCE_VMA(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu64_HFENCE_BVMA(m *RV64, ins uint) {
+	m.flag |= flagTodo
+}
+
+func emu64_HFENCE_GVMA(m *RV64, ins uint) {
 	m.flag |= flagTodo
 }
 
