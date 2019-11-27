@@ -11,6 +11,7 @@ package rv
 import (
 	"fmt"
 
+	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/mem"
 )
 
@@ -272,6 +273,7 @@ const (
 	flagExit                         // exit from emulation
 	flagTodo                         // unimplemented instruction
 	flagMemory                       // memory exception
+	flagCSR                          // CSR exception
 	flagSyscall                      // unrecognised system call
 	flagBreak                        // debug break point
 )
@@ -286,7 +288,22 @@ type memoryException struct {
 }
 
 func (e memoryException) String() string {
+	// TODO - fix the 64-bit address case
 	return fmt.Sprintf("at PC %08x (%s @ %08x)", e.pc, e.ex, e.adr)
+}
+
+//-----------------------------------------------------------------------------
+// CSR exceptions
+
+type csrException struct {
+	pc  uint          // PC when the exception occured
+	reg uint          // CSR causing the exception
+	ex  csr.Exception // exception bitmap
+}
+
+func (e csrException) String() string {
+	// TODO - fix the 64-bit address case
+	return fmt.Sprintf("at PC %08x (%s: %s)", e.pc, csr.Name(e.reg), e.ex)
 }
 
 //-----------------------------------------------------------------------------

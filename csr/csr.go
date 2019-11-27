@@ -14,6 +14,40 @@ import (
 )
 
 //-----------------------------------------------------------------------------
+
+// Exception is a bit mask of CSR exceptions.
+type Exception uint
+
+// Exception values.
+const (
+	ExTodo      Exception = 1 << iota // csr not implemented
+	ExPrivilege                       // insufficent privilege
+	ExReadOnly                        // trying to write a read-only register
+	ExNoRead                          // no read function (todo)
+	ExNoWrite                         // no write function (todo)
+)
+
+func (e Exception) String() string {
+	s := []string{}
+	if e&ExTodo != 0 {
+		s = append(s, "not implemented")
+	}
+	if e&ExPrivilege != 0 {
+		s = append(s, "insufficent privilege")
+	}
+	if e&ExReadOnly != 0 {
+		s = append(s, "read only")
+	}
+	if e&ExNoRead != 0 {
+		s = append(s, "no read function")
+	}
+	if e&ExNoWrite != 0 {
+		s = append(s, "no write function")
+	}
+	return strings.Join(s, ",")
+}
+
+//-----------------------------------------------------------------------------
 // Privilege Levels
 
 const PrivU = 0 // user
@@ -24,6 +58,7 @@ const PrivM = 3 // machine
 // Consts for Specific CSRs
 
 const FCSR = 0x003
+const MSTATUS = 0x300
 
 //-----------------------------------------------------------------------------
 
@@ -370,17 +405,16 @@ func Name(reg uint) string {
 
 //-----------------------------------------------------------------------------
 
-// canRd returns true if the register can be read.
-func (csr *State) canRd(reg uint) bool {
+// canAccess returns true if the register can be accessed at the current privilege level.
+func (csr *State) canAccess(reg uint) bool {
 	priv := (reg >> 8) & 3
 	return csr.Priv >= priv
 }
 
 // canWr returns true if the register can be written.
-func (csr *State) canWr(reg uint) bool {
-	priv := (reg >> 8) & 3
+func canWr(reg uint) bool {
 	rw := (reg >> 10) & 3
-	return (rw != 3) && (csr.Priv >= priv)
+	return rw != 3
 }
 
 //-----------------------------------------------------------------------------
@@ -411,32 +445,35 @@ func NewState(xlen uint) *State {
 }
 
 // Rd reads from a CSR.
-func (csr *State) Rd(reg uint) (uint, error) {
-	if x, ok := lookup[reg]; ok {
-		if !csr.canRd(reg) {
-			return 0, fmt.Errorf("can't read CSR \"%s\"", x.name)
-		}
-		if x.rd == nil {
-			return 0, fmt.Errorf("no read function for CSR \"%s\"", x.name)
-		}
-		return x.rd(csr), nil
+func (csr *State) Rd(reg uint) (uint, Exception) {
+	if !csr.canAccess(reg) {
+		return 0, ExPrivilege
 	}
-	return 0, fmt.Errorf("unknown CSR 0x%03x", reg)
+	if x, ok := lookup[reg]; ok {
+		if x.rd == nil {
+			return 0, ExNoRead
+		}
+		return x.rd(csr), 0
+	}
+	return 0, ExTodo
 }
 
 // Wr writes to a CSR.
-func (csr *State) Wr(reg, val uint) error {
+func (csr *State) Wr(reg, val uint) Exception {
+	if !canWr(reg) {
+		return ExReadOnly
+	}
+	if !csr.canAccess(reg) {
+		return ExPrivilege
+	}
 	if x, ok := lookup[reg]; ok {
-		if !csr.canWr(reg) {
-			return fmt.Errorf("can't write CSR \"%s\"", x.name)
-		}
 		if x.wr == nil {
-			return fmt.Errorf("no write function for CSR \"%s\"", x.name)
+			return ExNoWrite
 		}
 		x.wr(csr, val)
-		return nil
+		return 0
 	}
-	return fmt.Errorf("unknown CSR 0x%03x", reg)
+	return ExTodo
 }
 
 // Display displays the CSR state.
@@ -456,12 +493,15 @@ func (csr *State) Display() string {
 }
 
 // MRET performs an MRET operation.
-func (csr *State) MRET() uint {
+func (csr *State) MRET() (uint, Exception) {
+	if !csr.canAccess(MSTATUS) {
+		return 0, ExPrivilege
+	}
 	csr.Priv = csr.mstatusRdMPP()
 	csr.mstatusWrMIE(csr.mstatusRdMPIE())
 	csr.mstatusWrMPIE(1)
 	csr.mstatusWrMPP(PrivU)
-	return csr.mepc
+	return rdMEPC(csr), 0
 }
 
 //-----------------------------------------------------------------------------

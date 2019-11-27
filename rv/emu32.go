@@ -366,7 +366,9 @@ func emu32_SRET(m *RV32, ins uint) {
 }
 
 func emu32_MRET(m *RV32, ins uint) {
-	m.PC = uint32(m.CSR.MRET())
+	pc, ex := m.CSR.MRET()
+	m.checkCSR(csr.MSTATUS, ex)
+	m.PC = uint32(pc)
 }
 
 func emu32_WFI(m *RV32, ins uint) {
@@ -977,26 +979,29 @@ func (m *RV32) checkMemory(adr uint, ex mem.Exception) {
 		return
 	}
 	m.flag |= flagMemory
-	m.mx = memoryException{uint(m.PC), adr, ex}
+	m.memEx = memoryException{uint(m.PC), adr, ex}
 }
 
 // rdCSR reads a CSR.
 func (m *RV32) rdCSR(reg uint) uint32 {
-	val, err := m.CSR.Rd(reg)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		m.flag |= flagIllegal
-	}
+	val, ex := m.CSR.Rd(reg)
+	m.checkCSR(reg, ex)
 	return uint32(val)
 }
 
 // wrCSR writes a CSR.
 func (m *RV32) wrCSR(reg uint, val uint32) {
-	err := m.CSR.Wr(reg, uint(val))
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		m.flag |= flagIllegal
+	ex := m.CSR.Wr(reg, uint(val))
+	m.checkCSR(reg, ex)
+}
+
+// checkCSR records a memory exception.
+func (m *RV32) checkCSR(reg uint, ex csr.Exception) {
+	if ex == 0 {
+		return
 	}
+	m.flag |= flagCSR
+	m.csrEx = csrException{uint(m.PC), reg, ex}
 }
 
 //-----------------------------------------------------------------------------
@@ -1011,7 +1016,8 @@ type RV32 struct {
 	insCount uint            // number of instructions run
 	lastPC   uint32          // stuck PC detection
 	flag     emuFlags        // event flags
-	mx       memoryException // memory exceptions
+	memEx    memoryException // memory exceptions
+	csrEx    csrException    // csr exceptions
 	isa      *ISA            // ISA implemented for the CPU
 }
 
@@ -1067,7 +1073,7 @@ func (m *RV32) Run() error {
 	ins, ex := m.Mem.RdIns(uint(m.PC))
 	if ex != 0 {
 		m.checkMemory(uint(m.PC), ex)
-		return fmt.Errorf("memory exception %s", m.mx)
+		return fmt.Errorf("memory exception %s", m.memEx)
 	}
 
 	// lookup and emulate the instruction
@@ -1085,7 +1091,10 @@ func (m *RV32) Run() error {
 			return fmt.Errorf("illegal instruction at PC %08x", m.PC)
 		}
 		if m.flag&flagMemory != 0 {
-			return fmt.Errorf("memory exception %s", m.mx)
+			return fmt.Errorf("memory exception %s", m.memEx)
+		}
+		if m.flag&flagCSR != 0 {
+			return fmt.Errorf("csr exception %s", m.csrEx)
 		}
 		if m.flag&flagExit != 0 {
 			return fmt.Errorf("exit at PC %08x, status %08x (%d instructions)", m.PC, m.X[1], m.insCount)
