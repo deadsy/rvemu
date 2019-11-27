@@ -11,6 +11,7 @@ package rv
 import (
 	"fmt"
 
+	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/mem"
 	"github.com/deadsy/riscv/util"
 )
@@ -130,8 +131,8 @@ func daTypeIg(name string, pc uint, ins uint) string {
 }
 
 func daTypeIh(name string, pc uint, ins uint) string {
-	csr, rs1, rd := decodeIb(ins)
-	if csr == csrFCSR {
+	csrReg, rs1, rd := decodeIb(ins)
+	if csrReg == csr.FCSR {
 		if rd == 0 {
 			return fmt.Sprintf("fscsr %s", abiXName[rs1])
 		}
@@ -139,14 +140,14 @@ func daTypeIh(name string, pc uint, ins uint) string {
 	}
 
 	if rs1 == 0 {
-		return fmt.Sprintf("%s %s,%s", name, abiXName[rd], csrName(csr))
+		return fmt.Sprintf("%s %s,%s", name, abiXName[rd], csr.Name(csrReg))
 	}
 
 	if rd == 0 {
-		return fmt.Sprintf("%s %s,%s", name, csrName(csr), abiXName[rs1])
+		return fmt.Sprintf("%s %s,%s", name, csr.Name(csrReg), abiXName[rs1])
 	}
 
-	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], csrName(csr), abiXName[rs1])
+	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], csr.Name(csrReg), abiXName[rs1])
 }
 
 func daTypeIi(name string, pc uint, ins uint) string {
@@ -154,11 +155,11 @@ func daTypeIi(name string, pc uint, ins uint) string {
 }
 
 func daTypeIj(name string, pc uint, ins uint) string {
-	csr, uimm, rd := decodeIb(ins)
+	csrReg, uimm, rd := decodeIb(ins)
 	if rd == 0 {
-		return fmt.Sprintf("%s %s,%d", name, csrName(csr), uimm)
+		return fmt.Sprintf("%s %s,%d", name, csr.Name(csrReg), uimm)
 	}
-	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], csrName(csr), uimm)
+	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], csr.Name(csrReg), uimm)
 }
 
 //-----------------------------------------------------------------------------

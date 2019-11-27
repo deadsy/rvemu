@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/mem"
 )
 
@@ -282,7 +283,14 @@ func emu64_EBREAK(m *RV64, ins uint) {
 }
 
 func emu64_CSRRW(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	csr, rs1, rd := decodeIb(ins)
+	var t uint64
+	if rd != 0 {
+		t = m.rdCSR(csr)
+	}
+	m.wrCSR(csr, m.X[rs1])
+	m.wrX(rd, t)
+	m.PC += 4
 }
 
 func emu64_CSRRS(m *RV64, ins uint) {
@@ -304,9 +312,7 @@ func emu64_CSRRWI(m *RV64, ins uint) {
 	if rd != 0 {
 		m.X[rd] = m.rdCSR(csr)
 	}
-	if zimm != 0 {
-		m.wrCSR(csr, uint64(zimm))
-	}
+	m.wrCSR(csr, uint64(zimm))
 	m.PC += 4
 }
 
@@ -1197,6 +1203,23 @@ func (m *RV64) checkMemory(adr uint, ex mem.Exception) {
 	m.mx = memoryException{uint(m.PC), adr, ex}
 }
 
+// rdCSR reads a CSR.
+func (m *RV64) rdCSR(reg uint) uint64 {
+	val, err := m.CSR.Rd(reg)
+	if err != nil {
+		m.flag |= flagIllegal
+	}
+	return uint64(val)
+}
+
+// wrCSR writes a CSR.
+func (m *RV64) wrCSR(reg uint, val uint64) {
+	err := m.CSR.Wr(reg, uint(val))
+	if err != nil {
+		m.flag |= flagIllegal
+	}
+}
+
 //-----------------------------------------------------------------------------
 
 // RV64 is a 64-bit RISC-V CPU.
@@ -1205,6 +1228,7 @@ type RV64 struct {
 	X        [32]uint64      // registers
 	F        [32]uint64      // float registers
 	PC       uint64          // program counter
+	CSR      *csr.State      // CSR state
 	insCount uint            // number of instructions run
 	lastPC   uint64          // stuck PC detection
 	flag     emuFlags        // event flags
@@ -1216,6 +1240,7 @@ type RV64 struct {
 func NewRV64(isa *ISA, mem *mem.Memory) *RV64 {
 	return &RV64{
 		Mem: mem,
+		CSR: csr.NewState(64),
 		isa: isa,
 	}
 }

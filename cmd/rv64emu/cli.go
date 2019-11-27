@@ -159,8 +159,8 @@ var cmdDisassemble = cli.Leaf{
 
 //-----------------------------------------------------------------------------
 
-var cmdIntRegisters = cli.Leaf{
-	Descr: "display integer registers",
+var cmdRegisters = cli.Leaf{
+	Descr: "display registers",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*userApp).cpu
 		c.User.Put(fmt.Sprintf("%s\n", m.IRegs()))
@@ -179,17 +179,39 @@ var cmdReset = cli.Leaf{
 
 //-----------------------------------------------------------------------------
 
+var cmdSymbol = cli.Leaf{
+	Descr: "display the symbol table",
+	F: func(c *cli.CLI, args []string) {
+		m := c.User.(*userApp).mem
+		c.User.Put(fmt.Sprintf("%s\n", m.Symbols()))
+	},
+}
+
+//-----------------------------------------------------------------------------
+
+var cmdCSR = cli.Leaf{
+	Descr: "display the control and status registers",
+	F: func(c *cli.CLI, args []string) {
+		csr := c.User.(*userApp).cpu.CSR
+		c.User.Put(fmt.Sprintf("%s\n", csr.Display()))
+	},
+}
+
+//-----------------------------------------------------------------------------
+
 // root menu
 var menuRoot = cli.Menu{
+	{"csr", cmdCSR},
 	{"da", cmdDisassemble, helpDisassemble},
 	{"exit", cmdExit},
 	{"go", cmdGo, helpGo},
 	{"help", cmdHelp},
 	{"history", cmdHistory, cli.HistoryHelp},
-	{"ireg", cmdIntRegisters},
+	{"reg", cmdRegisters},
 	{"md", cmdMemDisplay, helpMemDisplay},
 	{"reset", cmdReset},
 	{"step", cmdStep, helpGo},
+	{"sym", cmdSymbol},
 	{"trace", cmdTrace, helpGo},
 }
 

@@ -189,8 +189,19 @@ var cmdSymbol = cli.Leaf{
 
 //-----------------------------------------------------------------------------
 
+var cmdCSR = cli.Leaf{
+	Descr: "display the control and status registers",
+	F: func(c *cli.CLI, args []string) {
+		csr := c.User.(*userApp).cpu.CSR
+		c.User.Put(fmt.Sprintf("%s\n", csr.Display()))
+	},
+}
+
+//-----------------------------------------------------------------------------
+
 // root menu
 var menuRoot = cli.Menu{
+	{"csr", cmdCSR},
 	{"da", cmdDisassemble, helpDisassemble},
 	{"exit", cmdExit},
 	{"go", cmdGo, helpGo},

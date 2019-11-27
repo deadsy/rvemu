@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/mem"
 )
 
@@ -313,7 +314,10 @@ func emu32_EBREAK(m *RV32, ins uint) {
 
 func emu32_CSRRW(m *RV32, ins uint) {
 	csr, rs1, rd := decodeIb(ins)
-	t := m.rdCSR(csr)
+	var t uint32
+	if rd != 0 {
+		t = m.rdCSR(csr)
+	}
 	m.wrCSR(csr, m.X[rs1])
 	m.wrX(rd, t)
 	m.PC += 4
@@ -338,9 +342,7 @@ func emu32_CSRRWI(m *RV32, ins uint) {
 	if rd != 0 {
 		m.X[rd] = m.rdCSR(csr)
 	}
-	if zimm != 0 {
-		m.wrCSR(csr, uint32(zimm))
-	}
+	m.wrCSR(csr, uint32(zimm))
 	m.PC += 4
 }
 
@@ -978,6 +980,25 @@ func (m *RV32) checkMemory(adr uint, ex mem.Exception) {
 	m.mx = memoryException{uint(m.PC), adr, ex}
 }
 
+// rdCSR reads a CSR.
+func (m *RV32) rdCSR(reg uint) uint32 {
+	val, err := m.CSR.Rd(reg)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		m.flag |= flagIllegal
+	}
+	return uint32(val)
+}
+
+// wrCSR writes a CSR.
+func (m *RV32) wrCSR(reg uint, val uint32) {
+	err := m.CSR.Wr(reg, uint(val))
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		m.flag |= flagIllegal
+	}
+}
+
 //-----------------------------------------------------------------------------
 
 // RV32 is a 32-bit RISC-V CPU.
@@ -986,6 +1007,7 @@ type RV32 struct {
 	X        [32]uint32      // interger registers
 	F        [32]uint64      // float registers
 	PC       uint32          // program counter
+	CSR      *csr.State      // CSR state
 	insCount uint            // number of instructions run
 	lastPC   uint32          // stuck PC detection
 	flag     emuFlags        // event flags
@@ -997,6 +1019,7 @@ type RV32 struct {
 func NewRV32(isa *ISA, mem *mem.Memory) *RV32 {
 	return &RV32{
 		Mem: mem,
+		CSR: csr.NewState(32),
 		isa: isa,
 	}
 }
