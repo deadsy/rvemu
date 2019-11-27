@@ -13,8 +13,20 @@ import (
 )
 
 //-----------------------------------------------------------------------------
+// Privilege Levels
 
+const privU = 0 // user
+const privS = 1 // supervisor
+const privM = 3 // machine
+
+//-----------------------------------------------------------------------------
+// Known CSRs
+
+// User CSRs 0x000 - 0x0ff (read/write)
 const csrUSTATUS = 0x0
+const csrFFLAGS = 0x1
+const csrFRM = 0x2
+const csrFCSR = 0x3
 const csrUIE = 0x4
 const csrUTVEC = 0x5
 const csrUSCRATCH = 0x40
@@ -22,9 +34,8 @@ const csrUEPC = 0x41
 const csrUCAUSE = 0x42
 const csrUTVAL = 0x43
 const csrUIP = 0x44
-const csrFFLAGS = 0x1
-const csrFRM = 0x2
-const csrFCSR = 0x3
+
+// User CSRs 0xc00 - 0xc7f (read only)
 const csrCYCLE = 0xc00
 const csrTIME = 0xc01
 const csrINSTRET = 0xc02
@@ -57,6 +68,8 @@ const csrHPMCOUNTER28 = 0xc1c
 const csrHPMCOUNTER29 = 0xc1d
 const csrHPMCOUNTER30 = 0xc1e
 const csrHPMCOUNTER31 = 0xc1f
+
+// User CSRs 0xc80 - 0xcbf (read only)
 const csrCYCLEH = 0xc80
 const csrTIMEH = 0xc81
 const csrINSTRETH = 0xc82
@@ -89,6 +102,8 @@ const csrHPMCOUNTER28H = 0xc9c
 const csrHPMCOUNTER29H = 0xc9d
 const csrHPMCOUNTER30H = 0xc9e
 const csrHPMCOUNTER31H = 0xc9f
+
+// Supervisor CSRs 0x100 - 0x1ff (read/write)
 const csrSSTATUS = 0x100
 const csrSEDELEG = 0x102
 const csrSIDELEG = 0x103
@@ -101,22 +116,64 @@ const csrSCAUSE = 0x142
 const csrSTVAL = 0x143
 const csrSIP = 0x144
 const csrSATP = 0x180
+
+// Machine CSRs 0xf00 - 0xf7f (read only)
 const csrMVENDORID = 0xf11
 const csrMARCHID = 0xf12
 const csrMIMPID = 0xf13
 const csrMHARTID = 0xf14
+
+// Machine CSRs 0x300 - 0x3ff (read/write)
 const csrMSTATUS = 0x300
-const csrMISA = 0x301 // 0xf10 in 1.9, 0x301 in 1.9.1.
+const csrMISA = 0x301
 const csrMEDELEG = 0x302
 const csrMIDELEG = 0x303
 const csrMIE = 0x304
 const csrMTVEC = 0x305
 const csrMCOUNTEREN = 0x306
+const csrMUCOUNTEREN = 0x320
+const csrMSCOUNTEREN = 0x321
+const csrMHCOUNTEREN = 0x322
+const csrMHPMEVENT3 = 0x323
+const csrMHPMEVENT4 = 0x324
+const csrMHPMEVENT5 = 0x325
+const csrMHPMEVENT6 = 0x326
+const csrMHPMEVENT7 = 0x327
+const csrMHPMEVENT8 = 0x328
+const csrMHPMEVENT9 = 0x329
+const csrMHPMEVENT10 = 0x32a
+const csrMHPMEVENT11 = 0x32b
+const csrMHPMEVENT12 = 0x32c
+const csrMHPMEVENT13 = 0x32d
+const csrMHPMEVENT14 = 0x32e
+const csrMHPMEVENT15 = 0x32f
+const csrMHPMEVENT16 = 0x330
+const csrMHPMEVENT17 = 0x331
+const csrMHPMEVENT18 = 0x332
+const csrMHPMEVENT19 = 0x333
+const csrMHPMEVENT20 = 0x334
+const csrMHPMEVENT21 = 0x335
+const csrMHPMEVENT22 = 0x336
+const csrMHPMEVENT23 = 0x337
+const csrMHPMEVENT24 = 0x338
+const csrMHPMEVENT25 = 0x339
+const csrMHPMEVENT26 = 0x33a
+const csrMHPMEVENT27 = 0x33b
+const csrMHPMEVENT28 = 0x33c
+const csrMHPMEVENT29 = 0x33d
+const csrMHPMEVENT30 = 0x33e
+const csrMHPMEVENT31 = 0x33f
 const csrMSCRATCH = 0x340
 const csrMEPC = 0x341
 const csrMCAUSE = 0x342
 const csrMTVAL = 0x343
 const csrMIP = 0x344
+const csrMBASE = 0x380
+const csrMBOUND = 0x381
+const csrMIBASE = 0x382
+const csrMIBOUND = 0x383
+const csrMDBASE = 0x384
+const csrMDBOUND = 0x385
 const csrPMPCFG0 = 0x3a0
 const csrPMPCFG1 = 0x3a1
 const csrPMPCFG2 = 0x3a2
@@ -137,6 +194,8 @@ const csrPMPADDR12 = 0x3bc
 const csrPMPADDR13 = 0x3bd
 const csrPMPADDR14 = 0x3be
 const csrPMPADDR15 = 0x3bf
+
+// Machine CSRs 0xb00 - 0xb7f (read/write)
 const csrMCYCLE = 0xb00
 const csrMINSTRET = 0xb02
 const csrMHPMCOUNTER3 = 0xb03
@@ -168,6 +227,8 @@ const csrMHPMCOUNTER28 = 0xb1c
 const csrMHPMCOUNTER29 = 0xb1d
 const csrMHPMCOUNTER30 = 0xb1e
 const csrMHPMCOUNTER31 = 0xb1f
+
+// Machine CSRs 0xb80 - 0xbbf (read/write)
 const csrMCYCLEH = 0xb80
 const csrMINSTRETH = 0xb82
 const csrMHPMCOUNTER3H = 0xb83
@@ -199,44 +260,19 @@ const csrMHPMCOUNTER28H = 0xb9c
 const csrMHPMCOUNTER29H = 0xb9d
 const csrMHPMCOUNTER30H = 0xb9e
 const csrMHPMCOUNTER31H = 0xb9f
-const csrMHPMEVENT3 = 0x323
-const csrMHPMEVENT4 = 0x324
-const csrMHPMEVENT5 = 0x325
-const csrMHPMEVENT6 = 0x326
-const csrMHPMEVENT7 = 0x327
-const csrMHPMEVENT8 = 0x328
-const csrMHPMEVENT9 = 0x329
-const csrMHPMEVENT10 = 0x32a
-const csrMHPMEVENT11 = 0x32b
-const csrMHPMEVENT12 = 0x32c
-const csrMHPMEVENT13 = 0x32d
-const csrMHPMEVENT14 = 0x32e
-const csrMHPMEVENT15 = 0x32f
-const csrMHPMEVENT16 = 0x330
-const csrMHPMEVENT17 = 0x331
-const csrMHPMEVENT18 = 0x332
-const csrMHPMEVENT19 = 0x333
-const csrMHPMEVENT20 = 0x334
-const csrMHPMEVENT21 = 0x335
-const csrMHPMEVENT22 = 0x336
-const csrMHPMEVENT23 = 0x337
-const csrMHPMEVENT24 = 0x338
-const csrMHPMEVENT25 = 0x339
-const csrMHPMEVENT26 = 0x33a
-const csrMHPMEVENT27 = 0x33b
-const csrMHPMEVENT28 = 0x33c
-const csrMHPMEVENT29 = 0x33d
-const csrMHPMEVENT30 = 0x33e
-const csrMHPMEVENT31 = 0x33f
+
+// Machine Debug CSRs 0x7a0 - 0x7af (read/write)
 const csrTSELECT = 0x7a0
 const csrTDATA1 = 0x7a1
 const csrTDATA2 = 0x7a2
 const csrTDATA3 = 0x7a3
+
+// Machine Debug Mode Only CSRs 0x7b0 - 0x7bf (read/write)
 const csrDCSR = 0x7b0
 const csrDPC = 0x7b1
 const csrDSCRATCH = 0x7b2
 
-// These registers are present in priv spec 1.9.1, dropped in 1.10.
+// Hypervisor CSRs 0x200 - 0x2ff (read/write)
 const csrHSTATUS = 0x200
 const csrHEDELEG = 0x202
 const csrHIDELEG = 0x203
@@ -247,17 +283,44 @@ const csrHEPC = 0x241
 const csrHCAUSE = 0x242
 const csrHBADADDR = 0x243
 const csrHIP = 0x244
-const csrMBASE = 0x380
-const csrMBOUND = 0x381
-const csrMIBASE = 0x382
-const csrMIBOUND = 0x383
-const csrMDBASE = 0x384
-const csrMDBOUND = 0x385
-const csrMUCOUNTEREN = 0x320
-const csrMSCOUNTEREN = 0x321
-const csrMHCOUNTEREN = 0x322
 
 //-----------------------------------------------------------------------------
+
+type csrWr func(csr, val uint)
+type csrRd func(csr uint) uint
+
+type csrDefn struct {
+	name string // name of CSR
+	wr   csrWr  // write function for CSR
+	rd   csrRd  // read function for CSR
+}
+
+var csrLUT = map[uint]csrDefn{
+	csrMTVEC:     {"mtvec", nil, nil},
+	csrPMPADDR0:  {"pmpaddr0", nil, nil},
+	csrPMPADDR1:  {"pmpaddr1", nil, nil},
+	csrPMPADDR2:  {"pmpaddr2", nil, nil},
+	csrPMPADDR3:  {"pmpaddr3", nil, nil},
+	csrPMPADDR4:  {"pmpaddr4", nil, nil},
+	csrPMPADDR5:  {"pmpaddr5", nil, nil},
+	csrPMPADDR6:  {"pmpaddr6", nil, nil},
+	csrPMPADDR7:  {"pmpaddr7", nil, nil},
+	csrPMPADDR8:  {"pmpaddr8", nil, nil},
+	csrPMPADDR9:  {"pmpaddr9", nil, nil},
+	csrPMPADDR10: {"pmpaddr10", nil, nil},
+	csrPMPADDR11: {"pmpaddr11", nil, nil},
+	csrPMPADDR12: {"pmpaddr12", nil, nil},
+	csrPMPADDR13: {"pmpaddr13", nil, nil},
+	csrPMPADDR14: {"pmpaddr14", nil, nil},
+	csrPMPADDR15: {"pmpaddr15", nil, nil},
+	csrMCAUSE:    {"mcause", nil, nil},
+	csrMHARTID:   {"mhartid", nil, nil},
+	csrSATP:      {"satp", nil, nil},
+}
+
+//-----------------------------------------------------------------------------
+
+/*
 
 var csrNameTable = map[uint]string{
 	csrUSTATUS:        "ustatus",
@@ -346,43 +409,23 @@ var csrNameTable = map[uint]string{
 	csrSCAUSE:         "scause",
 	csrSTVAL:          "stval",
 	csrSIP:            "sip",
-	csrSATP:           "satp",
 	csrMVENDORID:      "mvendorid",
 	csrMARCHID:        "marchid",
 	csrMIMPID:         "mimpid",
-	csrMHARTID:        "mhartid",
 	csrMSTATUS:        "mstatus",
 	csrMISA:           "misa",
 	csrMEDELEG:        "medeleg",
 	csrMIDELEG:        "mideleg",
 	csrMIE:            "mie",
-	csrMTVEC:          "mtvec",
 	csrMCOUNTEREN:     "mcounteren",
 	csrMSCRATCH:       "mscratch",
 	csrMEPC:           "mepc",
-	csrMCAUSE:         "mcause",
 	csrMTVAL:          "mtval",
 	csrMIP:            "mip",
 	csrPMPCFG0:        "pmpcfg0",
 	csrPMPCFG1:        "pmpcfg1",
 	csrPMPCFG2:        "pmpcfg2",
 	csrPMPCFG3:        "pmpcfg3",
-	csrPMPADDR0:       "pmpaddr0",
-	csrPMPADDR1:       "pmpaddr1",
-	csrPMPADDR2:       "pmpaddr2",
-	csrPMPADDR3:       "pmpaddr3",
-	csrPMPADDR4:       "pmpaddr4",
-	csrPMPADDR5:       "pmpaddr5",
-	csrPMPADDR6:       "pmpaddr6",
-	csrPMPADDR7:       "pmpaddr7",
-	csrPMPADDR8:       "pmpaddr8",
-	csrPMPADDR9:       "pmpaddr9",
-	csrPMPADDR10:      "pmpaddr10",
-	csrPMPADDR11:      "pmpaddr11",
-	csrPMPADDR12:      "pmpaddr12",
-	csrPMPADDR13:      "pmpaddr13",
-	csrPMPADDR14:      "pmpaddr14",
-	csrPMPADDR15:      "pmpaddr15",
 	csrMCYCLE:         "mcycle",
 	csrMINSTRET:       "minstret",
 	csrMHPMCOUNTER3:   "mhpmcounter3",
@@ -502,9 +545,11 @@ var csrNameTable = map[uint]string{
 	csrMHCOUNTEREN:    "mhcounteren",
 }
 
+*/
+
 func csrName(csr uint) string {
-	if s, ok := csrNameTable[csr]; ok {
-		return s
+	if cd, ok := csrLUT[csr]; ok {
+		return cd.name
 	}
 	return fmt.Sprintf("0x%03x", csr)
 }
