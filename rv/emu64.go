@@ -332,7 +332,7 @@ func emu64_URET(m *RV64, ins uint) {
 }
 
 func emu64_SRET(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	m.PC = uint64(m.CSR.MRET())
 }
 
 func emu64_MRET(m *RV64, ins uint) {

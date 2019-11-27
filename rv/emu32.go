@@ -366,7 +366,7 @@ func emu32_SRET(m *RV32, ins uint) {
 }
 
 func emu32_MRET(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	m.PC = uint32(m.CSR.MRET())
 }
 
 func emu32_WFI(m *RV32, ins uint) {

@@ -16,22 +16,28 @@ import (
 //-----------------------------------------------------------------------------
 // Privilege Levels
 
-const privU = 0 // user
-const privS = 1 // supervisor
-const privM = 3 // machine
+const PrivU = 0 // user
+const PrivS = 1 // supervisor
+const PrivM = 3 // machine
 
 //-----------------------------------------------------------------------------
+// Consts for Specific CSRs
 
 const FCSR = 0x003
 
 //-----------------------------------------------------------------------------
 
+// wrIgnore is a no-op write function.
+func wrIgnore(s *State, val uint) {
+}
+
+// rdZero always reads the CSR as zero.
 func rdZero(s *State) uint {
 	return 0
 }
 
-func wrIgnore(s *State, val uint) {
-}
+//-----------------------------------------------------------------------------
+// machine exception program counter
 
 func wrMEPC(s *State, val uint) {
 	s.mepc = val & ^uint(1)
@@ -44,14 +50,55 @@ func rdMEPC(s *State) uint {
 	return s.mepc
 }
 
+//-----------------------------------------------------------------------------
+// machine trap vector
+
 func wrMTVEC(s *State, val uint) {
 	s.mtvec = val
 }
 
+func rdMTVEC(s *State) uint {
+	return s.mtvec
+}
+
+//-----------------------------------------------------------------------------
+// mstatus
+
+func wrMSTATUS(s *State, x uint) {
+	s.mstatus = x
+}
+
+func rdMSTATUS(s *State) uint {
+	return s.mstatus
+}
+
+func (s *State) mstatusRdMPP() uint {
+	return (s.mstatus >> 11) & 3
+}
+
+func (s *State) mstatusWrMPP(x uint) {
+	s.mstatus &= ^uint(3 << 11)
+	s.mstatus |= (x & 3) << 11
+}
+
+func (s *State) mstatusWrMIE(x uint) {
+	s.mstatus &= ^uint(1 << 3)
+	s.mstatus |= (x & 1) << 3
+}
+
+func (s *State) mstatusRdMPIE() uint {
+	return (s.mstatus >> 7) & 1
+}
+
+func (s *State) mstatusWrMPIE(x uint) {
+	s.mstatus &= ^uint(1 << 7)
+	s.mstatus |= (x & 1) << 7
+}
+
 //-----------------------------------------------------------------------------
 
-type wrFunc func(csr *State, val uint)
-type rdFunc func(csr *State) uint
+type wrFunc func(s *State, val uint)
+type rdFunc func(s *State) uint
 
 type csrDefn struct {
 	name string // name of CSR
@@ -157,12 +204,12 @@ var lookup = map[uint]csrDefn{
 	0xf13: {"mimpid", nil, nil},
 	0xf14: {"mhartid", nil, rdZero},
 	// Machine CSRs 0x300 - 0x3ff (read/write)
-	0x300: {"mstatus", wrIgnore, rdZero},
+	0x300: {"mstatus", wrMSTATUS, rdMSTATUS},
 	0x301: {"misa", nil, nil},
 	0x302: {"medeleg", wrIgnore, nil},
 	0x303: {"mideleg", wrIgnore, nil},
 	0x304: {"mie", wrIgnore, nil},
-	0x305: {"mtvec", wrMTVEC, nil},
+	0x305: {"mtvec", wrMTVEC, rdMTVEC},
 	0x306: {"mcounteren", nil, nil},
 	0x320: {"mucounteren", nil, nil},
 	0x321: {"mscounteren", nil, nil},
@@ -313,22 +360,48 @@ var lookup = map[uint]csrDefn{
 	0x244: {"hip", nil, nil},
 }
 
+// Name returns the name of a given CSR.
+func Name(reg uint) string {
+	if x, ok := lookup[reg]; ok {
+		return x.name
+	}
+	return fmt.Sprintf("0x%03x", reg)
+}
+
+//-----------------------------------------------------------------------------
+
+// canRd returns true if the register can be read.
+func (csr *State) canRd(reg uint) bool {
+	priv := (reg >> 8) & 3
+	return csr.Priv >= priv
+}
+
+// canWr returns true if the register can be written.
+func (csr *State) canWr(reg uint) bool {
+	priv := (reg >> 8) & 3
+	rw := (reg >> 10) & 3
+	return (rw != 3) && (csr.Priv >= priv)
+}
+
 //-----------------------------------------------------------------------------
 
 // State stores the CSR state for the CPU.
 type State struct {
-	xlen   uint // cpu register length 32/64/128
-	mxlen  uint // machine register length
-	uxlen  uint // user register length
-	sxlen  uint // supervisor register length
-	ialign uint // instruction alignment 16/32
-	mepc   uint // machine exception program counter
-	mtvec  uint //  machine trap-vector base-address register
+	Priv    uint // current privilege level
+	xlen    uint // cpu register length 32/64/128
+	mxlen   uint // machine register length
+	uxlen   uint // user register length
+	sxlen   uint // supervisor register length
+	ialign  uint // instruction alignment 16/32
+	mepc    uint // machine exception program counter
+	mtvec   uint //  machine trap-vector base-address register
+	mstatus uint // machine status
 }
 
 // NewState returns a CSR state object.
 func NewState(xlen uint) *State {
 	return &State{
+		Priv:   PrivM, // start at machine level
 		xlen:   xlen,
 		mxlen:  xlen,
 		uxlen:  xlen,
@@ -340,6 +413,9 @@ func NewState(xlen uint) *State {
 // Rd reads from a CSR.
 func (csr *State) Rd(reg uint) (uint, error) {
 	if x, ok := lookup[reg]; ok {
+		if !csr.canRd(reg) {
+			return 0, fmt.Errorf("can't read CSR \"%s\"", x.name)
+		}
 		if x.rd == nil {
 			return 0, fmt.Errorf("no read function for CSR \"%s\"", x.name)
 		}
@@ -351,6 +427,9 @@ func (csr *State) Rd(reg uint) (uint, error) {
 // Wr writes to a CSR.
 func (csr *State) Wr(reg, val uint) error {
 	if x, ok := lookup[reg]; ok {
+		if !csr.canWr(reg) {
+			return fmt.Errorf("can't write CSR \"%s\"", x.name)
+		}
 		if x.wr == nil {
 			return fmt.Errorf("no write function for CSR \"%s\"", x.name)
 		}
@@ -372,15 +451,17 @@ func (csr *State) Display() string {
 	}
 	s = append(s, fmt.Sprintf(x, "mepc", csr.mepc))
 	s = append(s, fmt.Sprintf(x, "mtvec", csr.mtvec))
+	s = append(s, fmt.Sprintf(x, "mstatus", csr.mstatus))
 	return strings.Join(s, "\n")
 }
 
-// Name returns the name of a given CSR.
-func Name(reg uint) string {
-	if x, ok := lookup[reg]; ok {
-		return x.name
-	}
-	return fmt.Sprintf("0x%03x", reg)
+// MRET performs an MRET operation.
+func (csr *State) MRET() uint {
+	csr.Priv = csr.mstatusRdMPP()
+	csr.mstatusWrMIE(csr.mstatusRdMPIE())
+	csr.mstatusWrMPIE(1)
+	csr.mstatusWrMPP(PrivU)
+	return csr.mepc
 }
 
 //-----------------------------------------------------------------------------
