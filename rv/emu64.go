@@ -261,7 +261,8 @@ func emu64_AND(m *RV64, ins uint) {
 }
 
 func emu64_FENCE(m *RV64, ins uint) {
-	m.flag |= flagTodo
+	// no-op for a sw emulator
+	m.PC += 4
 }
 
 func emu64_FENCE_I(m *RV64, ins uint) {

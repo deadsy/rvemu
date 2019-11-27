@@ -291,7 +291,8 @@ func emu32_AND(m *RV32, ins uint) {
 }
 
 func emu32_FENCE(m *RV32, ins uint) {
-	m.flag |= flagTodo
+	// no-op for a sw emulator
+	m.PC += 4
 }
 
 func emu32_FENCE_I(m *RV32, ins uint) {

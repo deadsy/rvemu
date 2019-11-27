@@ -79,7 +79,7 @@ var ISArv32i = ISAModule{
 		{"0100000 rs2 rs1 101 rd 0110011 SRA", daTypeRa, emu32_SRA, emu64_SRA},                          // R
 		{"0000000 rs2 rs1 110 rd 0110011 OR", daTypeRa, emu32_OR, emu64_OR},                             // R
 		{"0000000 rs2 rs1 111 rd 0110011 AND", daTypeRa, emu32_AND, emu64_AND},                          // R
-		{"0000 pred succ 00000 000 00000 0001111 FENCE", daNone, emu32_FENCE, emu64_FENCE},              // I
+		{"0000 pred succ 00000 000 00000 0001111 FENCE", daTypeIi, emu32_FENCE, emu64_FENCE},            // I
 		{"0000 0000 0000 00000 001 00000 0001111 FENCE.I", daTypeIi, emu32_FENCE_I, emu64_FENCE_I},      // I
 		{"0000000 00000 00000 000 00000 1110011 ECALL", daTypeIi, emu32_ECALL, emu64_ECALL},             // I
 		{"0000000 00001 00000 000 00000 1110011 EBREAK", daTypeIi, emu32_EBREAK, emu64_EBREAK},          // I

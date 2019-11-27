@@ -73,6 +73,7 @@ var rv32iTest = []daTest{
 	{0, 0xf1402573, "csrr a0,mhartid"},
 	{0, 0x18005073, "csrwi satp,0"},
 	{0, 0x30200073, "mret"},
+	{0, 0x0ff0000f, "fence"},
 }
 
 var rv32mTest = []daTest{
