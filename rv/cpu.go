@@ -263,6 +263,20 @@ func decodeCB(ins uint) (int, uint) {
 }
 
 //-----------------------------------------------------------------------------
+// system call interface
+
+// ScFunc32 is 32-bit system call function
+type ScFunc32 func(m *RV32)
+
+// ScFunc64 is a 64-bit system call function
+type ScFunc64 func(m *RV64)
+
+type Syscall interface {
+	Lookup32(m *RV32) ScFunc32
+	Lookup64(m *RV64) ScFunc64
+}
+
+//-----------------------------------------------------------------------------
 
 // emuFlags stores emulation event flags.
 type emuFlags uint

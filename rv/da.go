@@ -33,38 +33,38 @@ var abiFName = [32]string{
 }
 
 const (
-	regZero = iota // 0: zero
-	regRa          // 1: return address
-	regSp          // 2: stack pointer
-	regGp          // 3: global pointer
-	regTp          // 4: thread pointer
-	regT0          // 5:
-	regT1          // 6:
-	regT2          // 7:
-	regS0          // 8: frame pointer
-	regS1          // 9:
-	regA0          // 10: syscall 0
-	regA1          // 11: syscall 1
-	regA2          // 12: syscall 2
-	regA3          // 13: syscall 3
-	regA4          // 14: syscall 4
-	regA5          // 15: syscall 5
-	regA6          // 16: syscall 6
-	regA7          // 17: syscall 7
-	regS2          // 18:
-	regS3          // 19:
-	regS4          // 20:
-	regS5          // 21:
-	regS6          // 22:
-	regS7          // 23:
-	regS8          // 24:
-	regS9          // 25:
-	regS10         // 26:
-	regS11         // 27:
-	regT3          // 28:
-	regT4          // 29:
-	regT5          // 30:
-	regT6          // 31:
+	RegZero = iota // 0: zero
+	RegRa          // 1: return address
+	RegSp          // 2: stack pointer
+	RegGp          // 3: global pointer
+	RegTp          // 4: thread pointer
+	RegT0          // 5:
+	RegT1          // 6:
+	RegT2          // 7:
+	RegS0          // 8: frame pointer
+	RegS1          // 9:
+	RegA0          // 10: syscall 0
+	RegA1          // 11: syscall 1
+	RegA2          // 12: syscall 2
+	RegA3          // 13: syscall 3
+	RegA4          // 14: syscall 4
+	RegA5          // 15: syscall 5
+	RegA6          // 16: syscall 6
+	RegA7          // 17: syscall 7
+	RegS2          // 18:
+	RegS3          // 19:
+	RegS4          // 20:
+	RegS5          // 21:
+	RegS6          // 22:
+	RegS7          // 23:
+	RegS8          // 24:
+	RegS9          // 25:
+	RegS10         // 26:
+	RegS11         // 27:
+	RegT3          // 28:
+	RegT4          // 29:
+	RegT5          // 30:
+	RegT6          // 31:
 )
 
 //-----------------------------------------------------------------------------

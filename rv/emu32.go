@@ -300,12 +300,16 @@ func emu32_FENCE_I(m *RV32, ins uint) {
 }
 
 func emu32_ECALL(m *RV32, ins uint) {
-	s := scLookup(int(m.X[regA7]))
-	if s == nil {
+	if m.sc == nil {
 		m.flag |= flagSyscall
 		return
 	}
-	s.sc32(m, s)
+	fn := m.sc.Lookup32(m)
+	if fn == nil {
+		m.flag |= flagSyscall
+		return
+	}
+	fn(m)
 	m.PC += 4
 }
 
@@ -721,7 +725,7 @@ func emu32_C_ILLEGAL(m *RV32, ins uint) {
 
 func emu32_C_ADDI4SPN(m *RV32, ins uint) {
 	uimm, rd := decodeCIW(ins)
-	m.X[rd] = m.X[regSp] + uint32(uimm)
+	m.X[rd] = m.X[RegSp] + uint32(uimm)
 	m.PC += 2
 }
 
@@ -772,7 +776,7 @@ func emu32_C_ADDI(m *RV32, ins uint) {
 
 func emu32_C_JAL(m *RV32, ins uint) {
 	imm := decodeCJ(ins)
-	m.X[regRa] = m.PC + 2
+	m.X[RegRa] = m.PC + 2
 	m.PC = uint32(int(m.PC) + imm)
 }
 
@@ -784,7 +788,7 @@ func emu32_C_LI(m *RV32, ins uint) {
 
 func emu32_C_ADDI16SP(m *RV32, ins uint) {
 	imm := decodeCIb(ins)
-	m.X[regSp] = uint32(int(m.X[regSp]) + imm)
+	m.X[RegSp] = uint32(int(m.X[RegSp]) + imm)
 	m.PC += 2
 }
 
@@ -899,7 +903,7 @@ func emu32_C_LWSP(m *RV32, ins uint) {
 		m.flag |= flagIllegal
 		return
 	}
-	adr := uint(m.X[regSp]) + uimm
+	adr := uint(m.X[RegSp]) + uimm
 	val, ex := m.Mem.Rd32(adr)
 	m.checkMemory(adr, ex)
 	m.X[rd] = val
@@ -939,7 +943,7 @@ func emu32_C_JALR(m *RV32, ins uint) {
 	}
 	t := m.PC + 2
 	m.PC = m.X[rs1]
-	m.X[regRa] = t
+	m.X[RegRa] = t
 }
 
 func emu32_C_ADD(m *RV32, ins uint) {
@@ -954,7 +958,7 @@ func emu32_C_FSDSP(m *RV32, ins uint) {
 
 func emu32_C_SWSP(m *RV32, ins uint) {
 	uimm, rs2 := decodeCSSb(ins)
-	adr := uint(m.X[regSp]) + uimm
+	adr := uint(m.X[RegSp]) + uimm
 	ex := m.Mem.Wr32(adr, m.X[rs2])
 	m.checkMemory(adr, ex)
 	m.PC += 2
@@ -1020,6 +1024,7 @@ type RV32 struct {
 	memEx    memoryException // memory exceptions
 	csrEx    csrException    // csr exceptions
 	isa      *ISA            // ISA implemented for the CPU
+	sc       Syscall         // available system calls
 }
 
 // NewRV32 returns a 32-bit RISC-V CPU.
@@ -1061,10 +1066,21 @@ func (m *RV32) Disassemble(adr uint) *Disassembly {
 // Reset the RV32 CPU.
 func (m *RV32) Reset() {
 	m.PC = uint32(m.Mem.Entry)
-	m.X[regSp] = uint32(uint(1<<32) - 16)
+	m.X[RegSp] = uint32(uint(1<<32) - 16)
 	m.insCount = 0
 	m.lastPC = 0
 	m.flag = 0
+}
+
+// SetBreak sets the break flag.
+func (m *RV32) SetBreak() {
+	m.flag |= flagBreak
+}
+
+// SetExit sets the exit flag.
+func (m *RV32) SetExit(status uint32) {
+	m.X[RegA0] = status
+	m.flag |= flagExit
 }
 
 // Run the RV32 CPU for a single instruction.
@@ -1101,7 +1117,7 @@ func (m *RV32) Run() error {
 			return fmt.Errorf("exit at PC %08x, status %08x (%d instructions)", m.PC, m.X[1], m.insCount)
 		}
 		if m.flag&flagSyscall != 0 {
-			return fmt.Errorf("unrecognized system call at PC %08x, %d", m.PC, m.X[regA7])
+			return fmt.Errorf("unrecognized system call at PC %08x, %d", m.PC, m.X[RegA7])
 		}
 		if m.flag&flagBreak != 0 {
 			m.flag &= ^flagBreak

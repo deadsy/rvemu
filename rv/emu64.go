@@ -270,12 +270,16 @@ func emu64_FENCE_I(m *RV64, ins uint) {
 }
 
 func emu64_ECALL(m *RV64, ins uint) {
-	s := scLookup(int(m.X[regA7]))
-	if s == nil {
+	if m.sc == nil {
 		m.flag |= flagSyscall
 		return
 	}
-	s.sc64(m, s)
+	fn := m.sc.Lookup64(m)
+	if fn == nil {
+		m.flag |= flagSyscall
+		return
+	}
+	fn(m)
 	m.PC += 4
 }
 
@@ -691,7 +695,7 @@ func emu64_C_ILLEGAL(m *RV64, ins uint) {
 
 func emu64_C_ADDI4SPN(m *RV64, ins uint) {
 	uimm, rd := decodeCIW(ins)
-	m.X[rd] = m.X[regSp] + uint64(uimm)
+	m.X[rd] = m.X[RegSp] + uint64(uimm)
 	m.PC += 2
 }
 
@@ -744,7 +748,7 @@ func emu64_C_LI(m *RV64, ins uint) {
 
 func emu64_C_ADDI16SP(m *RV64, ins uint) {
 	imm := decodeCIb(ins)
-	m.X[regSp] = uint64(int(m.X[regSp]) + imm)
+	m.X[RegSp] = uint64(int(m.X[RegSp]) + imm)
 	m.PC += 2
 }
 
@@ -847,7 +851,7 @@ func emu64_C_LWSP(m *RV64, ins uint) {
 		m.flag |= flagIllegal
 		return
 	}
-	adr := uint(m.X[regSp]) + uimm
+	adr := uint(m.X[RegSp]) + uimm
 	val, ex := m.Mem.Rd32(adr)
 	m.checkMemory(adr, ex)
 	m.X[rd] = uint64(int(val))
@@ -883,7 +887,7 @@ func emu64_C_JALR(m *RV64, ins uint) {
 	}
 	t := m.PC + 2
 	m.PC = m.X[rs1]
-	m.X[regRa] = t
+	m.X[RegRa] = t
 }
 
 func emu64_C_ADD(m *RV64, ins uint) {
@@ -898,7 +902,7 @@ func emu64_C_FSDSP(m *RV64, ins uint) {
 
 func emu64_C_SWSP(m *RV64, ins uint) {
 	uimm, rs2 := decodeCSSb(ins)
-	adr := uint(m.X[regSp]) + uimm
+	adr := uint(m.X[RegSp]) + uimm
 	ex := m.Mem.Wr32(adr, uint32(m.X[rs2]))
 	m.checkMemory(adr, ex)
 	m.PC += 2
@@ -1143,7 +1147,7 @@ func emu64_C_ADDIW(m *RV64, ins uint) {
 
 func emu64_C_LDSP(m *RV64, ins uint) {
 	uimm, rd := decodeCIg(ins)
-	adr := uint(m.X[regSp]) + uimm
+	adr := uint(m.X[RegSp]) + uimm
 	val, ex := m.Mem.Rd64(adr)
 	m.checkMemory(adr, ex)
 	if rd != 0 {
@@ -1156,7 +1160,7 @@ func emu64_C_LDSP(m *RV64, ins uint) {
 
 func emu64_C_SDSP(m *RV64, ins uint) {
 	uimm, rs2 := decodeCSSc(ins)
-	adr := uint(m.X[regSp]) + uimm
+	adr := uint(m.X[RegSp]) + uimm
 	ex := m.Mem.Wr64(adr, m.X[rs2])
 	m.checkMemory(adr, ex)
 	m.PC += 2
@@ -1243,6 +1247,7 @@ type RV64 struct {
 	memEx    memoryException // memory exceptions
 	csrEx    csrException    // csr exceptions
 	isa      *ISA            // ISA implemented for the CPU
+	sc       Syscall         // available system calls
 }
 
 // NewRV64 returns a 64-bit RISC-V CPU.
@@ -1284,10 +1289,21 @@ func (m *RV64) Disassemble(adr uint) *Disassembly {
 // Reset the RV64 CPU.
 func (m *RV64) Reset() {
 	m.PC = uint64(m.Mem.Entry)
-	m.X[regSp] = uint64(uint(1<<32) - 16)
+	m.X[RegSp] = uint64(uint(1<<32) - 16)
 	m.insCount = 0
 	m.lastPC = 0
 	m.flag = 0
+}
+
+// SetBreak sets the break flag.
+func (m *RV64) SetBreak() {
+	m.flag |= flagBreak
+}
+
+// SetExit sets the exit flag.
+func (m *RV64) SetExit(status uint64) {
+	m.X[RegA0] = status
+	m.flag |= flagExit
 }
 
 // Run the RV64 CPU for a single instruction.
@@ -1324,7 +1340,7 @@ func (m *RV64) Run() error {
 			return fmt.Errorf("exit at PC %016x, status %016x (%d instructions)", m.PC, m.X[1], m.insCount)
 		}
 		if m.flag&flagSyscall != 0 {
-			return fmt.Errorf("unrecognized system call at PC %016x, %d", m.PC, m.X[regA7])
+			return fmt.Errorf("unrecognized system call at PC %016x, %d", m.PC, m.X[RegA7])
 		}
 		if m.flag&flagBreak != 0 {
 			m.flag &= ^flagBreak
