@@ -46,38 +46,85 @@ func (m *Memory) Symbols() string {
 //-----------------------------------------------------------------------------
 
 // Display returns a string for a contiguous region of memory.
-func (m *Memory) Display(adr, size uint) string {
-	s := make([]string, 0)
+func (m *Memory) Display(adr, size, width uint) string {
+	s := []string{}
+
 	// round down address to 16 byte boundary
 	adr &= ^uint(15)
+
 	// round up n to an integral multiple of 16 bytes
 	size = (size + 15) & ^uint(15)
-	// print the header
+
+	// build the header
+	var hdr, fmtx string
 	if m.AddrLength == 32 {
-		s = append(s, "addr      0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F")
+		hdr = "addr      "
+		fmtx = "%08x  "
 	} else {
-		s = append(s, "addr              0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F")
+		hdr = "addr              "
+		fmtx = "%016x  "
 	}
+	switch width {
+	case 8:
+		hdr += "0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F"
+		fmtx += "%s %s"
+	case 16:
+		hdr += "0    2    4    6    8    A    C    E"
+		fmtx += "%s"
+	case 32:
+		hdr += "0        4        8        C"
+		fmtx += "%s"
+	case 64:
+		hdr += "0                8"
+		fmtx += "%s"
+	}
+	s = append(s, hdr)
+
 	// read and print the data
 	for i := 0; i < int(size>>4); i++ {
-		// read 16 bytes per line
-		var data [16]string
-		var ascii [16]string
-		for j := 0; j < 16; j++ {
-			x, _ := m.Rd8(adr + uint(j))
-			data[j] = fmt.Sprintf("%02x", x)
-			if x >= 32 && x <= 126 {
-				ascii[j] = fmt.Sprintf("%c", x)
-			} else {
-				ascii[j] = "."
+		if width == 8 {
+			// read 16x8 bits per line
+			var data [16]string
+			var ascii [16]string
+			for j := 0; j < 16; j++ {
+				x, _ := m.Rd8(adr + uint(j))
+				data[j] = fmt.Sprintf("%02x", x)
+				if x >= 32 && x <= 126 {
+					ascii[j] = fmt.Sprintf("%c", x)
+				} else {
+					ascii[j] = "."
+				}
 			}
-		}
-		dataStr := strings.Join(data[:], " ")
-		asciiStr := strings.Join(ascii[:], "")
-		if m.AddrLength == 32 {
-			s = append(s, fmt.Sprintf("%08x  %s  %s", adr, dataStr, asciiStr))
-		} else {
-			s = append(s, fmt.Sprintf("%016x  %s  %s", adr, dataStr, asciiStr))
+			dataStr := strings.Join(data[:], " ")
+			asciiStr := strings.Join(ascii[:], "")
+			s = append(s, fmt.Sprintf(fmtx, adr, dataStr, asciiStr))
+		} else if width == 16 {
+			// read 8x16 bits per line
+			var data [8]string
+			for j := 0; j < 8; j++ {
+				x, _ := m.Rd16(adr + uint(j*2))
+				data[j] = fmt.Sprintf("%04x", x)
+			}
+			dataStr := strings.Join(data[:], " ")
+			s = append(s, fmt.Sprintf(fmtx, adr, dataStr))
+		} else if width == 32 {
+			// read 4x32 bits per line
+			var data [4]string
+			for j := 0; j < 4; j++ {
+				x, _ := m.Rd32(adr + uint(j*4))
+				data[j] = fmt.Sprintf("%08x", x)
+			}
+			dataStr := strings.Join(data[:], " ")
+			s = append(s, fmt.Sprintf(fmtx, adr, dataStr))
+		} else if width == 64 {
+			// read 2x64 bits per line
+			var data [2]string
+			for j := 0; j < 2; j++ {
+				x, _ := m.Rd64(adr + uint(j*8))
+				data[j] = fmt.Sprintf("%016x", x)
+			}
+			dataStr := strings.Join(data[:], " ")
+			s = append(s, fmt.Sprintf(fmtx, adr, dataStr))
 		}
 		adr += 16
 		adr &= (1 << m.AddrLength) - 1

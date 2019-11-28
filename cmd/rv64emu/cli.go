@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 /*
 
-RISC-V Emulator
+RISC-V RV64 Emulator CLI
 
 */
 //-----------------------------------------------------------------------------
@@ -51,8 +51,8 @@ var helpMemDisplay = []cli.Help{
 	{"", "length (hex) - default is 0x40"},
 }
 
-var cmdMemDisplay = cli.Leaf{
-	Descr: "display memory",
+var cmdMemDisplay8 = cli.Leaf{
+	Descr: "display memory (8-bits)",
 	F: func(c *cli.CLI, args []string) {
 		adr, size, err := util.MemArg(0, maxAdr, args)
 		if err != nil {
@@ -60,8 +60,55 @@ var cmdMemDisplay = cli.Leaf{
 			return
 		}
 		m := c.User.(*userApp).mem
-		c.User.Put(m.Display(adr, size))
+		c.User.Put(m.Display(adr, size, 8))
 	},
+}
+
+var cmdMemDisplay16 = cli.Leaf{
+	Descr: "display memory (16-bits)",
+	F: func(c *cli.CLI, args []string) {
+		adr, size, err := util.MemArg(0, maxAdr, args)
+		if err != nil {
+			c.User.Put(fmt.Sprintf("%s\n", err))
+			return
+		}
+		m := c.User.(*userApp).mem
+		c.User.Put(m.Display(adr, size, 16))
+	},
+}
+
+var cmdMemDisplay32 = cli.Leaf{
+	Descr: "display memory (32-bits)",
+	F: func(c *cli.CLI, args []string) {
+		adr, size, err := util.MemArg(0, maxAdr, args)
+		if err != nil {
+			c.User.Put(fmt.Sprintf("%s\n", err))
+			return
+		}
+		m := c.User.(*userApp).mem
+		c.User.Put(m.Display(adr, size, 32))
+	},
+}
+
+var cmdMemDisplay64 = cli.Leaf{
+	Descr: "display memory (64-bits)",
+	F: func(c *cli.CLI, args []string) {
+		adr, size, err := util.MemArg(0, maxAdr, args)
+		if err != nil {
+			c.User.Put(fmt.Sprintf("%s\n", err))
+			return
+		}
+		m := c.User.(*userApp).mem
+		c.User.Put(m.Display(adr, size, 64))
+	},
+}
+
+// memDisplayMenu submenu items
+var memDisplayMenu = cli.Menu{
+	{"b", cmdMemDisplay8, helpMemDisplay},
+	{"h", cmdMemDisplay16, helpMemDisplay},
+	{"w", cmdMemDisplay32, helpMemDisplay},
+	{"d", cmdMemDisplay64, helpMemDisplay},
 }
 
 //-----------------------------------------------------------------------------
@@ -207,8 +254,8 @@ var menuRoot = cli.Menu{
 	{"go", cmdGo, helpGo},
 	{"help", cmdHelp},
 	{"history", cmdHistory, cli.HistoryHelp},
+	{"md", memDisplayMenu, "memory display"},
 	{"reg", cmdRegisters},
-	{"md", cmdMemDisplay, helpMemDisplay},
 	{"reset", cmdReset},
 	{"step", cmdStep, helpGo},
 	{"sym", cmdSymbol},
