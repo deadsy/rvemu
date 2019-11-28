@@ -101,6 +101,17 @@ func rdMTVEC(s *State) uint {
 }
 
 //-----------------------------------------------------------------------------
+// mscratch
+
+func wrMSCRATCH(s *State, val uint) {
+	s.mscratch = val
+}
+
+func rdMSCRATCH(s *State) uint {
+	return s.mscratch
+}
+
+//-----------------------------------------------------------------------------
 // mstatus
 
 func wrMSTATUS(s *State, x uint) {
@@ -282,7 +293,7 @@ var lookup = map[uint]csrDefn{
 	0x33d: {"mhpmevent29", nil, nil},
 	0x33e: {"mhpmevent30", nil, nil},
 	0x33f: {"mhpmevent31", nil, nil},
-	0x340: {"mscratch", nil, nil},
+	0x340: {"mscratch", wrMSCRATCH, rdMSCRATCH},
 	0x341: {"mepc", wrMEPC, rdMEPC},
 	0x342: {"mcause", nil, nil},
 	0x343: {"mtval", nil, nil},
@@ -425,15 +436,16 @@ func canWr(reg uint) bool {
 
 // State stores the CSR state for the CPU.
 type State struct {
-	Priv    uint // current privilege level
-	xlen    uint // cpu register length 32/64/128
-	mxlen   uint // machine register length
-	uxlen   uint // user register length
-	sxlen   uint // supervisor register length
-	ialign  uint // instruction alignment 16/32
-	mepc    uint // machine exception program counter
-	mtvec   uint //  machine trap-vector base-address register
-	mstatus uint // machine status
+	Priv     uint // current privilege level
+	xlen     uint // cpu register length 32/64/128
+	mxlen    uint // machine register length
+	uxlen    uint // user register length
+	sxlen    uint // supervisor register length
+	ialign   uint // instruction alignment 16/32
+	mepc     uint // machine exception program counter
+	mtvec    uint // machine trap-vector base-address register
+	mstatus  uint // machine status
+	mscratch uint // machine scratch
 }
 
 // NewState returns a CSR state object.

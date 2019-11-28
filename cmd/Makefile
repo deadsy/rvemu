@@ -1,6 +1,5 @@
 
-DIRS = gen \
-       da \
+DIRS = compliance \
        rv32emu \
        rv64emu \
 

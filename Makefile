@@ -11,6 +11,6 @@ clean:
 	for dir in $(DIRS); do \
 		$(MAKE) -C ./$$dir $@; \
 	done
-
-datest:
-	./cmd/da/da -f ./test/dump/rv32imc.txt
+	-rm .rv32emu_history
+	-rm .rv64emu_history
+	-rm log.txt
