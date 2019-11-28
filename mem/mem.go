@@ -9,7 +9,6 @@ Emulated Target Memory
 package mem
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -23,11 +22,11 @@ type Symbol struct {
 }
 
 // sort symbols by address
-type byAddr []*Symbol
+type symbolByAddr []*Symbol
 
-func (a byAddr) Len() int           { return len(a) }
-func (a byAddr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byAddr) Less(i, j int) bool { return a[i].Addr < a[j].Addr }
+func (a symbolByAddr) Len() int           { return len(a) }
+func (a symbolByAddr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a symbolByAddr) Less(i, j int) bool { return a[i].Addr < a[j].Addr }
 
 //-----------------------------------------------------------------------------
 
@@ -141,9 +140,6 @@ func (m *Memory) SymbolByName(s string) *Symbol {
 
 // AddSymbol adds a symbol to the symbol table.
 func (m *Memory) AddSymbol(s string, adr, size uint) error {
-	if len(s) == 0 {
-		return errors.New("zero length symbol")
-	}
 	if m.find(adr, size) != nil {
 		symbol := Symbol{s, adr, size}
 		m.symByAddr[adr] = &symbol

@@ -19,15 +19,48 @@ import (
 
 //-----------------------------------------------------------------------------
 
+// Map returns a memory map display string.
+func (m *Memory) Map() string {
+	if len(m.region) == 0 {
+		return "no map"
+	}
+	// list of regions
+	regions := []*RegionInfo{}
+	for _, r := range m.region {
+		regions = append(regions, r.Info())
+	}
+	// sort by start address
+	sort.Sort(regionByStart(regions))
+	// display string
+	s := make([][]string, len(regions))
+	for i, r := range regions {
+		var addrStr string
+		if m.AddrLength == 32 {
+			addrStr = fmt.Sprintf("%08x %08x", r.start, r.end)
+		} else {
+			addrStr = fmt.Sprintf("%016x %016x", r.start, r.end)
+		}
+		attrStr := r.attr.String()
+		sizeStr := fmt.Sprintf("(%d bytes)", r.end-r.start+1)
+		s[i] = []string{r.name, addrStr, attrStr, sizeStr}
+	}
+	return cli.TableString(s, []int{0, 0, 0, 0}, 1)
+}
+
+//-----------------------------------------------------------------------------
+
 // Symbols returns an address sorted string of memory symbols.
 func (m *Memory) Symbols() string {
+	if len(m.symByName) == 0 {
+		return "no symbols"
+	}
 	// list of symbols
 	symbols := []*Symbol{}
 	for _, v := range m.symByName {
 		symbols = append(symbols, v)
 	}
 	// sort by address
-	sort.Sort(byAddr(symbols))
+	sort.Sort(symbolByAddr(symbols))
 	// display string
 	s := make([][]string, len(symbols))
 	for i, se := range symbols {

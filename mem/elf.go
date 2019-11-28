@@ -23,13 +23,14 @@ func (m *Memory) loadSymbols(f *elf.File) string {
 	}
 	n := 0
 	for i := range st {
-		var err error
-		switch elf.ST_TYPE(st[i].Info) {
-		case elf.STT_FUNC:
-			err = m.AddSymbol(st[i].Name, uint(st[i].Value), uint(st[i].Size))
-			if err == nil {
-				n++
-			}
+		if (st[i].Name == "") || (elf.ST_TYPE(st[i].Info) == elf.STT_FILE) {
+			continue
+		}
+		err := m.AddSymbol(st[i].Name, uint(st[i].Value), uint(st[i].Size))
+		if err != nil {
+			fmt.Printf("%s\n", err)
+		} else {
+			n++
 		}
 	}
 	return fmt.Sprintf("loaded %d symbols", n)

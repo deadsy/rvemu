@@ -17,9 +17,9 @@ DEFINE =
 
 # compiler flags
 #X_CFLAGS = -march=rv32g -mabi=ilp32d
-X_CFLAGS = -march=rv32gc -mabi=ilp32d
+#X_CFLAGS = -march=rv32gc -mabi=ilp32d
 #X_CFLAGS = -march=rv64g -mabi=lp64d
-#X_CFLAGS = -march=rv64gc -mabi=lp64d
+X_CFLAGS = -march=rv64gc -mabi=lp64d
 X_CFLAGS += -Wall -Wstrict-prototypes -Werror
 
 # linker flags

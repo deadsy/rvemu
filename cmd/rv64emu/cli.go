@@ -246,6 +246,16 @@ var cmdCSR = cli.Leaf{
 
 //-----------------------------------------------------------------------------
 
+var cmdMap = cli.Leaf{
+	Descr: "display the memory map",
+	F: func(c *cli.CLI, args []string) {
+		m := c.User.(*userApp).mem
+		c.User.Put(fmt.Sprintf("%s\n", m.Map()))
+	},
+}
+
+//-----------------------------------------------------------------------------
+
 // root menu
 var menuRoot = cli.Menu{
 	{"csr", cmdCSR},
@@ -254,6 +264,7 @@ var menuRoot = cli.Menu{
 	{"go", cmdGo, helpGo},
 	{"help", cmdHelp},
 	{"history", cmdHistory, cli.HistoryHelp},
+	{"map", cmdMap},
 	{"md", memDisplayMenu, "memory display"},
 	{"reg", cmdRegisters},
 	{"reset", cmdReset},

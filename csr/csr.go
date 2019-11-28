@@ -48,17 +48,21 @@ func (e Exception) String() string {
 }
 
 //-----------------------------------------------------------------------------
-// Privilege Levels
 
-const PrivU = 0 // user
-const PrivS = 1 // supervisor
-const PrivM = 3 // machine
+// Privilege Levels.
+const (
+	PrivU = 0 // user
+	PrivS = 1 // supervisor
+	PrivM = 3 // machine
+)
 
 //-----------------------------------------------------------------------------
-// Consts for Specific CSRs
 
-const FCSR = 0x003
-const MSTATUS = 0x300
+// Register numbers for specific CSRs.
+const (
+	FCSR    = 0x003
+	MSTATUS = 0x300
+)
 
 //-----------------------------------------------------------------------------
 
@@ -406,9 +410,9 @@ func Name(reg uint) string {
 //-----------------------------------------------------------------------------
 
 // canAccess returns true if the register can be accessed at the current privilege level.
-func (csr *State) canAccess(reg uint) bool {
+func (s *State) canAccess(reg uint) bool {
 	priv := (reg >> 8) & 3
-	return csr.Priv >= priv
+	return s.Priv >= priv
 }
 
 // canWr returns true if the register can be written.
@@ -445,63 +449,63 @@ func NewState(xlen uint) *State {
 }
 
 // Rd reads from a CSR.
-func (csr *State) Rd(reg uint) (uint, Exception) {
-	if !csr.canAccess(reg) {
+func (s *State) Rd(reg uint) (uint, Exception) {
+	if !s.canAccess(reg) {
 		return 0, ExPrivilege
 	}
 	if x, ok := lookup[reg]; ok {
 		if x.rd == nil {
 			return 0, ExNoRead
 		}
-		return x.rd(csr), 0
+		return x.rd(s), 0
 	}
 	return 0, ExTodo
 }
 
 // Wr writes to a CSR.
-func (csr *State) Wr(reg, val uint) Exception {
+func (s *State) Wr(reg, val uint) Exception {
 	if !canWr(reg) {
 		return ExReadOnly
 	}
-	if !csr.canAccess(reg) {
+	if !s.canAccess(reg) {
 		return ExPrivilege
 	}
 	if x, ok := lookup[reg]; ok {
 		if x.wr == nil {
 			return ExNoWrite
 		}
-		x.wr(csr, val)
+		x.wr(s, val)
 		return 0
 	}
 	return ExTodo
 }
 
 // Display displays the CSR state.
-func (csr *State) Display() string {
-	s := []string{}
-	var x string
-	if csr.mxlen == 32 {
-		x = "%-8s %08x"
+func (s *State) Display() string {
+	x := []string{}
+	var fmtx string
+	if s.mxlen == 32 {
+		fmtx = "%-8s %08x"
 	}
-	if csr.mxlen == 64 {
-		x = "%-8s %016x"
+	if s.mxlen == 64 {
+		fmtx = "%-8s %016x"
 	}
-	s = append(s, fmt.Sprintf(x, "mepc", csr.mepc))
-	s = append(s, fmt.Sprintf(x, "mtvec", csr.mtvec))
-	s = append(s, fmt.Sprintf(x, "mstatus", csr.mstatus))
-	return strings.Join(s, "\n")
+	x = append(x, fmt.Sprintf(fmtx, "mepc", s.mepc))
+	x = append(x, fmt.Sprintf(fmtx, "mtvec", s.mtvec))
+	x = append(x, fmt.Sprintf(fmtx, "mstatus", s.mstatus))
+	return strings.Join(x, "\n")
 }
 
 // MRET performs an MRET operation.
-func (csr *State) MRET() (uint, Exception) {
-	if !csr.canAccess(MSTATUS) {
+func (s *State) MRET() (uint, Exception) {
+	if !s.canAccess(MSTATUS) {
 		return 0, ExPrivilege
 	}
-	csr.Priv = csr.mstatusRdMPP()
-	csr.mstatusWrMIE(csr.mstatusRdMPIE())
-	csr.mstatusWrMPIE(1)
-	csr.mstatusWrMPP(PrivU)
-	return rdMEPC(csr), 0
+	s.Priv = s.mstatusRdMPP()
+	s.mstatusWrMIE(s.mstatusRdMPIE())
+	s.mstatusWrMPIE(1)
+	s.mstatusWrMPP(PrivU)
+	return rdMEPC(s), 0
 }
 
 //-----------------------------------------------------------------------------

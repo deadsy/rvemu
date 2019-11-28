@@ -123,8 +123,23 @@ func rdInsException(adr uint, attr Attribute) Exception {
 
 //-----------------------------------------------------------------------------
 
+// RegionInfo contains information for the memory region.
+type RegionInfo struct {
+	name       string
+	start, end uint
+	attr       Attribute
+}
+
+// sort regions by start address
+type regionByStart []*RegionInfo
+
+func (a regionByStart) Len() int           { return len(a) }
+func (a regionByStart) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a regionByStart) Less(i, j int) bool { return a[i].start < a[j].start }
+
 // Region is an interface to a contiguous region of memory.
 type Region interface {
+	Info() *RegionInfo
 	RdIns(adr uint) (uint, Exception)
 	Rd64(adr uint) (uint64, Exception)
 	Rd32(adr uint) (uint32, Exception)
@@ -160,6 +175,16 @@ func NewSection(name string, start, size uint, attr Attribute) *Section {
 		start: start,
 		end:   start + size - 1,
 		mem:   mem,
+	}
+}
+
+// Info returns the information for this region.
+func (m *Section) Info() *RegionInfo {
+	return &RegionInfo{
+		name:  m.name,
+		start: m.start,
+		end:   m.end,
+		attr:  m.attr,
 	}
 }
 
@@ -231,6 +256,14 @@ type empty struct {
 func newEmpty(attr Attribute) *empty {
 	return &empty{
 		attr: attr,
+	}
+}
+
+// Info returns the information for the empty region.
+func (m *empty) Info() *RegionInfo {
+	return &RegionInfo{
+		name: "empty",
+		attr: m.attr,
 	}
 }
 
