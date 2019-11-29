@@ -19,7 +19,7 @@ import (
 //-----------------------------------------------------------------------------
 
 func emu64_Illegal(m *RV64, ins uint) {
-	m.ex.num = exIllegal
+	m.ex.N = ExIllegal
 }
 
 //-----------------------------------------------------------------------------
@@ -183,11 +183,11 @@ func emu64_ADDI(m *RV64, ins uint) {
 }
 
 func emu64_SLTI(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_SLTIU(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_XORI(m *RV64, ins uint) {
@@ -227,11 +227,11 @@ func emu64_SLL(m *RV64, ins uint) {
 }
 
 func emu64_SLT(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_SLTU(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_XOR(m *RV64, ins uint) {
@@ -241,11 +241,11 @@ func emu64_XOR(m *RV64, ins uint) {
 }
 
 func emu64_SRL(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_SRA(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_OR(m *RV64, ins uint) {
@@ -266,12 +266,12 @@ func emu64_FENCE(m *RV64, ins uint) {
 }
 
 func emu64_FENCE_I(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_ECALL(m *RV64, ins uint) {
 	if m.ecall == nil {
-		m.ex.num = exEcall
+		m.ex.N = ExEcall
 		return
 	}
 	m.ecall.Call64(m)
@@ -279,7 +279,7 @@ func emu64_ECALL(m *RV64, ins uint) {
 }
 
 func emu64_EBREAK(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_CSRRW(m *RV64, ins uint) {
@@ -304,7 +304,7 @@ func emu64_CSRRS(m *RV64, ins uint) {
 }
 
 func emu64_CSRRC(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_CSRRWI(m *RV64, ins uint) {
@@ -317,18 +317,18 @@ func emu64_CSRRWI(m *RV64, ins uint) {
 }
 
 func emu64_CSRRSI(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_CSRRCI(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv32i privileged
 
 func emu64_URET(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_SRET(m *RV64, ins uint) {
@@ -338,23 +338,23 @@ func emu64_SRET(m *RV64, ins uint) {
 }
 
 func emu64_MRET(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_WFI(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_SFENCE_VMA(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_HFENCE_BVMA(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_HFENCE_GVMA(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
@@ -367,15 +367,15 @@ func emu64_MUL(m *RV64, ins uint) {
 }
 
 func emu64_MULH(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_MULHSU(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_MULHU(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_DIV(m *RV64, ins uint) {
@@ -422,150 +422,150 @@ func emu64_REMU(m *RV64, ins uint) {
 // rv32a
 
 func emu64_LR_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_SC_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOSWAP_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOADD_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOXOR_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOAND_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOOR_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOMIN_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOMAX_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOMINU_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOMAXU_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv32f
 
 func emu64_FLW(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSW(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMADD_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMSUB_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FNMSUB_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FNMADD_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FADD_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSUB_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMUL_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FDIV_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSQRT_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSGNJ_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSGNJN_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSGNJX_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMIN_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMAX_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_W_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_WU_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMV_X_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FEQ_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FLT_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FLE_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCLASS_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_S_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_S_WU(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMV_W_X(m *RV64, ins uint) {
@@ -578,114 +578,114 @@ func emu64_FMV_W_X(m *RV64, ins uint) {
 // rv32d
 
 func emu64_FLD(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSD(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMADD_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMSUB_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FNMSUB_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FNMADD_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FADD_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSUB_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMUL_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FDIV_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSQRT_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSGNJ_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSGNJN_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FSGNJX_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMIN_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMAX_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_S_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_D_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FEQ_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FLT_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FLE_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCLASS_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_W_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_WU_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_D_W(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_D_WU(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv32c
 
 func emu64_C_ILLEGAL(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_C_ADDI4SPN(m *RV64, ins uint) {
@@ -695,7 +695,7 @@ func emu64_C_ADDI4SPN(m *RV64, ins uint) {
 }
 
 func emu64_C_FLD(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_C_LW(m *RV64, ins uint) {
@@ -708,7 +708,7 @@ func emu64_C_LW(m *RV64, ins uint) {
 }
 
 func emu64_C_FSD(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_C_SW(m *RV64, ins uint) {
@@ -720,7 +720,7 @@ func emu64_C_SW(m *RV64, ins uint) {
 }
 
 func emu64_C_FSW(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_C_NOP(m *RV64, ins uint) {
@@ -750,7 +750,7 @@ func emu64_C_ADDI16SP(m *RV64, ins uint) {
 func emu64_C_LUI(m *RV64, ins uint) {
 	imm, rd := decodeCIf(ins)
 	if imm == 0 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	if rd != 0 && rd != 2 {
@@ -833,17 +833,17 @@ func emu64_C_SLLI(m *RV64, ins uint) {
 }
 
 func emu64_C_SLLI64(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_C_FLDSP(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_C_LWSP(m *RV64, ins uint) {
 	uimm, rd := decodeCSSa(ins)
 	if rd == 0 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	adr := uint(m.X[RegSp]) + uimm
@@ -856,7 +856,7 @@ func emu64_C_LWSP(m *RV64, ins uint) {
 func emu64_C_JR(m *RV64, ins uint) {
 	rs1, _ := decodeCR(ins)
 	if rs1 == 0 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	m.PC = m.X[rs1]
@@ -871,13 +871,13 @@ func emu64_C_MV(m *RV64, ins uint) {
 }
 
 func emu64_C_EBREAK(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_C_JALR(m *RV64, ins uint) {
 	rs1, _ := decodeCR(ins)
 	if rs1 == 0 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	t := m.PC + 2
@@ -892,7 +892,7 @@ func emu64_C_ADD(m *RV64, ins uint) {
 }
 
 func emu64_C_FSDSP(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_C_SWSP(m *RV64, ins uint) {
@@ -907,7 +907,7 @@ func emu64_C_SWSP(m *RV64, ins uint) {
 // rv64i
 
 func emu64_LWU(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_LD(m *RV64, ins uint) {
@@ -954,7 +954,7 @@ func emu64_ADDIW(m *RV64, ins uint) {
 func emu64_SLLIW(m *RV64, ins uint) {
 	shamt, rs1, rd := decodeIc(ins)
 	if shamt&32 != 0 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	m.wrX(rd, uint64(int32(m.X[rs1])<<shamt))
@@ -964,7 +964,7 @@ func emu64_SLLIW(m *RV64, ins uint) {
 func emu64_SRLIW(m *RV64, ins uint) {
 	shamt, rs1, rd := decodeIc(ins)
 	if shamt&32 != 0 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	m.wrX(rd, uint64(int32(uint32(m.X[rs1])>>shamt)))
@@ -974,7 +974,7 @@ func emu64_SRLIW(m *RV64, ins uint) {
 func emu64_SRAIW(m *RV64, ins uint) {
 	shamt, rs1, rd := decodeIc(ins)
 	if shamt&32 != 0 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	m.wrX(rd, uint64(int32(m.X[rs1])>>shamt))
@@ -1000,22 +1000,22 @@ func emu64_SLLW(m *RV64, ins uint) {
 }
 
 func emu64_SRLW(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_SRAW(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv64m
 
 func emu64_MULW(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_DIVW(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_DIVUW(m *RV64, ins uint) {
@@ -1025,7 +1025,7 @@ func emu64_DIVUW(m *RV64, ins uint) {
 }
 
 func emu64_REMW(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_REMUW(m *RV64, ins uint) {
@@ -1038,93 +1038,93 @@ func emu64_REMUW(m *RV64, ins uint) {
 // rv64a
 
 func emu64_LR_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_SC_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOSWAP_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOADD_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOXOR_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOAND_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOOR_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOMIN_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOMAX_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOMINU_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_AMOMAXU_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv64f
 
 func emu64_FCVT_L_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_LU_S(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_S_L(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_S_LU(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv64d
 
 func emu64_FCVT_L_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_LU_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMV_X_D(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_D_L(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FCVT_D_LU(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_FMV_D_X(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
@@ -1135,7 +1135,7 @@ func emu64_C_ADDIW(m *RV64, ins uint) {
 	if rd != 0 {
 		m.X[rd] = uint64(int32(int(m.X[rd]) + imm))
 	} else {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 	}
 	m.PC += 2
 }
@@ -1148,7 +1148,7 @@ func emu64_C_LDSP(m *RV64, ins uint) {
 	if rd != 0 {
 		m.X[rd] = val
 	} else {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 	}
 	m.PC += 2
 }
@@ -1179,11 +1179,11 @@ func emu64_C_SD(m *RV64, ins uint) {
 }
 
 func emu64_C_SUBW(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu64_C_ADDW(m *RV64, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
@@ -1201,7 +1201,7 @@ func (m *RV64) checkMemory(adr uint, ex mem.Exception) {
 	if ex == 0 {
 		return
 	}
-	m.ex.num = exMemory
+	m.ex.N = ExMemory
 	m.ex.mem = memoryException{adr, ex}
 }
 
@@ -1223,7 +1223,7 @@ func (m *RV64) checkCSR(reg uint, ex csr.Exception) {
 	if ex == 0 {
 		return
 	}
-	m.ex.num = exCSR
+	m.ex.N = ExCSR
 	m.ex.csr = csrException{reg, ex}
 }
 
@@ -1292,17 +1292,17 @@ func (m *RV64) Run() error {
 		im.defn.emu64(m, ins)
 		m.insCount++
 	} else {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 	}
 
 	// check exception flags
-	if m.ex.num != 0 {
+	if m.ex.N != 0 {
 		return &m.ex
 	}
 
 	// stuck PC detection
 	if m.PC == m.lastPC {
-		m.ex.num = exStuck
+		m.ex.N = ExStuck
 		return &m.ex
 	}
 	m.lastPC = m.PC
@@ -1324,12 +1324,12 @@ func (m *RV64) Reset() {
 // Exit sets a status code and exits the emulation
 func (m *RV64) Exit(status uint64) {
 	m.X[RegA0] = status
-	m.ex.num = exExit
+	m.ex.N = ExExit
 }
 
 // SetBreak sets the break flag.
 func (m *RV64) SetBreak() {
-	m.ex.num = exBreak
+	m.ex.N = ExBreak
 }
 
 //-----------------------------------------------------------------------------

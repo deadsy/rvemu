@@ -19,7 +19,7 @@ import (
 //-----------------------------------------------------------------------------
 
 func emu32_Illegal(m *RV32, ins uint) {
-	m.ex.num = exIllegal
+	m.ex.N = ExIllegal
 }
 
 //-----------------------------------------------------------------------------
@@ -183,11 +183,11 @@ func emu32_ADDI(m *RV32, ins uint) {
 }
 
 func emu32_SLTI(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_SLTIU(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_XORI(m *RV32, ins uint) {
@@ -211,7 +211,7 @@ func emu32_ANDI(m *RV32, ins uint) {
 func emu32_SLLI(m *RV32, ins uint) {
 	shamt, rs1, rd := decodeIc(ins)
 	if shamt > 31 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	m.wrX(rd, m.X[rs1]<<shamt)
@@ -221,7 +221,7 @@ func emu32_SLLI(m *RV32, ins uint) {
 func emu32_SRLI(m *RV32, ins uint) {
 	shamt, rs1, rd := decodeIc(ins)
 	if shamt > 31 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	m.wrX(rd, m.X[rs1]>>shamt)
@@ -231,7 +231,7 @@ func emu32_SRLI(m *RV32, ins uint) {
 func emu32_SRAI(m *RV32, ins uint) {
 	shamt, rs1, rd := decodeIc(ins)
 	if shamt > 31 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	m.wrX(rd, uint32(int(m.X[rs1])>>shamt))
@@ -257,11 +257,11 @@ func emu32_SLL(m *RV32, ins uint) {
 }
 
 func emu32_SLT(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_SLTU(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_XOR(m *RV32, ins uint) {
@@ -271,11 +271,11 @@ func emu32_XOR(m *RV32, ins uint) {
 }
 
 func emu32_SRL(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_SRA(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_OR(m *RV32, ins uint) {
@@ -296,12 +296,12 @@ func emu32_FENCE(m *RV32, ins uint) {
 }
 
 func emu32_FENCE_I(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_ECALL(m *RV32, ins uint) {
 	if m.ecall == nil {
-		m.ex.num = exEcall
+		m.ex.N = ExEcall
 		return
 	}
 	m.ecall.Call32(m)
@@ -309,7 +309,7 @@ func emu32_ECALL(m *RV32, ins uint) {
 }
 
 func emu32_EBREAK(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_CSRRW(m *RV32, ins uint) {
@@ -334,7 +334,7 @@ func emu32_CSRRS(m *RV32, ins uint) {
 }
 
 func emu32_CSRRC(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_CSRRWI(m *RV32, ins uint) {
@@ -347,22 +347,22 @@ func emu32_CSRRWI(m *RV32, ins uint) {
 }
 
 func emu32_CSRRSI(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_CSRRCI(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv32i privileged
 
 func emu32_URET(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_SRET(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_MRET(m *RV32, ins uint) {
@@ -372,19 +372,19 @@ func emu32_MRET(m *RV32, ins uint) {
 }
 
 func emu32_WFI(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_SFENCE_VMA(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_HFENCE_BVMA(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_HFENCE_GVMA(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
@@ -397,15 +397,15 @@ func emu32_MUL(m *RV32, ins uint) {
 }
 
 func emu32_MULH(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_MULHSU(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_MULHU(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_DIV(m *RV32, ins uint) {
@@ -452,150 +452,150 @@ func emu32_REMU(m *RV32, ins uint) {
 // rv32a
 
 func emu32_LR_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_SC_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_AMOSWAP_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_AMOADD_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_AMOXOR_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_AMOAND_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_AMOOR_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_AMOMIN_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_AMOMAX_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_AMOMINU_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_AMOMAXU_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv32f
 
 func emu32_FLW(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSW(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMADD_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMSUB_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FNMSUB_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FNMADD_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FADD_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSUB_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMUL_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FDIV_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSQRT_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSGNJ_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSGNJN_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSGNJX_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMIN_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMAX_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCVT_W_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCVT_WU_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMV_X_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FEQ_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FLT_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FLE_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCLASS_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCVT_S_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCVT_S_WU(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMV_W_X(m *RV32, ins uint) {
@@ -608,114 +608,114 @@ func emu32_FMV_W_X(m *RV32, ins uint) {
 // rv32d
 
 func emu32_FLD(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSD(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMADD_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMSUB_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FNMSUB_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FNMADD_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FADD_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSUB_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMUL_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FDIV_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSQRT_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSGNJ_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSGNJN_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FSGNJX_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMIN_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FMAX_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCVT_S_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCVT_D_S(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FEQ_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FLT_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FLE_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCLASS_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCVT_W_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCVT_WU_D(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCVT_D_W(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_FCVT_D_WU(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv32c
 
 func emu32_C_ILLEGAL(m *RV32, ins uint) {
-	m.ex.num = exIllegal
+	m.ex.N = ExIllegal
 }
 
 func emu32_C_ADDI4SPN(m *RV32, ins uint) {
@@ -725,7 +725,7 @@ func emu32_C_ADDI4SPN(m *RV32, ins uint) {
 }
 
 func emu32_C_FLD(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_C_LW(m *RV32, ins uint) {
@@ -738,11 +738,11 @@ func emu32_C_LW(m *RV32, ins uint) {
 }
 
 func emu32_C_FLW(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_C_FSD(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_C_SW(m *RV32, ins uint) {
@@ -754,7 +754,7 @@ func emu32_C_SW(m *RV32, ins uint) {
 }
 
 func emu32_C_FSW(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_C_NOP(m *RV32, ins uint) {
@@ -790,7 +790,7 @@ func emu32_C_ADDI16SP(m *RV32, ins uint) {
 func emu32_C_LUI(m *RV32, ins uint) {
 	imm, rd := decodeCIf(ins)
 	if imm == 0 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	if rd != 0 && rd != 2 {
@@ -802,7 +802,7 @@ func emu32_C_LUI(m *RV32, ins uint) {
 func emu32_C_SRLI(m *RV32, ins uint) {
 	shamt, rd := decodeCIc(ins)
 	if shamt > 31 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	m.X[rd] = m.X[rd] >> shamt
@@ -812,7 +812,7 @@ func emu32_C_SRLI(m *RV32, ins uint) {
 func emu32_C_SRAI(m *RV32, ins uint) {
 	shamt, rd := decodeCIc(ins)
 	if shamt > 31 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	m.X[rd] = uint32(int(m.X[rd]) >> shamt)
@@ -875,7 +875,7 @@ func emu32_C_BNEZ(m *RV32, ins uint) {
 func emu32_C_SLLI(m *RV32, ins uint) {
 	shamt, rd := decodeCId(ins)
 	if shamt > 31 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	if rd != 0 && shamt != 0 {
@@ -885,17 +885,17 @@ func emu32_C_SLLI(m *RV32, ins uint) {
 }
 
 func emu32_C_SLLI64(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_C_FLDSP(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_C_LWSP(m *RV32, ins uint) {
 	uimm, rd := decodeCSSa(ins)
 	if rd == 0 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	adr := uint(m.X[RegSp]) + uimm
@@ -906,13 +906,13 @@ func emu32_C_LWSP(m *RV32, ins uint) {
 }
 
 func emu32_C_FLWSP(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_C_JR(m *RV32, ins uint) {
 	rs1, _ := decodeCR(ins)
 	if rs1 == 0 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	m.PC = m.X[rs1]
@@ -927,13 +927,13 @@ func emu32_C_MV(m *RV32, ins uint) {
 }
 
 func emu32_C_EBREAK(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_C_JALR(m *RV32, ins uint) {
 	rs1, _ := decodeCR(ins)
 	if rs1 == 0 {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 		return
 	}
 	t := m.PC + 2
@@ -948,7 +948,7 @@ func emu32_C_ADD(m *RV32, ins uint) {
 }
 
 func emu32_C_FSDSP(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 func emu32_C_SWSP(m *RV32, ins uint) {
@@ -960,7 +960,7 @@ func emu32_C_SWSP(m *RV32, ins uint) {
 }
 
 func emu32_C_FSWSP(m *RV32, ins uint) {
-	m.ex.num = exTodo
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------
@@ -978,7 +978,7 @@ func (m *RV32) checkMemory(adr uint, ex mem.Exception) {
 	if ex == 0 {
 		return
 	}
-	m.ex.num = exMemory
+	m.ex.N = ExMemory
 	m.ex.mem = memoryException{adr, ex}
 }
 
@@ -1000,7 +1000,7 @@ func (m *RV32) checkCSR(reg uint, ex csr.Exception) {
 	if ex == 0 {
 		return
 	}
-	m.ex.num = exCSR
+	m.ex.N = ExCSR
 	m.ex.csr = csrException{reg, ex}
 }
 
@@ -1071,17 +1071,17 @@ func (m *RV32) Run() error {
 		im.defn.emu32(m, ins)
 		m.insCount++
 	} else {
-		m.ex.num = exIllegal
+		m.ex.N = ExIllegal
 	}
 
 	// check exception flags
-	if m.ex.num != 0 {
+	if m.ex.N != 0 {
 		return &m.ex
 	}
 
 	// stuck PC detection
 	if m.PC == m.lastPC {
-		m.ex.num = exStuck
+		m.ex.N = ExStuck
 		return &m.ex
 	}
 	m.lastPC = m.PC
@@ -1103,12 +1103,12 @@ func (m *RV32) Reset() {
 // Exit sets a status code and exits the emulation
 func (m *RV32) Exit(status uint32) {
 	m.X[RegA0] = status
-	m.ex.num = exExit
+	m.ex.N = ExExit
 }
 
 // SetBreak sets the break flag.
 func (m *RV32) SetBreak() {
-	m.ex.num = exBreak
+	m.ex.N = ExBreak
 }
 
 //-----------------------------------------------------------------------------

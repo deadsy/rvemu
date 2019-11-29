@@ -300,20 +300,20 @@ func (e csrException) String() string {
 
 // Exception numbers.
 const (
-	exNone    = iota // normal (0)
-	exIllegal        // illegal instruction
-	exExit           // exit from emulation
-	exTodo           // unimplemented instruction
-	exMemory         // memory exception
-	exCSR            // CSR exception
-	exEcall          // unrecognised ecall
-	exBreak          // debug break point
-	exStuck          // stuck program counter
+	ExNone    = iota // normal (0)
+	ExIllegal        // illegal instruction
+	ExExit           // exit from emulation
+	ExTodo           // unimplemented instruction
+	ExMemory         // memory exception
+	ExCSR            // CSR exception
+	ExEcall          // unrecognised ecall
+	ExBreak          // debug break point
+	ExStuck          // stuck program counter
 )
 
 // Exception is a general emulation exception.
 type Exception struct {
-	num  int             // exception number
+	N    int             // exception number
 	alen int             // address length
 	pc   uint            // program counter at which exception occurrred
 	mem  memoryException // memory exception info
@@ -329,22 +329,22 @@ func (e *Exception) Error() string {
 		pcStr = fmt.Sprintf("%016x", e.pc)
 	}
 
-	switch e.num {
-	case exNone:
+	switch e.N {
+	case ExNone:
 		return ""
-	case exIllegal:
+	case ExIllegal:
 		return "illegal instruction at PC " + pcStr
-	case exExit:
+	case ExExit:
 		return "exit at PC " + pcStr
-	case exTodo:
+	case ExTodo:
 		return "unimplemented instruction at PC " + pcStr
-	case exMemory:
+	case ExMemory:
 		return fmt.Sprintf("memory exception at PC %s (%s)", pcStr, e.mem)
-	case exCSR:
+	case ExCSR:
 		return fmt.Sprintf("csr exception at PC %s (%s)", pcStr, e.csr)
-	case exEcall:
+	case ExEcall:
 		return "unrecognized ecall at PC " + pcStr
-	case exBreak:
+	case ExBreak:
 		return "breakpoint at PC " + pcStr
 	}
 
