@@ -32,6 +32,7 @@ var abiFName = [32]string{
 	"fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11",
 }
 
+// Register numbers.
 const (
 	RegZero = iota // 0: zero
 	RegRa          // 1: return address

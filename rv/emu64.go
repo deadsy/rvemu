@@ -270,16 +270,11 @@ func emu64_FENCE_I(m *RV64, ins uint) {
 }
 
 func emu64_ECALL(m *RV64, ins uint) {
-	if m.sc == nil {
-		m.flag |= flagSyscall
+	if m.ecall == nil {
+		m.flag |= flagEcall
 		return
 	}
-	fn := m.sc.Lookup64(m)
-	if fn == nil {
-		m.flag |= flagSyscall
-		return
-	}
-	fn(m)
+	m.ecall.Call64(m)
 	m.PC += 4
 }
 
@@ -1247,15 +1242,16 @@ type RV64 struct {
 	memEx    memoryException // memory exceptions
 	csrEx    csrException    // csr exceptions
 	isa      *ISA            // ISA implemented for the CPU
-	sc       Syscall         // available system calls
+	ecall    Ecall           // ecall interface
 }
 
 // NewRV64 returns a 64-bit RISC-V CPU.
-func NewRV64(isa *ISA, mem *mem.Memory) *RV64 {
+func NewRV64(isa *ISA, mem *mem.Memory, ecall Ecall) *RV64 {
 	return &RV64{
-		Mem: mem,
-		CSR: csr.NewState(64),
-		isa: isa,
+		Mem:   mem,
+		CSR:   csr.NewState(64),
+		isa:   isa,
+		ecall: ecall,
 	}
 }
 
@@ -1275,35 +1271,9 @@ func (m *RV64) IRegs() string {
 	return strings.Join(s, "\n")
 }
 
-// Exit sets a status code and exits the emulation
-func (m *RV64) Exit(status uint64) {
-	m.X[1] = status
-	m.flag |= flagExit
-}
-
 // Disassemble the instruction at the address.
 func (m *RV64) Disassemble(adr uint) *Disassembly {
 	return m.isa.Disassemble(m.Mem, adr)
-}
-
-// Reset the RV64 CPU.
-func (m *RV64) Reset() {
-	m.PC = uint64(m.Mem.Entry)
-	m.X[RegSp] = uint64(uint(1<<32) - 16)
-	m.insCount = 0
-	m.lastPC = 0
-	m.flag = 0
-}
-
-// SetBreak sets the break flag.
-func (m *RV64) SetBreak() {
-	m.flag |= flagBreak
-}
-
-// SetExit sets the exit flag.
-func (m *RV64) SetExit(status uint64) {
-	m.X[RegA0] = status
-	m.flag |= flagExit
 }
 
 // Run the RV64 CPU for a single instruction.
@@ -1337,10 +1307,10 @@ func (m *RV64) Run() error {
 			return fmt.Errorf("csr exception %s", m.csrEx)
 		}
 		if m.flag&flagExit != 0 {
-			return fmt.Errorf("exit at PC %016x, status %016x (%d instructions)", m.PC, m.X[1], m.insCount)
+			return fmt.Errorf("exit at PC %016x, status %016x (%d instructions)", m.PC, m.X[RegA0], m.insCount)
 		}
-		if m.flag&flagSyscall != 0 {
-			return fmt.Errorf("unrecognized system call at PC %016x, %d", m.PC, m.X[RegA7])
+		if m.flag&flagEcall != 0 {
+			return fmt.Errorf("unrecognized ecall at PC %016x", m.PC)
 		}
 		if m.flag&flagBreak != 0 {
 			m.flag &= ^flagBreak
@@ -1359,6 +1329,33 @@ func (m *RV64) Run() error {
 	m.lastPC = m.PC
 
 	return nil
+}
+
+//-----------------------------------------------------------------------------
+
+// Reset the RV64 CPU.
+func (m *RV64) Reset() {
+	m.PC = uint64(m.Mem.Entry)
+	m.X[RegSp] = uint64(uint(1<<32) - 16)
+	m.insCount = 0
+	m.lastPC = 0
+	m.flag = 0
+}
+
+// Exit sets a status code and exits the emulation
+func (m *RV64) Exit(status uint64) {
+	m.X[RegA0] = status
+	m.flag |= flagExit
+}
+
+// SetBreak sets the break flag.
+func (m *RV64) SetBreak() {
+	m.flag |= flagBreak
+}
+
+// SetEcall sets the ecall flag.
+func (m *RV64) SetEcall() {
+	m.flag |= flagEcall
 }
 
 //-----------------------------------------------------------------------------

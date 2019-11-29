@@ -15,6 +15,7 @@ import (
 	"os"
 
 	cli "github.com/deadsy/go-cli"
+	"github.com/deadsy/riscv/ecall"
 	"github.com/deadsy/riscv/mem"
 	"github.com/deadsy/riscv/rv"
 )
@@ -46,8 +47,11 @@ func newUserApp() (*userApp, error) {
 	m := mem.NewMem64(0)
 	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
+	// ecall functions for compliance testing
+	ecall := ecall.NewCompliance()
+
 	// create the cpu
-	cpu := rv.NewRV64(isa, m)
+	cpu := rv.NewRV64(isa, m, ecall)
 
 	return &userApp{
 		mem: m,

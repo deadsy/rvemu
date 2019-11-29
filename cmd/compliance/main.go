@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/deadsy/riscv/ecall"
 	"github.com/deadsy/riscv/mem"
 	"github.com/deadsy/riscv/rv"
 )
@@ -80,7 +81,7 @@ func (c *testCase) TestRV32() error {
 	fmt.Printf("%s\n", status)
 
 	// create the cpu
-	cpu := rv.NewRV32(isa, m)
+	cpu := rv.NewRV32(isa, m, ecall.NewCompliance())
 	cpu.Reset()
 
 	for true {
