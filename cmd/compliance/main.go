@@ -82,7 +82,6 @@ func (c *testCase) TestRV32() error {
 
 	// create the cpu
 	cpu := rv.NewRV32(isa, m, ecall.NewCompliance())
-	cpu.Reset()
 
 	for true {
 		err := cpu.Run()

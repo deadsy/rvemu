@@ -271,47 +271,84 @@ type Ecall interface {
 }
 
 //-----------------------------------------------------------------------------
-
-// emuFlags stores emulation event flags.
-type emuFlags uint
-
-// Emulation event flag values.
-const (
-	flagIllegal emuFlags = 1 << iota // illegal instruction
-	flagExit                         // exit from emulation
-	flagTodo                         // unimplemented instruction
-	flagMemory                       // memory exception
-	flagCSR                          // CSR exception
-	flagEcall                        // unrecognised ecall
-	flagBreak                        // debug break point
-)
-
-//-----------------------------------------------------------------------------
 // memory exceptions
 
 type memoryException struct {
-	pc  uint          // PC when the exception occured
-	adr uint          // address that caused the exception
-	ex  mem.Exception // exception bitmap
+	addr uint          // memory address that caused the exception
+	ex   mem.Exception // exception bitmap
 }
 
 func (e memoryException) String() string {
 	// TODO - fix the 64-bit address case
-	return fmt.Sprintf("at PC %08x (%s @ %08x)", e.pc, e.ex, e.adr)
+	return fmt.Sprintf("%s @ %08x", e.ex, e.addr)
 }
 
 //-----------------------------------------------------------------------------
 // CSR exceptions
 
 type csrException struct {
-	pc  uint          // PC when the exception occured
 	reg uint          // CSR causing the exception
 	ex  csr.Exception // exception bitmap
 }
 
 func (e csrException) String() string {
 	// TODO - fix the 64-bit address case
-	return fmt.Sprintf("at PC %08x (%s: %s)", e.pc, csr.Name(e.reg), e.ex)
+	return fmt.Sprintf("%s: %s", csr.Name(e.reg), e.ex)
+}
+
+//-----------------------------------------------------------------------------
+
+// Exception numbers.
+const (
+	exNone    = iota // normal (0)
+	exIllegal        // illegal instruction
+	exExit           // exit from emulation
+	exTodo           // unimplemented instruction
+	exMemory         // memory exception
+	exCSR            // CSR exception
+	exEcall          // unrecognised ecall
+	exBreak          // debug break point
+	exStuck          // stuck program counter
+)
+
+// Exception is a general emulation exception.
+type Exception struct {
+	num  int             // exception number
+	alen int             // address length
+	pc   uint            // program counter at which exception occurrred
+	mem  memoryException // memory exception info
+	csr  csrException    // csr exception info
+}
+
+func (e *Exception) Error() string {
+
+	pcStr := ""
+	if e.alen == 32 {
+		pcStr = fmt.Sprintf("%08x", e.pc)
+	} else {
+		pcStr = fmt.Sprintf("%016x", e.pc)
+	}
+
+	switch e.num {
+	case exNone:
+		return ""
+	case exIllegal:
+		return "illegal instruction at PC " + pcStr
+	case exExit:
+		return "exit at PC " + pcStr
+	case exTodo:
+		return "unimplemented instruction at PC " + pcStr
+	case exMemory:
+		return fmt.Sprintf("memory exception at PC %s (%s)", pcStr, e.mem)
+	case exCSR:
+		return fmt.Sprintf("csr exception at PC %s (%s)", pcStr, e.csr)
+	case exEcall:
+		return "unrecognized ecall at PC " + pcStr
+	case exBreak:
+		return "breakpoint at PC " + pcStr
+	}
+
+	return "unknown exception at PC " + pcStr
 }
 
 //-----------------------------------------------------------------------------
