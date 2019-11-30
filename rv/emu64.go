@@ -183,11 +183,23 @@ func emu64_ADDI(m *RV64, ins uint) {
 }
 
 func emu64_SLTI(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	imm, rs1, rd := decodeIa(ins)
+	var result uint64
+	if int64(m.X[rs1]) < int64(imm) {
+		result = 1
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 func emu64_SLTIU(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	imm, rs1, rd := decodeIa(ins)
+	var result uint64
+	if m.X[rs1] < uint64(imm) {
+		result = 1
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 func emu64_XORI(m *RV64, ins uint) {
@@ -227,7 +239,13 @@ func emu64_SLL(m *RV64, ins uint) {
 }
 
 func emu64_SLT(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	var result uint64
+	if int64(m.X[rs1]) < int64(m.X[rs2]) {
+		result = 1
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 func emu64_SLTU(m *RV64, ins uint) {

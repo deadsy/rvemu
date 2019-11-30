@@ -27,6 +27,7 @@ import (
 //-----------------------------------------------------------------------------
 
 const stackSize = 8 << 10
+const insLimit = 20000
 
 //-----------------------------------------------------------------------------
 
@@ -122,11 +123,15 @@ func TestRV32(name string) error {
 	cpu := rv.NewRV32(isa, m, ecall.NewCompliance())
 
 	// run the emulation
-	for true {
+	var ins int
+	for ins = 0; ins < insLimit; ins++ {
 		err = cpu.Run()
 		if err != nil {
 			break
 		}
+	}
+	if ins == insLimit {
+		return fmt.Errorf("reached instruction limit")
 	}
 
 	// check for a normal exit
@@ -179,11 +184,15 @@ func TestRV64(name string) error {
 	cpu := rv.NewRV64(isa, m, ecall.NewCompliance())
 
 	// run the emulation
-	for true {
+	var ins int
+	for ins = 0; ins < insLimit; ins++ {
 		err = cpu.Run()
 		if err != nil {
 			break
 		}
+	}
+	if ins == insLimit {
+		return fmt.Errorf("reached instruction limit")
 	}
 
 	// check for a normal exit

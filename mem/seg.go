@@ -178,6 +178,11 @@ func NewSection(name string, start, size uint, attr Attribute) *Section {
 	}
 }
 
+// SetAttr sets the attributes for this memory section.
+func (m *Section) SetAttr(attr Attribute) {
+	m.attr = attr
+}
+
 // Info returns the information for this region.
 func (m *Section) Info() *RegionInfo {
 	return &RegionInfo{
@@ -221,25 +226,33 @@ func (m *Section) Rd8(adr uint) (uint8, Exception) {
 
 // Wr64 writes a 64-bit data value to memory.
 func (m *Section) Wr64(adr uint, val uint64) Exception {
-	binary.LittleEndian.PutUint64(m.mem[adr-m.start:], val)
+	if m.attr&AttrW != 0 {
+		binary.LittleEndian.PutUint64(m.mem[adr-m.start:], val)
+	}
 	return wrException(adr, m.attr, 8)
 }
 
 // Wr32 writes a 32-bit data value to memory.
 func (m *Section) Wr32(adr uint, val uint32) Exception {
-	binary.LittleEndian.PutUint32(m.mem[adr-m.start:], val)
+	if m.attr&AttrW != 0 {
+		binary.LittleEndian.PutUint32(m.mem[adr-m.start:], val)
+	}
 	return wrException(adr, m.attr, 4)
 }
 
 // Wr16 writes a 16-bit data value to memory.
 func (m *Section) Wr16(adr uint, val uint16) Exception {
-	binary.LittleEndian.PutUint16(m.mem[adr-m.start:], val)
+	if m.attr&AttrW != 0 {
+		binary.LittleEndian.PutUint16(m.mem[adr-m.start:], val)
+	}
 	return wrException(adr, m.attr, 2)
 }
 
 // Wr8 writes an 8-bit data value to memory.
 func (m *Section) Wr8(adr uint, val uint8) Exception {
-	m.mem[adr-m.start] = val
+	if m.attr&AttrW != 0 {
+		m.mem[adr-m.start] = val
+	}
 	return wrException(adr, m.attr, 1)
 }
 

@@ -183,11 +183,23 @@ func emu32_ADDI(m *RV32, ins uint) {
 }
 
 func emu32_SLTI(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	imm, rs1, rd := decodeIa(ins)
+	var result uint32
+	if int32(m.X[rs1]) < int32(imm) {
+		result = 1
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 func emu32_SLTIU(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	imm, rs1, rd := decodeIa(ins)
+	var result uint32
+	if m.X[rs1] < uint32(imm) {
+		result = 1
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 func emu32_XORI(m *RV32, ins uint) {
@@ -257,7 +269,13 @@ func emu32_SLL(m *RV32, ins uint) {
 }
 
 func emu32_SLT(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	var result uint32
+	if int32(m.X[rs1]) < int32(m.X[rs2]) {
+		result = 1
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 func emu32_SLTU(m *RV32, ins uint) {

@@ -30,6 +30,9 @@ var rv32iTest = []daTest{
 	{0, 0x800005b7, "lui a1,0x80000"},
 	{0, 0xdeadc7b7, "lui a5,0xdeadc"},
 	{0, 0x00000097, "auipc ra,0x0"},
+	{0, 0x00002297, "auipc t0,0x2"},
+	{0, 0x00000017, "auipc zero,0x0"},
+	{0, 0x00000297, "auipc t0,0x0"},
 	{0x44, 0x0100006f, "j 54"},
 	{0, 0x00008067, "ret"},
 	{0, 0x000080e7, "jalr ra"},
@@ -91,6 +94,16 @@ var rv32iTest = []daTest{
 	{0, 0x34003cf3, "csrrc s9,mscratch,zero"},
 	{0, 0x30200073, "mret"},
 	{0, 0x0ff0000f, "fence"},
+	{0, 0x010fa033, "slt zero,t6,a6"},
+	{0, 0x00ff20b3, "slt ra,t5,a5"},
+	{0, 0x00cda233, "slt tp,s11,a2"},
+	{0, 0x800b2493, "slti s1,s6,-2048"},
+	{0, 0x7ff9a613, "slti a2,s3,2047"},
+	{0, 0x000fa013, "slti zero,t6,0"},
+	{0, 0x000fb013, "sltiu zero,t6,0"},
+	{0, 0x800d3293, "sltiu t0,s10,-2048"},
+	{0, 0x80053a93, "sltiu s5,a0,-2048"},
+	{0, 0x80173893, "sltiu a7,a4,-2047"},
 }
 
 var rv32mTest = []daTest{

@@ -44,17 +44,8 @@ func makeSection(f *elf.File, s *elf.Section) (*Section, string) {
 		return nil, fmt.Sprintf("%s (0 bytes)", s.Name)
 	}
 
-	// work out the memory attribute
-	attr := AttrR
-	if s.Flags&elf.SHF_WRITE != 0 {
-		attr |= AttrW
-	}
-	if s.Flags&elf.SHF_EXECINSTR != 0 {
-		attr |= AttrX
-	}
-
 	// create the memory section
-	ms := NewSection(s.Name, uint(s.Addr), uint(s.Size), attr)
+	ms := NewSection(s.Name, uint(s.Addr), uint(s.Size), AttrW)
 
 	if s.Type&elf.SHT_PROGBITS != 0 {
 		// read the section data from the ELF file
@@ -67,6 +58,16 @@ func makeSection(f *elf.File, s *elf.Section) (*Section, string) {
 			ms.Wr8(uint(s.Addr)+uint(i), v)
 		}
 	}
+
+	// work out the memory attribute
+	attr := AttrR
+	if s.Flags&elf.SHF_WRITE != 0 {
+		attr |= AttrW
+	}
+	if s.Flags&elf.SHF_EXECINSTR != 0 {
+		attr |= AttrX
+	}
+	ms.SetAttr(attr)
 
 	end := s.Addr + s.Size - 1
 	return ms, fmt.Sprintf("%-16s %08x-%08x %s (%d bytes)", s.Name, s.Addr, end, attr.String(), s.Size)
