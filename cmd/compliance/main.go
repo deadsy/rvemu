@@ -30,34 +30,21 @@ const stackSize = 8 << 10
 
 //-----------------------------------------------------------------------------
 
-type testCase struct {
-	xlen        int
-	elfFilename string
-	sigFilename string
-}
+const elf_suffix = ".elf"
+const sig_suffix = ".signature.output"
 
-func getTestCases(path string) ([]*testCase, error) {
-	cases := []*testCase{}
+func getTestCases(path string) ([]string, error) {
+	x := []string{}
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if strings.HasSuffix(path, ".elf") {
-			base := strings.TrimSuffix(path, ".elf")
-			xlen := 32
-			if strings.Contains(base, "rv64") {
-				xlen = 64
-			}
-			tc := testCase{
-				xlen:        xlen,
-				elfFilename: base + ".elf",
-				sigFilename: base + ".signature.output",
-			}
-			cases = append(cases, &tc)
+		if strings.HasSuffix(path, elf_suffix) {
+			x = append(x, strings.TrimSuffix(path, elf_suffix))
 		}
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return cases, nil
+	return x, nil
 }
 
 //-----------------------------------------------------------------------------
@@ -112,8 +99,7 @@ func getResults(m *mem.Memory) ([]uint32, error) {
 
 //-----------------------------------------------------------------------------
 
-func (c *testCase) TestRV32() error {
-	fmt.Printf("Testing %s (RV32)\n", c.elfFilename)
+func TestRV32(name string) error {
 
 	// create the ISA
 	isa := rv.NewISA()
@@ -127,7 +113,7 @@ func (c *testCase) TestRV32() error {
 	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
 	// load the elf file
-	_, err = m.LoadELF(c.elfFilename, elf.ELFCLASS32)
+	_, err = m.LoadELF(name+elf_suffix, elf.ELFCLASS32)
 	if err != nil {
 		return err
 	}
@@ -155,7 +141,7 @@ func (c *testCase) TestRV32() error {
 		return err
 	}
 	// get the signature results from the file
-	sig, err := getSignature(c.sigFilename)
+	sig, err := getSignature(name + sig_suffix)
 	if err != nil {
 		return err
 	}
@@ -168,8 +154,9 @@ func (c *testCase) TestRV32() error {
 	return nil
 }
 
-func (c *testCase) TestRV64() error {
-	fmt.Printf("Testing %s (RV64)\n", c.elfFilename)
+//-----------------------------------------------------------------------------
+
+func TestRV64(name string) error {
 
 	// create the ISA
 	isa := rv.NewISA()
@@ -183,7 +170,7 @@ func (c *testCase) TestRV64() error {
 	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
 	// load the elf file
-	_, err = m.LoadELF(c.elfFilename, elf.ELFCLASS64)
+	_, err = m.LoadELF(name+elf_suffix, elf.ELFCLASS64)
 	if err != nil {
 		return err
 	}
@@ -211,7 +198,7 @@ func (c *testCase) TestRV64() error {
 		return err
 	}
 	// get the signature results from the file
-	sig, err := getSignature(c.sigFilename)
+	sig, err := getSignature(name + sig_suffix)
 	if err != nil {
 		return err
 	}
@@ -224,11 +211,11 @@ func (c *testCase) TestRV64() error {
 	return nil
 }
 
-func (c *testCase) Test() error {
-	if c.xlen == 32 {
-		return c.TestRV32()
+func Test(base string) error {
+	if strings.Contains(base, "rv32") {
+		return TestRV32(base)
 	}
-	return c.TestRV64()
+	return TestRV64(base)
 }
 
 //-----------------------------------------------------------------------------
@@ -238,21 +225,29 @@ func main() {
 	path := flag.String("p", "test", "path to compliance tests")
 	flag.Parse()
 
-	cases, err := getTestCases(*path)
-
+	testCases, err := getTestCases(*path)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	}
 
-	for i := range cases {
-		err := cases[i].Test()
+	pass := 0
+	fail := 0
+
+	for _, name := range testCases {
+		err := Test(name)
+		fmt.Printf("%-50s ", name)
 		if err != nil {
-			fmt.Printf("FAIL %s\n\n", err)
+			fmt.Printf("FAIL %s\n", err)
+			fail++
 		} else {
-			fmt.Printf("PASS\n\n")
+			fmt.Printf("PASS\n")
+			pass++
 		}
 	}
+
+	total := pass + fail
+	fmt.Printf("result: %d/%d passed (%d failed) score %.2f\n", pass, total, fail, float32(pass)/float32(total))
 
 	os.Exit(0)
 }
