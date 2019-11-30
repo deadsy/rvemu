@@ -21,7 +21,7 @@ type Exception uint
 // Exception values.
 const (
 	ExTodo      Exception = 1 << iota // csr not implemented
-	ExPrivilege                       // insufficent privilege
+	ExPrivilege                       // insufficient privilege
 	ExReadOnly                        // trying to write a read-only register
 	ExNoRead                          // no read function (todo)
 	ExNoWrite                         // no write function (todo)
@@ -33,7 +33,7 @@ func (e Exception) String() string {
 		s = append(s, "not implemented")
 	}
 	if e&ExPrivilege != 0 {
-		s = append(s, "insufficent privilege")
+		s = append(s, "insufficient privilege")
 	}
 	if e&ExReadOnly != 0 {
 		s = append(s, "read only")

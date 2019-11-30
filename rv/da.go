@@ -403,9 +403,6 @@ func daTypeCBa(name string, pc uint, ins uint) string {
 
 //-----------------------------------------------------------------------------
 
-// SymbolTable maps an address to a symbol.
-type SymbolTable map[uint32]string
-
 // Disassembly returns the result of the disassembler call.
 type Disassembly struct {
 	Dump     string // address and memory bytes

@@ -1009,7 +1009,7 @@ func (m *RV32) checkCSR(reg uint, ex csr.Exception) {
 // RV32 is a 32-bit RISC-V CPU.
 type RV32 struct {
 	Mem      *mem.Memory // memory of the target system
-	X        [32]uint32  // interger registers
+	X        [32]uint32  // integer registers
 	F        [32]uint64  // float registers
 	PC       uint32      // program counter
 	CSR      *csr.State  // CSR state
