@@ -206,6 +206,8 @@ var rv64iTest = []daTest{
 	{0, 0x0064d513, "srli a0,s1,0x6"},
 	{0, 0x4037d493, "srai s1,a5,0x3"},
 	{0, 0x40395913, "srai s2,s2,0x3"},
+	{0, 0x413a59bb, "sraw s3,s4,s3"},
+	{0, 0x41be5dbb, "sraw s11,t3,s11"},
 }
 
 var rv64mTest = []daTest{

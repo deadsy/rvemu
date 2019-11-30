@@ -292,8 +292,8 @@ var ISArv64i = ISAModule{
 		{"0000000 rs2 rs1 000 rd 0111011 ADDW", daTypeRa, emu32_Illegal, emu64_ADDW},      // R
 		{"0100000 rs2 rs1 000 rd 0111011 SUBW", daTypeRa, emu32_Illegal, emu64_SUBW},      // R
 		{"0000000 rs2 rs1 001 rd 0111011 SLLW", daTypeRa, emu32_Illegal, emu64_SLLW},      // R
-		{"0000000 rs2 rs1 101 rd 0111011 SRLW", daNone, emu32_Illegal, emu64_SRLW},        // R
-		{"0100000 rs2 rs1 101 rd 0111011 SRAW", daNone, emu32_Illegal, emu64_SRAW},        // R
+		{"0000000 rs2 rs1 101 rd 0111011 SRLW", daTypeRa, emu32_Illegal, emu64_SRLW},      // R
+		{"0100000 rs2 rs1 101 rd 0111011 SRAW", daTypeRa, emu32_Illegal, emu64_SRAW},      // R
 	},
 }
 

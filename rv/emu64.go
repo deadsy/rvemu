@@ -1039,16 +1039,23 @@ func emu64_SUBW(m *RV64, ins uint) {
 
 func emu64_SLLW(m *RV64, ins uint) {
 	rs2, rs1, rd := decodeR(ins)
-	m.wrX(rd, uint64(int32(m.X[rs1]<<m.X[rs2]&31)))
+	shamt := m.X[rs2] & 31
+	m.wrX(rd, uint64(int32(m.X[rs1]<<shamt)))
 	m.PC += 4
 }
 
 func emu64_SRLW(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	shamt := m.X[rs2] & 31
+	m.wrX(rd, uint64(int32(uint32(m.X[rs1])>>shamt)))
+	m.PC += 4
 }
 
 func emu64_SRAW(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	shamt := m.X[rs2] & 31
+	m.wrX(rd, uint64(int32(m.X[rs1])>>shamt))
+	m.PC += 4
 }
 
 //-----------------------------------------------------------------------------
@@ -1334,6 +1341,8 @@ func (m *RV64) Disassemble(adr uint) *Disassembly {
 
 // Run the RV64 CPU for a single instruction.
 func (m *RV64) Run() error {
+
+	m.ex.pc = uint(m.PC)
 
 	// read the next instruction
 	ins, ex := m.Mem.RdIns(uint(m.PC))
