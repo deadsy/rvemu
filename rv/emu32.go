@@ -246,7 +246,7 @@ func emu32_SRAI(m *RV32, ins uint) {
 		m.ex.N = ExIllegal
 		return
 	}
-	m.wrX(rd, uint32(int(m.X[rs1])>>shamt))
+	m.wrX(rd, uint32(int32(m.X[rs1])>>shamt))
 	m.PC += 4
 }
 
@@ -279,7 +279,13 @@ func emu32_SLT(m *RV32, ins uint) {
 }
 
 func emu32_SLTU(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	var result uint32
+	if m.X[rs1] < m.X[rs2] {
+		result = 1
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 func emu32_XOR(m *RV32, ins uint) {
@@ -289,11 +295,17 @@ func emu32_XOR(m *RV32, ins uint) {
 }
 
 func emu32_SRL(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	shamt := m.X[rs2] & 31
+	m.wrX(rd, m.X[rs1]>>shamt)
+	m.PC += 4
 }
 
 func emu32_SRA(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	shamt := m.X[rs2] & 31
+	m.wrX(rd, uint32(int32(m.X[rs1])>>shamt))
+	m.PC += 4
 }
 
 func emu32_OR(m *RV32, ins uint) {
@@ -847,7 +859,7 @@ func emu32_C_SRAI(m *RV32, ins uint) {
 		m.ex.N = ExIllegal
 		return
 	}
-	m.X[rd] = uint32(int(m.X[rd]) >> shamt)
+	m.X[rd] = uint32(int32(m.X[rd]) >> shamt)
 	m.PC += 2
 }
 

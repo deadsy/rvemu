@@ -104,6 +104,12 @@ var rv32iTest = []daTest{
 	{0, 0x800d3293, "sltiu t0,s10,-2048"},
 	{0, 0x80053a93, "sltiu s5,a0,-2048"},
 	{0, 0x80173893, "sltiu a7,a4,-2047"},
+	{0, 0x40605033, "sra zero,zero,t1"},
+	{0, 0x407b54b3, "sra s1,s6,t2"},
+	{0, 0x00bd52b3, "srl t0,s10,a1"},
+	{0, 0x010fd033, "srl zero,t6,a6"},
+	{0, 0x00cdb233, "sltu tp,s11,a2"},
+	{0, 0x006ab533, "sltu a0,s5,t1"},
 }
 
 var rv32mTest = []daTest{
