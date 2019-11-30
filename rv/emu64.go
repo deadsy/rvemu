@@ -346,13 +346,13 @@ func emu64_URET(m *RV64, ins uint) {
 }
 
 func emu64_SRET(m *RV64, ins uint) {
-	pc, ex := m.CSR.MRET()
-	m.checkCSR(csr.MSTATUS, ex)
-	m.PC = uint64(pc)
+	m.ex.N = ExTodo
 }
 
 func emu64_MRET(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	pc, ex := m.CSR.MRET()
+	m.checkCSR(csr.MSTATUS, ex)
+	m.PC = uint64(pc)
 }
 
 func emu64_WFI(m *RV64, ins uint) {
@@ -1034,7 +1034,13 @@ func emu64_DIVW(m *RV64, ins uint) {
 
 func emu64_DIVUW(m *RV64, ins uint) {
 	rs2, rs1, rd := decodeR(ins)
-	m.wrX(rd, uint64(int32(uint32(m.X[rs1])/uint32(m.X[rs2]))))
+	dividend := uint32(m.X[rs1])
+	divisor := uint32(m.X[rs2])
+	result := int32(-1)
+	if divisor != 0 {
+		result = int32(dividend / divisor)
+	}
+	m.wrX(rd, uint64(result))
 	m.PC += 4
 }
 
@@ -1044,7 +1050,13 @@ func emu64_REMW(m *RV64, ins uint) {
 
 func emu64_REMUW(m *RV64, ins uint) {
 	rs2, rs1, rd := decodeR(ins)
-	m.wrX(rd, uint64(int32(uint32(m.X[rs1])%uint32(m.X[rs2]))))
+	dividend := uint32(m.X[rs1])
+	divisor := uint32(m.X[rs2])
+	result := int32(dividend)
+	if divisor != 0 {
+		result = int32(dividend % divisor)
+	}
+	m.wrX(rd, uint64(result))
 	m.PC += 4
 }
 
