@@ -38,8 +38,6 @@ type Memory struct {
 	symByAddr  map[uint]*Symbol   // symbol table by address
 	symByName  map[string]*Symbol // symbol table by name
 	noMemory   Region             // empty memory region
-	da         map[uint]string    // reference disassembly
-
 }
 
 // newMemory returns a memory object.
@@ -50,7 +48,6 @@ func newMemory(alen int, empty Attribute) *Memory {
 		symByAddr:  make(map[uint]*Symbol),
 		symByName:  make(map[string]*Symbol),
 		noMemory:   newEmpty(empty),
-		da:         make(map[uint]string),
 	}
 }
 
@@ -128,6 +125,17 @@ func (m *Memory) Wr8(adr uint, val uint8) Exception {
 
 //-----------------------------------------------------------------------------
 
+// RangeRd32 reads a range of 32-bit data values from memory.
+func (m *Memory) RangeRd32(adr, n uint) []uint32 {
+	x := make([]uint32, n)
+	for i := uint(0); i < n; i++ {
+		x[i], _ = m.Rd32(adr + (i * 4))
+	}
+	return x
+}
+
+//-----------------------------------------------------------------------------
+
 // SymbolByAddress returns a symbol for the memory address.
 func (m *Memory) SymbolByAddress(adr uint) *Symbol {
 	return m.symByAddr[adr]
@@ -136,6 +144,15 @@ func (m *Memory) SymbolByAddress(adr uint) *Symbol {
 // SymbolByName returns the symbol for a symbol name.
 func (m *Memory) SymbolByName(s string) *Symbol {
 	return m.symByName[s]
+}
+
+// SymbolGetAddress returns the symbol address for a symbol name.
+func (m *Memory) SymbolGetAddress(s string) (uint, error) {
+	symbol := m.symByName[s]
+	if symbol == nil {
+		return 0, fmt.Errorf("%s not found", s)
+	}
+	return symbol.Addr, nil
 }
 
 // AddSymbol adds a symbol to the symbol table.
@@ -147,18 +164,6 @@ func (m *Memory) AddSymbol(s string, adr, size uint) error {
 		return nil
 	}
 	return fmt.Errorf("%s is not in a memory segment", s)
-}
-
-//-----------------------------------------------------------------------------
-
-// Disassembly returns the reference disassembly for the memory address (if there is any).
-func (m *Memory) Disassembly(adr uint) string {
-	return m.da[adr]
-}
-
-// AddDisassembly adds reference diassembly to the disassembly table.
-func (m *Memory) AddDisassembly(s string, adr uint) {
-	m.da[adr] = s
 }
 
 //-----------------------------------------------------------------------------
