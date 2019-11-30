@@ -334,7 +334,13 @@ func emu32_CSRRS(m *RV32, ins uint) {
 }
 
 func emu32_CSRRC(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	csr, rs1, rd := decodeIb(ins)
+	t := m.rdCSR(csr)
+	if rs1 != 0 {
+		m.wrCSR(csr, t & ^m.X[rs1])
+	}
+	m.wrX(rd, t)
+	m.PC += 4
 }
 
 func emu32_CSRRWI(m *RV32, ins uint) {
@@ -347,11 +353,19 @@ func emu32_CSRRWI(m *RV32, ins uint) {
 }
 
 func emu32_CSRRSI(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	csr, zimm, rd := decodeIb(ins)
+	t := m.rdCSR(csr)
+	m.wrCSR(csr, t|uint32(zimm))
+	m.wrX(rd, t)
+	m.PC += 4
 }
 
 func emu32_CSRRCI(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	csr, zimm, rd := decodeIb(ins)
+	t := m.rdCSR(csr)
+	m.wrCSR(csr, t & ^uint32(zimm))
+	m.wrX(rd, t)
+	m.PC += 4
 }
 
 //-----------------------------------------------------------------------------

@@ -228,18 +228,39 @@ func nameRemap(name string) string {
 		"c.sdsp":     "sd",
 		"c.addi16sp": "addi",
 		"c.addi4spn": "addi",
-		"csrrs":      "csrr",
-		"csrrw":      "csrw",
-		"csrrwi":     "csrwi",
-		//"csrrc":      "",
-		//"csrrsi":     "",
-		//"csrrci":     "",
 	}
 	if s, ok := x[name]; ok {
 		return s
 	}
 	if strings.HasPrefix(name, "c.") {
 		return name[2:]
+	}
+	return name
+}
+
+// remaps when rd == 0
+func csrRemap1(name string) string {
+	x := map[string]string{
+		"csrrw":  "csrw",
+		"csrrs":  "csrs",
+		"csrrc":  "csrc",
+		"csrrwi": "csrwi",
+		"csrrsi": "csrsi",
+		"csrrci": "csrci",
+	}
+	if s, ok := x[name]; ok {
+		return s
+	}
+	return name
+}
+
+// remaps when rs1 == 0
+func csrRemap2(name string) string {
+	x := map[string]string{
+		"csrrs": "csrr",
+	}
+	if s, ok := x[name]; ok {
+		return s
 	}
 	return name
 }
