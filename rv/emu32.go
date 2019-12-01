@@ -9,6 +9,8 @@ RISC-V 32-bit CPU Emulation
 package rv
 
 import (
+	"math"
+
 	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/mem"
 )
@@ -248,25 +250,25 @@ func emu32_SRAI(m *RV32, ins uint) {
 }
 
 func emu32_ADD(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, m.X[rs1]+m.X[rs2])
 	m.PC += 4
 }
 
 func emu32_SUB(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, m.X[rs1]-m.X[rs2])
 	m.PC += 4
 }
 
 func emu32_SLL(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, m.X[rs1]<<(m.X[rs2]&31))
 	m.PC += 4
 }
 
 func emu32_SLT(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	var result uint32
 	if int32(m.X[rs1]) < int32(m.X[rs2]) {
 		result = 1
@@ -276,7 +278,7 @@ func emu32_SLT(m *RV32, ins uint) {
 }
 
 func emu32_SLTU(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	var result uint32
 	if m.X[rs1] < m.X[rs2] {
 		result = 1
@@ -286,33 +288,33 @@ func emu32_SLTU(m *RV32, ins uint) {
 }
 
 func emu32_XOR(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, m.X[rs1]^m.X[rs2])
 	m.PC += 4
 }
 
 func emu32_SRL(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	shamt := m.X[rs2] & 31
 	m.wrX(rd, m.X[rs1]>>shamt)
 	m.PC += 4
 }
 
 func emu32_SRA(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	shamt := m.X[rs2] & 31
 	m.wrX(rd, uint32(int32(m.X[rs1])>>shamt))
 	m.PC += 4
 }
 
 func emu32_OR(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, m.X[rs1]|m.X[rs2])
 	m.PC += 4
 }
 
 func emu32_AND(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, m.X[rs1]&m.X[rs2])
 	m.PC += 4
 }
@@ -432,13 +434,13 @@ func emu32_HFENCE_GVMA(m *RV32, ins uint) {
 // rv32m
 
 func emu32_MUL(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, m.X[rs1]*m.X[rs2])
 	m.PC += 4
 }
 
 func emu32_MULH(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	a := int64(int32(m.X[rs1]))
 	b := int64(int32(m.X[rs2]))
 	c := (a * b) >> 32
@@ -447,7 +449,7 @@ func emu32_MULH(m *RV32, ins uint) {
 }
 
 func emu32_MULHSU(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	a := int64(int32(m.X[rs1]))
 	b := int64(m.X[rs2])
 	c := (a * b) >> 32
@@ -456,7 +458,7 @@ func emu32_MULHSU(m *RV32, ins uint) {
 }
 
 func emu32_MULHU(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	a := uint64(m.X[rs1])
 	b := uint64(m.X[rs2])
 	c := (a * b) >> 32
@@ -465,7 +467,7 @@ func emu32_MULHU(m *RV32, ins uint) {
 }
 
 func emu32_DIV(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	result := int32(-1)
 	a := int32(m.X[rs1])
 	b := int32(m.X[rs2])
@@ -477,7 +479,7 @@ func emu32_DIV(m *RV32, ins uint) {
 }
 
 func emu32_DIVU(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	result := uint32((1 << 32) - 1)
 	if m.X[rs2] != 0 {
 		result = m.X[rs1] / m.X[rs2]
@@ -487,7 +489,7 @@ func emu32_DIVU(m *RV32, ins uint) {
 }
 
 func emu32_REM(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	result := int32(m.X[rs1])
 	b := int32(m.X[rs2])
 	if b != 0 {
@@ -498,7 +500,7 @@ func emu32_REM(m *RV32, ins uint) {
 }
 
 func emu32_REMU(m *RV32, ins uint) {
-	rs2, rs1, rd := decodeR(ins)
+	rs2, rs1, _, rd := decodeR(ins)
 	result := m.X[rs1]
 	if m.X[rs2] != 0 {
 		result %= m.X[rs2]
@@ -558,7 +560,12 @@ func emu32_AMOMAXU_W(m *RV32, ins uint) {
 // rv32f
 
 func emu32_FLW(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	imm, rs1, rd := decodeIa(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	val, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	m.F[rd] = uint64(val)
+	m.PC += 4
 }
 
 func emu32_FSW(m *RV32, ins uint) {
@@ -590,7 +597,11 @@ func emu32_FSUB_S(m *RV32, ins uint) {
 }
 
 func emu32_FMUL_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	f1 := math.Float32frombits(uint32(m.F[rs1]))
+	f2 := math.Float32frombits(uint32(m.F[rs2]))
+	m.F[rd] = uint64(math.Float32bits(f1 * f2))
+	m.PC += 4
 }
 
 func emu32_FDIV_S(m *RV32, ins uint) {
@@ -602,15 +613,24 @@ func emu32_FSQRT_S(m *RV32, ins uint) {
 }
 
 func emu32_FSGNJ_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	sign := m.F[rs2] & mask31
+	m.F[rd] = sign | (m.F[rs1] & mask30to0)
+	m.PC += 4
 }
 
 func emu32_FSGNJN_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	sign := ^m.F[rs2] & mask31
+	m.F[rd] = sign | (m.F[rs1] & mask30to0)
+	m.PC += 4
 }
 
 func emu32_FSGNJX_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	sign := (m.F[rs1] ^ m.F[rs2]) & mask31
+	m.F[rd] = sign | (m.F[rs1] & mask30to0)
+	m.PC += 4
 }
 
 func emu32_FMIN_S(m *RV32, ins uint) {
@@ -622,27 +642,116 @@ func emu32_FMAX_S(m *RV32, ins uint) {
 }
 
 func emu32_FCVT_W_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, rm, rd := decodeR(ins)
+	// get the float to convert
+	f1 := math.Float32frombits(uint32(m.F[rs1]))
+	// is this dynamic rounding mode?
+	if rm == frmDYN {
+		// get the rounding mode from FCSR
+		rm, _ = m.CSR.Rd(csr.FRM)
+	}
+	// Clear the float status flags
+	m.CSR.Clr(csr.FFLAGS, fflagsALL)
+	// convert the float to an int32
+	var x int32
+	if f1 < float32(math.MinInt32) {
+		m.CSR.Set(csr.FFLAGS, fflagsNV)
+		x = math.MinInt32
+	} else if f1 > float32(math.MaxInt32) {
+		m.CSR.Set(csr.FFLAGS, fflagsNV)
+		x = math.MaxInt32
+	} else {
+		switch rm {
+		case frmRNE:
+		case frmRTZ:
+			x = int32(f1)
+		case frmRDN:
+		case frmRUP:
+		case frmRRM:
+		default:
+			m.ex.N = ExIllegal
+			return
+		}
+		if f1 != float32(x) {
+			m.CSR.Set(csr.FFLAGS, fflagsNX)
+		}
+	}
+	m.wrX(rd, uint32(x))
+	m.PC += 4
 }
 
 func emu32_FCVT_WU_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, rm, rd := decodeR(ins)
+	// get the float to convert
+	f1 := math.Float32frombits(uint32(m.F[rs1]))
+	// is this dynamic rounding mode?
+	if rm == frmDYN {
+		// get the rounding mode from FCSR
+		rm, _ = m.CSR.Rd(csr.FRM)
+	}
+	// Clear the float status flags
+	m.CSR.Clr(csr.FFLAGS, fflagsALL)
+	// convert the float to an int32
+	var x uint32
+	if f1 <= -1.0 {
+		m.CSR.Set(csr.FFLAGS, fflagsNV)
+	} else if f1 > float32(math.MaxUint32) {
+		m.CSR.Set(csr.FFLAGS, fflagsNV)
+		x = math.MaxUint32
+	} else {
+		switch rm {
+		case frmRNE:
+		case frmRTZ:
+			x = uint32(f1)
+		case frmRDN:
+		case frmRUP:
+		case frmRRM:
+		default:
+			m.ex.N = ExIllegal
+			return
+		}
+		if f1 != float32(x) {
+			m.CSR.Set(csr.FFLAGS, fflagsNX)
+		}
+	}
+	m.wrX(rd, x)
+	m.PC += 4
 }
 
 func emu32_FMV_X_W(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, _, rd := decodeR(ins)
+	m.wrX(rd, uint32(int32(m.F[rs1])))
+	m.PC += 4
 }
 
 func emu32_FEQ_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	var result uint32
+	if uint32(m.F[rs1]) == uint32(m.F[rs2]) {
+		result = 1
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 func emu32_FLT_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	var result uint32
+	if uint32(m.F[rs1]) < uint32(m.F[rs2]) {
+		result = 1
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 func emu32_FLE_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	var result uint32
+	if uint32(m.F[rs1]) <= uint32(m.F[rs2]) {
+		result = 1
+	}
+	m.wrX(rd, result)
+	m.PC += 4
 }
 
 func emu32_FCLASS_S(m *RV32, ins uint) {
@@ -650,15 +759,21 @@ func emu32_FCLASS_S(m *RV32, ins uint) {
 }
 
 func emu32_FCVT_S_W(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, _, rd := decodeR(ins)
+	f1 := float32(int32(m.X[rs1]))
+	m.F[rd] = uint64(math.Float32bits(f1))
+	m.PC += 4
 }
 
 func emu32_FCVT_S_WU(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, _, rd := decodeR(ins)
+	f1 := float32(m.X[rs1])
+	m.F[rd] = uint64(math.Float32bits(f1))
+	m.PC += 4
 }
 
 func emu32_FMV_W_X(m *RV32, ins uint) {
-	_, rs1, rd := decodeR(ins)
+	_, rs1, _, rd := decodeR(ins)
 	m.F[rd] = u32Upper | uint64(m.X[rs1])
 	m.PC += 4
 }

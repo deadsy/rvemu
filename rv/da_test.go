@@ -140,6 +140,11 @@ var rv32fTest = []daTest{
 	{0, 0xf0000053, "fmv.w.x ft0,zero"},
 	{0, 0xe0078553, "fmv.x.w a0,fa5"},
 	{0, 0x20208053, "fsgnj.s ft0,ft1,ft2"},
+	{0, 0xd0007053, "fcvt.s.w ft0,zero"},
+	{0, 0x1000f0d3, "fmul.s ft1,ft1,ft0"},
+	{0, 0xa0101553, "flt.s a0,ft0,ft1"},
+	{0, 0xa0102553, "feq.s a0,ft0,ft1"},
+	{0, 0xc0001553, "fcvt.w.s a0,ft0,rtz"},
 }
 
 var rv32dTest = []daTest{

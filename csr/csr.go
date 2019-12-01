@@ -528,6 +528,24 @@ func (s *State) Wr(reg, val uint) Exception {
 	return ExTodo
 }
 
+// Set sets bits in a CSR.
+func (s *State) Set(reg, bits uint) Exception {
+	val, ex := s.Rd(reg)
+	if ex != 0 {
+		return ex
+	}
+	return s.Wr(reg, val|bits)
+}
+
+// Clr clears bits in a CSR.
+func (s *State) Clr(reg, bits uint) Exception {
+	val, ex := s.Rd(reg)
+	if ex != 0 {
+		return ex
+	}
+	return s.Wr(reg, val & ^bits)
+}
+
 // Display displays the CSR state.
 func (s *State) Display() string {
 	x := []string{}

@@ -49,11 +49,12 @@ func bitSigned(x, msb, lsb uint) int {
 //-----------------------------------------------------------------------------
 // instruction decoding
 
-func decodeR(ins uint) (uint, uint, uint) {
+func decodeR(ins uint) (uint, uint, uint, uint) {
 	rs2 := bitUnsigned(ins, 24, 20, 0)
 	rs1 := bitUnsigned(ins, 19, 15, 0)
+	rm := bitUnsigned(ins, 14, 12, 0)
 	rd := bitUnsigned(ins, 11, 7, 0)
-	return rs2, rs1, rd
+	return rs2, rs1, rm, rd
 }
 
 func decodeR4(ins uint) (uint, uint, uint, uint, uint) {
@@ -353,6 +354,9 @@ func (e *Exception) Error() string {
 }
 
 //-----------------------------------------------------------------------------
+
+const mask30to0 = (1 << 31) - 1
+const mask31 = (1 << 31)
 
 const u32Lower = uint64(0xffffffff)
 const u32Upper = uint64(u32Lower << 32)
