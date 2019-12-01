@@ -9,9 +9,7 @@ RISC-V 64-bit CPU Emulation
 package rv
 
 import (
-	"fmt"
 	"math"
-	"strings"
 
 	"github.com/deadsy/riscv/big"
 	"github.com/deadsy/riscv/csr"
@@ -1364,30 +1362,10 @@ func NewRV64(isa *ISA, mem *mem.Memory, ecall Ecall) *RV64 {
 	return &m
 }
 
-// IRegs returns a display string for the integer registers.
-func (m *RV64) IRegs() string {
-	nregs := 32
-	s := make([]string, nregs+1)
-	for i := 0; i < nregs; i++ {
-		x := fmt.Sprintf("x%d", i)
-		r := "0"
-		if m.X[i] != 0 {
-			r = fmt.Sprintf("%016x", m.X[i])
-		}
-		s[i] = fmt.Sprintf("%-4s %-4s %s", x, abiXName[i], r)
-	}
-	s[nregs] = fmt.Sprintf("%-9s %016x", "pc", m.PC)
-	return strings.Join(s, "\n")
-}
-
-// Disassemble the instruction at the address.
-func (m *RV64) Disassemble(adr uint) *Disassembly {
-	return m.isa.Disassemble(m.Mem, adr)
-}
-
 // Run the RV64 CPU for a single instruction.
 func (m *RV64) Run() error {
 
+	// set the pc for the exception (if there is one)
 	m.ex.pc = uint(m.PC)
 
 	// read the next instruction
@@ -1419,6 +1397,27 @@ func (m *RV64) Run() error {
 	m.lastPC = m.PC
 
 	return nil
+}
+
+//-----------------------------------------------------------------------------
+
+// IntRegs returns a display string for the integer registers.
+func (m *RV64) IntRegs() string {
+	reg := make([]uint, 32)
+	for i := range reg {
+		reg[i] = uint(m.X[i])
+	}
+	return intRegString(reg, uint(m.PC), 64)
+}
+
+// FloatRegs returns a display string for the float registers.
+func (m *RV64) FloatRegs() string {
+	return floatRegString(m.F[:])
+}
+
+// Disassemble the instruction at the address.
+func (m *RV64) Disassemble(adr uint) *Disassembly {
+	return m.isa.Disassemble(m.Mem, adr)
 }
 
 //-----------------------------------------------------------------------------

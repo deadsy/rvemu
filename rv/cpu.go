@@ -10,6 +10,7 @@ package rv
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/mem"
@@ -355,5 +356,38 @@ func (e *Exception) Error() string {
 
 const u32Lower = uint64(0xffffffff)
 const u32Upper = uint64(u32Lower << 32)
+
+//-----------------------------------------------------------------------------
+
+func intRegString(reg []uint, pc, xlen uint) string {
+	fmtx := "%08x"
+	if xlen == 64 {
+		fmtx = "%016x"
+	}
+	s := make([]string, len(reg)+1)
+	for i := 0; i < len(reg); i++ {
+		regStr := fmt.Sprintf("x%d", i)
+		valStr := "0"
+		if reg[i] != 0 {
+			valStr = fmt.Sprintf(fmtx, reg[i])
+		}
+		s[i] = fmt.Sprintf("%-4s %-4s %s", regStr, abiXName[i], valStr)
+	}
+	s[len(reg)] = fmt.Sprintf("%-9s "+fmtx, "pc", pc)
+	return strings.Join(s, "\n")
+}
+
+func floatRegString(reg []uint64) string {
+	s := make([]string, len(reg))
+	for i := 0; i < len(reg); i++ {
+		regStr := fmt.Sprintf("f%d", i)
+		valStr := "0"
+		if reg[i] != 0 {
+			valStr = fmt.Sprintf("%016x", reg[i])
+		}
+		s[i] = fmt.Sprintf("%-4s %-4s %s", regStr, abiFName[i], valStr)
+	}
+	return strings.Join(s, "\n")
+}
 
 //-----------------------------------------------------------------------------
