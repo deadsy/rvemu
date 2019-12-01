@@ -216,6 +216,8 @@ var rv64iTest = []daTest{
 var rv64mTest = []daTest{
 	{0, 0x02f777bb, "remuw a5,a4,a5"},
 	{0, 0x02f757bb, "divuw a5,a4,a5"},
+	{0, 0x031908bb, "mulw a7,s2,a7"},
+	{0, 0x03be0dbb, "mulw s11,t3,s11"},
 }
 
 var rv64aTest = []daTest{}

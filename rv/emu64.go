@@ -10,8 +10,10 @@ package rv
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
+	"github.com/deadsy/riscv/big"
 	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/mem"
 )
@@ -411,15 +413,30 @@ func emu64_MUL(m *RV64, ins uint) {
 }
 
 func emu64_MULH(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	a := big.Int128FromInt(int64(m.X[rs1]))
+	b := big.Int128FromInt(int64(m.X[rs2]))
+	c := a.Mul(b)
+	m.wrX(rd, uint64(c.Hi))
+	m.PC += 4
 }
 
 func emu64_MULHSU(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	a := big.Int128FromInt(int64(m.X[rs1]))
+	b := big.Int128FromUint(m.X[rs2])
+	c := a.Mul(b)
+	m.wrX(rd, uint64(c.Hi))
+	m.PC += 4
 }
 
 func emu64_MULHU(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	a := big.Uint128FromUint(m.X[rs1])
+	b := big.Uint128FromUint(m.X[rs2])
+	c := a.Mul(b)
+	m.wrX(rd, c.Hi)
+	m.PC += 4
 }
 
 func emu64_DIV(m *RV64, ins uint) {
@@ -1065,11 +1082,25 @@ func emu64_SRAW(m *RV64, ins uint) {
 // rv64m
 
 func emu64_MULW(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	result := int32(m.X[rs1] * m.X[rs2])
+	m.wrX(rd, uint64(result))
+	m.PC += 4
 }
 
 func emu64_DIVW(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	result := int32(m.X[rs1])
+	divisor := int32(m.X[rs2])
+	if divisor == -1 && result == math.MinInt32 {
+		// overflow
+	} else if divisor == 0 {
+		result = -1
+	} else {
+		result /= divisor
+	}
+	m.wrX(rd, uint64(result))
+	m.PC += 4
 }
 
 func emu64_DIVUW(m *RV64, ins uint) {
@@ -1085,7 +1116,19 @@ func emu64_DIVUW(m *RV64, ins uint) {
 }
 
 func emu64_REMW(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	result := int32(m.X[rs1])
+	divisor := int32(m.X[rs2])
+	if divisor == -1 && result == math.MinInt32 {
+		// overflow
+		result = 0
+	} else if divisor == 0 {
+		// nop
+	} else {
+		result %= divisor
+	}
+	m.wrX(rd, uint64(result))
+	m.PC += 4
 }
 
 func emu64_REMUW(m *RV64, ins uint) {
