@@ -138,7 +138,20 @@ func daTypeIh(name string, pc uint, ins uint) string {
 		if rd == 0 {
 			return fmt.Sprintf("fscsr %s", abiXName[rs1])
 		}
+		if rs1 == 0 {
+			return fmt.Sprintf("frcsr %s", abiXName[rd])
+		}
 		return fmt.Sprintf("fscsr %s,%s", abiXName[rd], abiXName[rs1])
+	}
+
+	if csrReg == csr.FFLAGS {
+		if rd == 0 {
+			return fmt.Sprintf("fsflags %s", abiXName[rs1])
+		}
+		if rs1 == 0 {
+			return fmt.Sprintf("frflags %s", abiXName[rd])
+		}
+		return fmt.Sprintf("fsflags %s,%s", abiXName[rd], abiXName[rs1])
 	}
 
 	if rd == 0 {
@@ -158,6 +171,9 @@ func daTypeIi(name string, pc uint, ins uint) string {
 
 func daTypeIj(name string, pc uint, ins uint) string {
 	csrReg, uimm, rd := decodeIb(ins)
+	if csrReg == csr.FRM {
+		return fmt.Sprintf("fsrmi %s,%d", abiXName[rd], uimm)
+	}
 	if rd == 0 {
 		return fmt.Sprintf("%s %s,%d", csrRemap1(name), csr.Name(csrReg), uimm)
 	}

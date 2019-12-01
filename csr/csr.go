@@ -60,6 +60,8 @@ const (
 
 // Register numbers for specific CSRs.
 const (
+	FFLAGS  = 0x001
+	FRM     = 0x002
 	FCSR    = 0x003
 	MSTATUS = 0x300
 )
@@ -112,6 +114,39 @@ func rdMSCRATCH(s *State) uint {
 }
 
 //-----------------------------------------------------------------------------
+// fcsr
+
+const frmMask = uint(7 << 5)
+const fflagsMask = uint(31 << 0)
+const fcsrMask = frmMask | fflagsMask
+
+func wrFCSR(s *State, val uint) {
+	s.fcsr = val & fcsrMask
+}
+
+func rdFCSR(s *State) uint {
+	return s.fcsr
+}
+
+func wrFRM(s *State, val uint) {
+	s.fcsr &= ^frmMask
+	s.fcsr |= (val & 7) << 5
+}
+
+func rdFRM(s *State) uint {
+	return (s.fcsr & frmMask) >> 5
+}
+
+func wrFFLAGS(s *State, val uint) {
+	s.fcsr &= ^fflagsMask
+	s.fcsr |= val & fflagsMask
+}
+
+func rdFFLAGS(s *State) uint {
+	return s.fcsr & fflagsMask
+}
+
+//-----------------------------------------------------------------------------
 // mstatus
 
 func wrMSTATUS(s *State, x uint) {
@@ -159,9 +194,9 @@ type csrDefn struct {
 var lookup = map[uint]csrDefn{
 	// User CSRs 0x000 - 0x0ff (read/write)
 	0x000: {"ustatus", nil, nil},
-	0x001: {"fflags", nil, nil},
-	0x002: {"frm", nil, nil},
-	0x003: {"fcsr", wrIgnore, rdZero},
+	0x001: {"fflags", wrFFLAGS, rdFFLAGS},
+	0x002: {"frm", wrFRM, rdFRM},
+	0x003: {"fcsr", wrFCSR, rdFCSR},
 	0x004: {"uie", nil, nil},
 	0x005: {"utvec", nil, nil},
 	0x040: {"uscratch", nil, nil},
@@ -446,6 +481,7 @@ type State struct {
 	mtvec    uint // machine trap-vector base-address register
 	mstatus  uint // machine status
 	mscratch uint // machine scratch
+	fcsr     uint // floating point control and status register
 }
 
 // NewState returns a CSR state object.
