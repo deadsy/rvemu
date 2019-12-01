@@ -424,9 +424,11 @@ func emu64_MULHU(m *RV64, ins uint) {
 
 func emu64_DIV(m *RV64, ins uint) {
 	rs2, rs1, rd := decodeR(ins)
-	result := -1
-	if m.X[rs2] != 0 {
-		result = int(m.X[rs1]) / int(m.X[rs2])
+	result := int64(-1)
+	a := int64(m.X[rs1])
+	b := int64(m.X[rs2])
+	if b != 0 {
+		result = a / b
 	}
 	m.wrX(rd, uint64(result))
 	m.PC += 4
@@ -444,9 +446,10 @@ func emu64_DIVU(m *RV64, ins uint) {
 
 func emu64_REM(m *RV64, ins uint) {
 	rs2, rs1, rd := decodeR(ins)
-	result := int(m.X[rs1])
-	if m.X[rs2] != 0 {
-		result %= int(m.X[rs2])
+	result := int64(m.X[rs1])
+	b := int64(m.X[rs2])
+	if b != 0 {
+		result %= b
 	}
 	m.wrX(rd, uint64(result))
 	m.PC += 4

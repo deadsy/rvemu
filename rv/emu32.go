@@ -441,22 +441,39 @@ func emu32_MUL(m *RV32, ins uint) {
 }
 
 func emu32_MULH(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	a := int64(int32(m.X[rs1]))
+	b := int64(int32(m.X[rs2]))
+	c := (a * b) >> 32
+	m.wrX(rd, uint32(c))
+	m.PC += 4
 }
 
 func emu32_MULHSU(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	a := int64(int32(m.X[rs1]))
+	b := int64(m.X[rs2])
+	c := (a * b) >> 32
+	m.wrX(rd, uint32(c))
+	m.PC += 4
 }
 
 func emu32_MULHU(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rd := decodeR(ins)
+	a := uint64(m.X[rs1])
+	b := uint64(m.X[rs2])
+	c := (a * b) >> 32
+	m.wrX(rd, uint32(c))
+	m.PC += 4
 }
 
 func emu32_DIV(m *RV32, ins uint) {
 	rs2, rs1, rd := decodeR(ins)
-	result := -1
-	if m.X[rs2] != 0 {
-		result = int(m.X[rs1]) / int(m.X[rs2])
+	result := int32(-1)
+	a := int32(m.X[rs1])
+	b := int32(m.X[rs2])
+	if b != 0 {
+		result = a / b
 	}
 	m.wrX(rd, uint32(result))
 	m.PC += 4
@@ -474,9 +491,10 @@ func emu32_DIVU(m *RV32, ins uint) {
 
 func emu32_REM(m *RV32, ins uint) {
 	rs2, rs1, rd := decodeR(ins)
-	result := int(m.X[rs1])
-	if m.X[rs2] != 0 {
-		result %= int(m.X[rs2])
+	result := int32(m.X[rs1])
+	b := int32(m.X[rs2])
+	if b != 0 {
+		result %= b
 	}
 	m.wrX(rd, uint32(result))
 	m.PC += 4

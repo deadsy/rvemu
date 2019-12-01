@@ -115,6 +115,9 @@ var rv32iTest = []daTest{
 var rv32mTest = []daTest{
 	{0, 0x025535b3, "mulhu a1,a0,t0"},
 	{0, 0x036484b3, "mul s1,s1,s6"},
+	{0, 0x03519ab3, "mulh s5,gp,s5"},
+	{0, 0x039d1cb3, "mulh s9,s10,s9"},
+	{0, 0x03089833, "mulh a6,a7,a6"},
 }
 
 var rv32aTest = []daTest{
