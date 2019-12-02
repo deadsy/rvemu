@@ -114,6 +114,7 @@ var rv32iTest = []daTest{
 	{0, 0x0030d073, "csrwi fcsr,1"},
 	{0, 0x00302573, "frcsr a0"},
 	{0, 0x00102573, "frflags a0"},
+	{0, 0x001015f3, "fsflags a1,zero"},
 	{0, 0x00215573, "fsrmi a0,2"},
 	{0, 0x00127573, "csrrci a0,fflags,4"},
 }
@@ -146,6 +147,7 @@ var rv32fTest = []daTest{
 	{0, 0xa0102553, "feq.s a0,ft0,ft1"},
 	{0, 0xc0001553, "fcvt.w.s a0,ft0,rtz"},
 	{0, 0xc000f0d3, "fcvt.w.s ra,ft1"},
+	{0, 0x001071d3, "fadd.s ft3,ft0,ft1"},
 }
 
 var rv32dTest = []daTest{

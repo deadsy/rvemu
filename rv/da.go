@@ -145,10 +145,7 @@ func daTypeIh(name string, pc uint, ins uint) string {
 	}
 
 	if csrReg == csr.FFLAGS {
-		if rd == 0 {
-			return fmt.Sprintf("fsflags %s", abiXName[rs1])
-		}
-		if rs1 == 0 {
+		if rs1 == 0 && name == "csrrs" {
 			return fmt.Sprintf("frflags %s", abiXName[rd])
 		}
 		return fmt.Sprintf("fsflags %s,%s", abiXName[rd], abiXName[rs1])

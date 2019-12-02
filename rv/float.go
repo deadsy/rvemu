@@ -51,6 +51,7 @@ const fflagsALL = fflagsNX | fflagsUF | fflagsOF | fflagsDZ | fflagsNV
 //-----------------------------------------------------------------------------
 
 // convertF32toI32 converts a float32 to an int32 (fcvt.w.s)
+// NV, NX flags
 func convertF32toI32(f float32, rm uint, s *csr.State) (int32, error) {
 
 	// with dynamic rounding rm = FRM
@@ -92,6 +93,7 @@ func convertF32toI32(f float32, rm uint, s *csr.State) (int32, error) {
 }
 
 // convertF32toU32 converts a float32 to an uint32 (fcvt.wu.s)
+// NV, NX flags
 func convertF32toU32(f float32, rm uint, s *csr.State) (uint32, error) {
 
 	// with dynamic rounding rm = FRM
@@ -127,6 +129,66 @@ func convertF32toU32(f float32, rm uint, s *csr.State) (uint32, error) {
 
 	if f != float32(x) {
 		s.Set(csr.FFLAGS, fflagsNX)
+	}
+
+	return x, nil
+}
+
+//-----------------------------------------------------------------------------
+
+// addF32 adds two float32s (fadd.s)
+//  NV, OF, UF, NX flags
+func addF32(f1, f2 float32, rm uint, s *csr.State) (float32, error) {
+
+	// with dynamic rounding rm = FRM
+	if rm == frmDYN {
+		rm, _ = s.Rd(csr.FRM)
+	}
+
+	// Clear the FCSR flags
+	s.Clr(csr.FFLAGS, fflagsALL)
+
+	var x float32
+	switch rm {
+	case frmRNE:
+		x = f1 + f2
+	case frmRTZ:
+		x = f1 + f2
+	case frmRDN:
+	case frmRUP:
+	case frmRRM:
+	default:
+		return 0, errors.New("illegal")
+	}
+
+	return x, nil
+}
+
+//-----------------------------------------------------------------------------
+
+// mulF32 multiplies two float32s (fmul.s)
+//  NV, OF, UF, NX flags
+func mulF32(f1, f2 float32, rm uint, s *csr.State) (float32, error) {
+
+	// with dynamic rounding rm = FRM
+	if rm == frmDYN {
+		rm, _ = s.Rd(csr.FRM)
+	}
+
+	// Clear the FCSR flags
+	s.Clr(csr.FFLAGS, fflagsALL)
+
+	var x float32
+	switch rm {
+	case frmRNE:
+		x = f1 * f2
+	case frmRTZ:
+		x = f1 * f2
+	case frmRDN:
+	case frmRUP:
+	case frmRRM:
+	default:
+		return 0, errors.New("illegal")
 	}
 
 	return x, nil
