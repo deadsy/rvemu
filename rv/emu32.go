@@ -592,7 +592,7 @@ func emu32_FADD_S(m *RV32, ins uint) {
 	rs2, rs1, rm, rd := decodeR(ins)
 	f1 := math.Float32frombits(uint32(m.F[rs1]))
 	f2 := math.Float32frombits(uint32(m.F[rs2]))
-	x, err := addF32(f1, f2, rm, m.CSR)
+	x, err := fadd_s(f1, f2, rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -602,14 +602,23 @@ func emu32_FADD_S(m *RV32, ins uint) {
 }
 
 func emu32_FSUB_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rm, rd := decodeR(ins)
+	f1 := math.Float32frombits(uint32(m.F[rs1]))
+	f2 := math.Float32frombits(uint32(m.F[rs2]))
+	x, err := fsub_s(f1, f2, rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = uint64(math.Float32bits(x))
+	m.PC += 4
 }
 
 func emu32_FMUL_S(m *RV32, ins uint) {
 	rs2, rs1, rm, rd := decodeR(ins)
 	f1 := math.Float32frombits(uint32(m.F[rs1]))
 	f2 := math.Float32frombits(uint32(m.F[rs2]))
-	x, err := mulF32(f1, f2, rm, m.CSR)
+	x, err := fmul_s(f1, f2, rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -658,7 +667,7 @@ func emu32_FMAX_S(m *RV32, ins uint) {
 func emu32_FCVT_W_S(m *RV32, ins uint) {
 	_, rs1, rm, rd := decodeR(ins)
 	f := math.Float32frombits(uint32(m.F[rs1]))
-	x, err := convertF32toI32(f, rm, m.CSR)
+	x, err := fcvt_w_s(f, rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -670,7 +679,7 @@ func emu32_FCVT_W_S(m *RV32, ins uint) {
 func emu32_FCVT_WU_S(m *RV32, ins uint) {
 	_, rs1, rm, rd := decodeR(ins)
 	f := math.Float32frombits(uint32(m.F[rs1]))
-	x, err := convertF32toU32(f, rm, m.CSR)
+	x, err := fcvt_wu_s(f, rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -685,36 +694,27 @@ func emu32_FMV_X_W(m *RV32, ins uint) {
 	m.PC += 4
 }
 
-// TODO NV
 func emu32_FEQ_S(m *RV32, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	var result uint32
-	if uint32(m.F[rs1]) == uint32(m.F[rs2]) {
-		result = 1
-	}
-	m.wrX(rd, result)
+	f1 := math.Float32frombits(uint32(m.F[rs1]))
+	f2 := math.Float32frombits(uint32(m.F[rs2]))
+	m.wrX(rd, uint32(feq_s(f1, f2, m.CSR)))
 	m.PC += 4
 }
 
-// TODO NV
 func emu32_FLT_S(m *RV32, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	var result uint32
-	if uint32(m.F[rs1]) < uint32(m.F[rs2]) {
-		result = 1
-	}
-	m.wrX(rd, result)
+	f1 := math.Float32frombits(uint32(m.F[rs1]))
+	f2 := math.Float32frombits(uint32(m.F[rs2]))
+	m.wrX(rd, uint32(flt_s(f1, f2, m.CSR)))
 	m.PC += 4
 }
 
-// TODO NV
 func emu32_FLE_S(m *RV32, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	var result uint32
-	if uint32(m.F[rs1]) <= uint32(m.F[rs2]) {
-		result = 1
-	}
-	m.wrX(rd, result)
+	f1 := math.Float32frombits(uint32(m.F[rs1]))
+	f2 := math.Float32frombits(uint32(m.F[rs2]))
+	m.wrX(rd, uint32(fle_s(f1, f2, m.CSR)))
 	m.PC += 4
 }
 
@@ -722,19 +722,17 @@ func emu32_FCLASS_S(m *RV32, ins uint) {
 	m.ex.N = ExTodo
 }
 
-// TODO NX
 func emu32_FCVT_S_W(m *RV32, ins uint) {
 	_, rs1, _, rd := decodeR(ins)
-	f1 := float32(int32(m.X[rs1]))
-	m.F[rd] = uint64(math.Float32bits(f1))
+	f := fcvt_s_w(int32(m.X[rs1]), m.CSR)
+	m.F[rd] = uint64(math.Float32bits(f))
 	m.PC += 4
 }
 
-// TODO NX
 func emu32_FCVT_S_WU(m *RV32, ins uint) {
 	_, rs1, _, rd := decodeR(ins)
-	f1 := float32(m.X[rs1])
-	m.F[rd] = uint64(math.Float32bits(f1))
+	f := fcvt_s_wu(m.X[rs1], m.CSR)
+	m.F[rd] = uint64(math.Float32bits(f))
 	m.PC += 4
 }
 

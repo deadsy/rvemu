@@ -10,6 +10,7 @@ package rv
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/deadsy/riscv/csr"
@@ -381,7 +382,8 @@ func floatRegString(reg []uint64) string {
 		if reg[i] != 0 {
 			valStr = fmt.Sprintf("%016x", reg[i])
 		}
-		s[i] = fmt.Sprintf("%-4s %-4s %s", regStr, abiFName[i], valStr)
+		f32 := math.Float32frombits(uint32(reg[i]))
+		s[i] = fmt.Sprintf("%-4s %-4s %-16s %f", regStr, abiFName[i], valStr, f32)
 	}
 	return strings.Join(s, "\n")
 }
