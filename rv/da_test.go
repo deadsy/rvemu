@@ -145,6 +145,7 @@ var rv32fTest = []daTest{
 	{0, 0xa0101553, "flt.s a0,ft0,ft1"},
 	{0, 0xa0102553, "feq.s a0,ft0,ft1"},
 	{0, 0xc0001553, "fcvt.w.s a0,ft0,rtz"},
+	{0, 0xc000f0d3, "fcvt.w.s ra,ft1"},
 }
 
 var rv32dTest = []daTest{

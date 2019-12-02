@@ -355,14 +355,6 @@ func (e *Exception) Error() string {
 
 //-----------------------------------------------------------------------------
 
-const mask30to0 = (1 << 31) - 1
-const mask31 = (1 << 31)
-
-const u32Lower = uint64(0xffffffff)
-const u32Upper = uint64(u32Lower << 32)
-
-//-----------------------------------------------------------------------------
-
 func intRegString(reg []uint, pc, xlen uint) string {
 	fmtx := "%08x"
 	if xlen == 64 {

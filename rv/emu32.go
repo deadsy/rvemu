@@ -643,38 +643,11 @@ func emu32_FMAX_S(m *RV32, ins uint) {
 
 func emu32_FCVT_W_S(m *RV32, ins uint) {
 	_, rs1, rm, rd := decodeR(ins)
-	// get the float to convert
-	f1 := math.Float32frombits(uint32(m.F[rs1]))
-	// is this dynamic rounding mode?
-	if rm == frmDYN {
-		// get the rounding mode from FCSR
-		rm, _ = m.CSR.Rd(csr.FRM)
-	}
-	// Clear the float status flags
-	m.CSR.Clr(csr.FFLAGS, fflagsALL)
-	// convert the float to an int32
-	var x int32
-	if f1 < float32(math.MinInt32) {
-		m.CSR.Set(csr.FFLAGS, fflagsNV)
-		x = math.MinInt32
-	} else if f1 > float32(math.MaxInt32) {
-		m.CSR.Set(csr.FFLAGS, fflagsNV)
-		x = math.MaxInt32
-	} else {
-		switch rm {
-		case frmRNE:
-		case frmRTZ:
-			x = int32(f1)
-		case frmRDN:
-		case frmRUP:
-		case frmRRM:
-		default:
-			m.ex.N = ExIllegal
-			return
-		}
-		if f1 != float32(x) {
-			m.CSR.Set(csr.FFLAGS, fflagsNX)
-		}
+	f := math.Float32frombits(uint32(m.F[rs1]))
+	x, err := convertF32toI32(f, rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
 	}
 	m.wrX(rd, uint32(x))
 	m.PC += 4
@@ -682,37 +655,11 @@ func emu32_FCVT_W_S(m *RV32, ins uint) {
 
 func emu32_FCVT_WU_S(m *RV32, ins uint) {
 	_, rs1, rm, rd := decodeR(ins)
-	// get the float to convert
-	f1 := math.Float32frombits(uint32(m.F[rs1]))
-	// is this dynamic rounding mode?
-	if rm == frmDYN {
-		// get the rounding mode from FCSR
-		rm, _ = m.CSR.Rd(csr.FRM)
-	}
-	// Clear the float status flags
-	m.CSR.Clr(csr.FFLAGS, fflagsALL)
-	// convert the float to an int32
-	var x uint32
-	if f1 <= -1.0 {
-		m.CSR.Set(csr.FFLAGS, fflagsNV)
-	} else if f1 > float32(math.MaxUint32) {
-		m.CSR.Set(csr.FFLAGS, fflagsNV)
-		x = math.MaxUint32
-	} else {
-		switch rm {
-		case frmRNE:
-		case frmRTZ:
-			x = uint32(f1)
-		case frmRDN:
-		case frmRUP:
-		case frmRRM:
-		default:
-			m.ex.N = ExIllegal
-			return
-		}
-		if f1 != float32(x) {
-			m.CSR.Set(csr.FFLAGS, fflagsNX)
-		}
+	f := math.Float32frombits(uint32(m.F[rs1]))
+	x, err := convertF32toU32(f, rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
 	}
 	m.wrX(rd, x)
 	m.PC += 4
@@ -774,7 +721,7 @@ func emu32_FCVT_S_WU(m *RV32, ins uint) {
 
 func emu32_FMV_W_X(m *RV32, ins uint) {
 	_, rs1, _, rd := decodeR(ins)
-	m.F[rd] = u32Upper | uint64(m.X[rs1])
+	m.F[rd] = uint64(m.X[rs1])
 	m.PC += 4
 }
 

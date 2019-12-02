@@ -68,31 +68,6 @@ const (
 	RegT6          // 31:
 )
 
-var rmName = [8]string{
-	"rne", "rtz", "rdn", "rup", "rrm", "rm5", "rm6", "dyn",
-}
-
-// floating point rounding mode numbers.
-const (
-	frmRNE = 0 // Round to Nearest, ties to Even
-	frmRTZ = 1 // Round towards Zero
-	frmRDN = 2 // Round Down (towards -inf)
-	frmRUP = 3 // Round Up (towards +inf)
-	frmRRM = 4 // Round to Nearest, ties to Max Magnitude
-	frmDYN = 7 // Use the value in the FRM csr
-)
-
-// floating point flag bits.
-const (
-	fflagsNX = (1 << iota) // Inexact
-	fflagsUF               // Underflow
-	fflagsOF               // Overflow
-	fflagsDZ               // Divide by Zero
-	fflagsNV               // Invalid Operation
-)
-
-const fflagsALL = fflagsNX | fflagsUF | fflagsOF | fflagsDZ | fflagsNV
-
 //-----------------------------------------------------------------------------
 // default decode
 
@@ -267,6 +242,9 @@ func daTypeRf(name string, pc uint, ins uint) string {
 
 func daTypeRg(name string, pc uint, ins uint) string {
 	_, rs1, rm, rd := decodeR(ins)
+	if rm == frmDYN {
+		return fmt.Sprintf("%s %s,%s", name, abiXName[rd], abiFName[rs1])
+	}
 	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiFName[rs1], rmName[rm])
 }
 
