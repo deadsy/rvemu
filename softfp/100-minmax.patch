@@ -1,0 +1,24 @@
+--- ./softfp_template.h	2019-12-03 07:22:22.735772011 -0800
++++ ./softfp_template.h	2019-12-03 07:23:50.122624875 -0800
+@@ -775,8 +775,8 @@
+     if (isnan_sf(a) || isnan_sf(b)) {
+         if (issignan_sf(a) || issignan_sf(b)) {
+             *pfflags |= FFLAG_INVALID_OP;
+-            return F_QNAN;
+-        } else if (isnan_sf(a)) {
++        }
++        if (isnan_sf(a)) {
+             if (isnan_sf(b)) 
+                 return F_QNAN;
+             else
+@@ -808,8 +808,8 @@
+     if (isnan_sf(a) || isnan_sf(b)) {
+         if (issignan_sf(a) || issignan_sf(b)) {
+             *pfflags |= FFLAG_INVALID_OP;
+-            return F_QNAN;
+-        } else if (isnan_sf(a)) {
++        }
++        if (isnan_sf(a)) {
+             if (isnan_sf(b)) 
+                 return F_QNAN;
+             else

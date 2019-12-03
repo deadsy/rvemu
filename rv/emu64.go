@@ -1499,7 +1499,6 @@ type RV64 struct {
 func NewRV64(isa *ISA, mem *mem.Memory, ecall Ecall) *RV64 {
 	m := RV64{
 		Mem:   mem,
-		CSR:   csr.NewState(64),
 		isa:   isa,
 		ecall: ecall,
 	}
@@ -1571,6 +1570,7 @@ func (m *RV64) Disassemble(adr uint) *Disassembly {
 func (m *RV64) Reset() {
 	m.PC = uint64(m.Mem.Entry)
 	m.X[RegSp] = uint64(uint(1<<32) - 16)
+	m.CSR = csr.NewState(64)
 	m.insCount = 0
 	m.lastPC = 0
 	m.ex = Exception{alen: 64}

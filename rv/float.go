@@ -208,6 +208,24 @@ func fdiv_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 
 //-----------------------------------------------------------------------------
 
+// fmin_s returns the minimum of two float32s
+func fmin_s(a, b uint32, s *csr.State) uint32 {
+	var flags C.uint32_t
+	x := uint32(C.min_sf32(C.sfloat32(a), C.sfloat32(b), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x
+}
+
+// fmax_s returns the maximum of two float32s
+func fmax_s(a, b uint32, s *csr.State) uint32 {
+	var flags C.uint32_t
+	x := uint32(C.max_sf32(C.sfloat32(a), C.sfloat32(b), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x
+}
+
+//-----------------------------------------------------------------------------
+
 // fclass_s returns the class of a float32
 func fclass_s(a uint32) uint32 {
 	return uint32(C.fclass_sf32(C.sfloat32(a)))

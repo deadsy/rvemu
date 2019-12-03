@@ -712,11 +712,19 @@ func emu32_FSGNJX_S(m *RV32, ins uint) {
 }
 
 func emu32_FMIN_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	f1 := uint32(m.F[rs1])
+	f2 := uint32(m.F[rs2])
+	m.F[rd] = uint64(fmin_s(f1, f2, m.CSR))
+	m.PC += 4
 }
 
 func emu32_FMAX_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	f1 := uint32(m.F[rs1])
+	f2 := uint32(m.F[rs2])
+	m.F[rd] = uint64(fmax_s(f1, f2, m.CSR))
+	m.PC += 4
 }
 
 func emu32_FCVT_W_S(m *RV32, ins uint) {
@@ -1228,7 +1236,6 @@ type RV32 struct {
 func NewRV32(isa *ISA, mem *mem.Memory, ecall Ecall) *RV32 {
 	m := RV32{
 		Mem:   mem,
-		CSR:   csr.NewState(32),
 		isa:   isa,
 		ecall: ecall,
 	}
@@ -1300,6 +1307,7 @@ func (m *RV32) Disassemble(adr uint) *Disassembly {
 func (m *RV32) Reset() {
 	m.PC = uint32(m.Mem.Entry)
 	m.X[RegSp] = uint32(uint(1<<32) - 16)
+	m.CSR = csr.NewState(32)
 	m.insCount = 0
 	m.lastPC = 0
 	m.ex = Exception{alen: 32}
@@ -1307,7 +1315,6 @@ func (m *RV32) Reset() {
 
 // Exit sets a status code and exits the emulation
 func (m *RV32) Exit(status uint32) {
-	m.X[RegA0] = status
 	m.ex.N = ExExit
 }
 

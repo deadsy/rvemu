@@ -9,6 +9,14 @@ DIR = softfp-$(VER)
 TGZ = $(DIR).tar.gz  
 LIB = libsoftfp.a
 
+PATCHFILES = $(sort $(wildcard *.patch ))
+
+PATCH = \
+	for f in $(PATCHFILES); do\
+	    echo -n $$f": "; \
+	    patch -d $(DIR) -p0 -b -z .original < $$f; \
+	done
+
 SRC = $(DIR)/softfloat.c \
 			$(DIR)/softfp.c \
 
@@ -36,6 +44,7 @@ libsoftfp.a: $(OBJ)
 .PHONY: untar
 untar:
 	tar zxf $(TGZ)
+	$(PATCH)
 
 .PHONY: clean
 clean:

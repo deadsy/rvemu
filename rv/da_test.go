@@ -154,6 +154,8 @@ var rv32fTest = []daTest{
 	{0, 0x101071c3, "fmadd.s ft3,ft0,ft1,ft2"},
 	{0, 0x101071cf, "fnmadd.s ft3,ft0,ft1,ft2"},
 	{0, 0x101071c7, "fmsub.s ft3,ft0,ft1,ft2"},
+	{0, 0x281001d3, "fmin.s ft3,ft0,ft1"},
+	{0, 0x281011d3, "fmax.s ft3,ft0,ft1"},
 }
 
 var rv32dTest = []daTest{
