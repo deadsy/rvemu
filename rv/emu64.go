@@ -544,19 +544,59 @@ func emu64_FSW(m *RV64, ins uint) {
 }
 
 func emu64_FMADD_S(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs3, rs2, rs1, rm, rd := decodeR4(ins)
+	f1 := uint32(m.F[rs1])
+	f2 := uint32(m.F[rs2])
+	f3 := uint32(m.F[rs3])
+	x, err := fmadd_s(f1, f2, f3, rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = uint64(x)
+	m.PC += 4
 }
 
 func emu64_FMSUB_S(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs3, rs2, rs1, rm, rd := decodeR4(ins)
+	f1 := uint32(m.F[rs1])
+	f2 := uint32(m.F[rs2])
+	f3 := uint32(m.F[rs3])
+	x, err := fmadd_s(f1, f2, neg32(f3), rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = uint64(x)
+	m.PC += 4
 }
 
 func emu64_FNMSUB_S(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs3, rs2, rs1, rm, rd := decodeR4(ins)
+	f1 := uint32(m.F[rs1])
+	f2 := uint32(m.F[rs2])
+	f3 := uint32(m.F[rs3])
+	x, err := fmadd_s(neg32(f1), f2, f3, rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = uint64(x)
+	m.PC += 4
 }
 
 func emu64_FNMADD_S(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs3, rs2, rs1, rm, rd := decodeR4(ins)
+	f1 := uint32(m.F[rs1])
+	f2 := uint32(m.F[rs2])
+	f3 := uint32(m.F[rs3])
+	x, err := fmadd_s(neg32(f1), f2, neg32(f3), rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = uint64(x)
+	m.PC += 4
 }
 
 func emu64_FADD_S(m *RV64, ins uint) {
@@ -599,30 +639,47 @@ func emu64_FMUL_S(m *RV64, ins uint) {
 }
 
 func emu64_FDIV_S(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rm, rd := decodeR(ins)
+	f1 := uint32(m.F[rs1])
+	f2 := uint32(m.F[rs2])
+	x, err := fdiv_s(f1, f2, rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = uint64(x)
+	m.PC += 4
 }
 
 func emu64_FSQRT_S(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, rm, rd := decodeR(ins)
+	f1 := uint32(m.F[rs1])
+	x, err := fsqrt_s(f1, rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = uint64(x)
+	m.PC += 4
 }
 
 func emu64_FSGNJ_S(m *RV64, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	sign := m.F[rs2] & mask31
+	sign := m.F[rs2] & f32SignMask
 	m.F[rd] = sign | (m.F[rs1] & mask30to0)
 	m.PC += 4
 }
 
 func emu64_FSGNJN_S(m *RV64, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	sign := ^m.F[rs2] & mask31
+	sign := ^m.F[rs2] & f32SignMask
 	m.F[rd] = sign | (m.F[rs1] & mask30to0)
 	m.PC += 4
 }
 
 func emu64_FSGNJX_S(m *RV64, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	sign := (m.F[rs1] ^ m.F[rs2]) & mask31
+	sign := (m.F[rs1] ^ m.F[rs2]) & f32SignMask
 	m.F[rd] = sign | (m.F[rs1] & mask30to0)
 	m.PC += 4
 }
@@ -690,7 +747,10 @@ func emu64_FLE_S(m *RV64, ins uint) {
 }
 
 func emu64_FCLASS_S(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, _, rd := decodeR(ins)
+	f1 := uint32(m.F[rs1])
+	m.wrX(rd, uint64(fclass_s(f1)))
+	m.PC += 4
 }
 
 func emu64_FCVT_S_W(m *RV64, ins uint) {

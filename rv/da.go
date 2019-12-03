@@ -245,6 +245,11 @@ func daTypeRg(name string, pc uint, ins uint) string {
 	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiFName[rs1], rmName[rm])
 }
 
+func daTypeRh(name string, pc uint, ins uint) string {
+	_, rs1, _, rd := decodeR(ins)
+	return fmt.Sprintf("%s %s,%s", name, abiFName[rd], abiFName[rs1])
+}
+
 //-----------------------------------------------------------------------------
 // Type R4 Decodes
 
