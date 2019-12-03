@@ -1,6 +1,5 @@
 
-DIRS = cmd \
-       test \
+DIRS = softfp cmd test
 
 all:
 	for dir in $(DIRS); do \
