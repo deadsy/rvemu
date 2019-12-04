@@ -173,6 +173,11 @@ var rv32dTest = []daTest{
 	{0, 0xa2101553, "flt.d a0,ft0,ft1"},
 	{0, 0x1a1071d3, "fdiv.d ft3,ft0,ft1"},
 	{0, 0x5a0071d3, "fsqrt.d ft3,ft0"},
+	{0, 0xd2058053, "fcvt.d.w ft0,a1"},
+	{0, 0xd2158053, "fcvt.d.wu ft0,a1"},
+	{0, 0xd2158053, "fcvt.d.wu ft0,a1"},
+	{0, 0x40117153, "fcvt.s.d ft2,ft2"},
+	{0, 0x42010153, "fcvt.d.s ft2,ft2"},
 }
 
 var rv32cTest = []daTest{

@@ -173,32 +173,32 @@ var ISArv32d = ISAModule{
 	name: "rv32d",
 	ilen: 32,
 	defn: []insDefn{
-		{"imm[11:0] rs1 011 rd 0000111 FLD", daTypeIg, emu32_FLD, emu64_FLD},                    // I
-		{"imm[11:5] rs2 rs1 011 imm[4:0] 0100111 FSD", daTypeSb, emu32_FSD, emu64_FSD},          // S
-		{"rs3 01 rs2 rs1 rm rd 1000011 FMADD.D", daTypeR4a, emu32_FMADD_D, emu64_FMADD_D},       // R4
-		{"rs3 01 rs2 rs1 rm rd 1000111 FMSUB.D", daTypeR4a, emu32_FMSUB_D, emu64_FMSUB_D},       // R4
-		{"rs3 01 rs2 rs1 rm rd 1001011 FNMSUB.D", daTypeR4a, emu32_FNMSUB_D, emu64_FNMSUB_D},    // R4
-		{"rs3 01 rs2 rs1 rm rd 1001111 FNMADD.D", daTypeR4a, emu32_FNMADD_D, emu64_FNMADD_D},    // R4
-		{"0000001 rs2 rs1 rm rd 1010011 FADD.D", daTypeRc, emu32_FADD_D, emu64_FADD_D},          // R
-		{"0000101 rs2 rs1 rm rd 1010011 FSUB.D", daTypeRc, emu32_FSUB_D, emu64_FSUB_D},          // R
-		{"0001001 rs2 rs1 rm rd 1010011 FMUL.D", daTypeRc, emu32_FMUL_D, emu64_FMUL_D},          // R
-		{"0001101 rs2 rs1 rm rd 1010011 FDIV.D", daTypeRc, emu32_FDIV_D, emu64_FDIV_D},          // R
-		{"0101101 00000 rs1 rm rd 1010011 FSQRT.D", daTypeRh, emu32_FSQRT_D, emu64_FSQRT_D},     // R
-		{"0010001 rs2 rs1 000 rd 1010011 FSGNJ.D", daNone, emu32_FSGNJ_D, emu64_FSGNJ_D},        // R
-		{"0010001 rs2 rs1 001 rd 1010011 FSGNJN.D", daNone, emu32_FSGNJN_D, emu64_FSGNJN_D},     // R
-		{"0010001 rs2 rs1 010 rd 1010011 FSGNJX.D", daNone, emu32_FSGNJX_D, emu64_FSGNJX_D},     // R
-		{"0010101 rs2 rs1 000 rd 1010011 FMIN.D", daNone, emu32_FMIN_D, emu64_FMIN_D},           // R
-		{"0010101 rs2 rs1 001 rd 1010011 FMAX.D", daNone, emu32_FMAX_D, emu64_FMAX_D},           // R
-		{"0100000 00001 rs1 rm rd 1010011 FCVT.S.D", daNone, emu32_FCVT_S_D, emu64_FCVT_S_D},    // R
-		{"0100001 00000 rs1 rm rd 1010011 FCVT.D.S", daNone, emu32_FCVT_D_S, emu64_FCVT_D_S},    // R
-		{"1010001 rs2 rs1 010 rd 1010011 FEQ.D", daTypeRf, emu32_FEQ_D, emu64_FEQ_D},            // R
-		{"1010001 rs2 rs1 001 rd 1010011 FLT.D", daTypeRf, emu32_FLT_D, emu64_FLT_D},            // R
-		{"1010001 rs2 rs1 000 rd 1010011 FLE.D", daTypeRf, emu32_FLE_D, emu64_FLE_D},            // R
-		{"1110001 00000 rs1 001 rd 1010011 FCLASS.D", daTypeRd, emu32_FCLASS_D, emu64_FCLASS_D}, // R
-		{"1100001 00000 rs1 rm rd 1010011 FCVT.W.D", daNone, emu32_FCVT_W_D, emu64_FCVT_W_D},    // R
-		{"1100001 00001 rs1 rm rd 1010011 FCVT.WU.D", daNone, emu32_FCVT_WU_D, emu64_FCVT_WU_D}, // R
-		{"1101001 00000 rs1 rm rd 1010011 FCVT.D.W", daNone, emu32_FCVT_D_W, emu64_FCVT_D_W},    // R
-		{"1101001 00001 rs1 rm rd 1010011 FCVT.D.WU", daNone, emu32_FCVT_D_WU, emu64_FCVT_D_WU}, // R
+		{"imm[11:0] rs1 011 rd 0000111 FLD", daTypeIg, emu32_FLD, emu64_FLD},                      // I
+		{"imm[11:5] rs2 rs1 011 imm[4:0] 0100111 FSD", daTypeSb, emu32_FSD, emu64_FSD},            // S
+		{"rs3 01 rs2 rs1 rm rd 1000011 FMADD.D", daTypeR4a, emu32_FMADD_D, emu64_FMADD_D},         // R4
+		{"rs3 01 rs2 rs1 rm rd 1000111 FMSUB.D", daTypeR4a, emu32_FMSUB_D, emu64_FMSUB_D},         // R4
+		{"rs3 01 rs2 rs1 rm rd 1001011 FNMSUB.D", daTypeR4a, emu32_FNMSUB_D, emu64_FNMSUB_D},      // R4
+		{"rs3 01 rs2 rs1 rm rd 1001111 FNMADD.D", daTypeR4a, emu32_FNMADD_D, emu64_FNMADD_D},      // R4
+		{"0000001 rs2 rs1 rm rd 1010011 FADD.D", daTypeRc, emu32_FADD_D, emu64_FADD_D},            // R
+		{"0000101 rs2 rs1 rm rd 1010011 FSUB.D", daTypeRc, emu32_FSUB_D, emu64_FSUB_D},            // R
+		{"0001001 rs2 rs1 rm rd 1010011 FMUL.D", daTypeRc, emu32_FMUL_D, emu64_FMUL_D},            // R
+		{"0001101 rs2 rs1 rm rd 1010011 FDIV.D", daTypeRc, emu32_FDIV_D, emu64_FDIV_D},            // R
+		{"0101101 00000 rs1 rm rd 1010011 FSQRT.D", daTypeRh, emu32_FSQRT_D, emu64_FSQRT_D},       // R
+		{"0010001 rs2 rs1 000 rd 1010011 FSGNJ.D", daNone, emu32_FSGNJ_D, emu64_FSGNJ_D},          // R
+		{"0010001 rs2 rs1 001 rd 1010011 FSGNJN.D", daNone, emu32_FSGNJN_D, emu64_FSGNJN_D},       // R
+		{"0010001 rs2 rs1 010 rd 1010011 FSGNJX.D", daNone, emu32_FSGNJX_D, emu64_FSGNJX_D},       // R
+		{"0010101 rs2 rs1 000 rd 1010011 FMIN.D", daNone, emu32_FMIN_D, emu64_FMIN_D},             // R
+		{"0010101 rs2 rs1 001 rd 1010011 FMAX.D", daNone, emu32_FMAX_D, emu64_FMAX_D},             // R
+		{"0100000 00001 rs1 rm rd 1010011 FCVT.S.D", daTypeRh, emu32_FCVT_S_D, emu64_FCVT_S_D},    // R
+		{"0100001 00000 rs1 rm rd 1010011 FCVT.D.S", daTypeRh, emu32_FCVT_D_S, emu64_FCVT_D_S},    // R
+		{"1010001 rs2 rs1 010 rd 1010011 FEQ.D", daTypeRf, emu32_FEQ_D, emu64_FEQ_D},              // R
+		{"1010001 rs2 rs1 001 rd 1010011 FLT.D", daTypeRf, emu32_FLT_D, emu64_FLT_D},              // R
+		{"1010001 rs2 rs1 000 rd 1010011 FLE.D", daTypeRf, emu32_FLE_D, emu64_FLE_D},              // R
+		{"1110001 00000 rs1 001 rd 1010011 FCLASS.D", daTypeRd, emu32_FCLASS_D, emu64_FCLASS_D},   // R
+		{"1100001 00000 rs1 rm rd 1010011 FCVT.W.D", daTypeRe, emu32_FCVT_W_D, emu64_FCVT_W_D},    // R
+		{"1100001 00001 rs1 rm rd 1010011 FCVT.WU.D", daTypeRe, emu32_FCVT_WU_D, emu64_FCVT_WU_D}, // R
+		{"1101001 00000 rs1 rm rd 1010011 FCVT.D.W", daTypeRe, emu32_FCVT_D_W, emu64_FCVT_D_W},    // R
+		{"1101001 00001 rs1 rm rd 1010011 FCVT.D.WU", daTypeRe, emu32_FCVT_D_WU, emu64_FCVT_D_WU}, // R
 	},
 }
 

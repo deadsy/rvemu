@@ -142,6 +142,18 @@ func fcvt_s_w(a int32, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
+// fcvt_d_w converts an int32 to a 64-bit float
+func fcvt_d_w(a int32, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.cvt_i32_sf64(C.int32_t(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x, nil
+}
+
 // fcvt_s_wu converts a uint32 to a 32-bit float
 func fcvt_s_wu(a uint32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
@@ -150,6 +162,18 @@ func fcvt_s_wu(a uint32, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.cvt_u32_sf32(C.uint32_t(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x, nil
+}
+
+// fcvt_d_wu converts a uint32 to a 64-bit float
+func fcvt_d_wu(a uint32, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.cvt_u32_sf64(C.uint32_t(a), C.RoundingModeEnum(rm), &flags))
 	s.Wr(csr.FFLAGS, uint(flags))
 	return x, nil
 }
@@ -176,6 +200,26 @@ func fcvt_wu_s(a uint32, rm uint, s *csr.State) (uint32, error) {
 	x := uint32(C.cvt_sf32_u32(C.sfloat32(a), C.RoundingModeEnum(rm), &flags))
 	s.Wr(csr.FFLAGS, uint(flags))
 	return x, nil
+}
+
+// fcvt_s_d converts a 64-bit float to a 32-bit float
+func fcvt_s_d(a uint64, rm uint, s *csr.State) (uint32, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint32(C.cvt_sf64_sf32(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x, nil
+}
+
+// fcvt_d_s converts a 32-bit float to a 64-bit float
+func fcvt_d_s(a uint32, s *csr.State) uint64 {
+	var flags C.uint32_t
+	x := uint64(C.cvt_sf32_sf64(C.sfloat32(a), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x
 }
 
 //-----------------------------------------------------------------------------

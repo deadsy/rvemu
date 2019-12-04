@@ -898,11 +898,20 @@ func emu32_FMAX_D(m *RV32, ins uint) {
 }
 
 func emu32_FCVT_S_D(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fcvt_s_d(m.F[rs1], rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = uint64(x)
+	m.PC += 4
 }
 
 func emu32_FCVT_D_S(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, _, rd := decodeR(ins)
+	m.F[rd] = fcvt_d_s(uint32(m.F[rs1]), m.CSR)
+	m.PC += 4
 }
 
 func emu32_FEQ_D(m *RV32, ins uint) {
@@ -938,11 +947,25 @@ func emu32_FCVT_WU_D(m *RV32, ins uint) {
 }
 
 func emu32_FCVT_D_W(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fcvt_d_w(int32(m.X[rs1]), rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = x
+	m.PC += 4
 }
 
 func emu32_FCVT_D_WU(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fcvt_d_wu(m.X[rs1], rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = x
+	m.PC += 4
 }
 
 //-----------------------------------------------------------------------------
