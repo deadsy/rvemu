@@ -162,6 +162,17 @@ var rv32dTest = []daTest{
 	{0, 0x0005b787, "fld fa5,0(a1)"},
 	{0, 0x72a7f7c3, "fmadd.d fa5,fa5,fa0,fa4"},
 	{0, 0xfef63c27, "fsd fa5,-8(a2)"},
+	{0, 0x00853087, "fld ft1,8(a0)"},
+	{0, 0x121071d3, "fmul.d ft3,ft0,ft1"},
+	{0, 0x0a1071d3, "fsub.d ft3,ft0,ft1"},
+	{0, 0x021071d3, "fadd.d ft3,ft0,ft1"},
+	{0, 0x00353027, "fsd ft3,0(a0)"},
+	{0, 0xe2051553, "fclass.d a0,fa0"},
+	{0, 0xa2102553, "feq.d a0,ft0,ft1"},
+	{0, 0xa2100553, "fle.d a0,ft0,ft1"},
+	{0, 0xa2101553, "flt.d a0,ft0,ft1"},
+	{0, 0x1a1071d3, "fdiv.d ft3,ft0,ft1"},
+	{0, 0x5a0071d3, "fsqrt.d ft3,ft0"},
 }
 
 var rv32cTest = []daTest{

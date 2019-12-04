@@ -104,9 +104,33 @@ func fle_s(a, b uint32, s *csr.State) uint {
 	return x
 }
 
+// feq_d returns a == b
+func feq_d(a, b uint64, s *csr.State) uint {
+	var flags C.uint32_t
+	x := uint(C.eq_quiet_sf64(C.sfloat64(a), C.sfloat64(b), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x
+}
+
+// flt_d return a < b
+func flt_d(a, b uint64, s *csr.State) uint {
+	var flags C.uint32_t
+	x := uint(C.lt_sf64(C.sfloat64(a), C.sfloat64(b), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x
+}
+
+// fle_d returns a <= b
+func fle_d(a, b uint64, s *csr.State) uint {
+	var flags C.uint32_t
+	x := uint(C.le_sf64(C.sfloat64(a), C.sfloat64(b), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x
+}
+
 //-----------------------------------------------------------------------------
 
-// fcvt_s_w converts int32 to float32
+// fcvt_s_w converts an int32 to a 32-bit float
 func fcvt_s_w(a int32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -118,7 +142,7 @@ func fcvt_s_w(a int32, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
-// fcvt_s_wu converts uint32 to float32
+// fcvt_s_wu converts a uint32 to a 32-bit float
 func fcvt_s_wu(a uint32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -130,7 +154,7 @@ func fcvt_s_wu(a uint32, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
-// fcvt_w_s converts float32 to int32
+// fcvt_w_s converts a 32-bit float to a int32
 func fcvt_w_s(a uint32, rm uint, s *csr.State) (int32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -142,7 +166,7 @@ func fcvt_w_s(a uint32, rm uint, s *csr.State) (int32, error) {
 	return x, nil
 }
 
-// fcvt_wu_s converts float32 to uint32
+// fcvt_wu_s converts a 32-bit float to a uint32
 func fcvt_wu_s(a uint32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -156,7 +180,7 @@ func fcvt_wu_s(a uint32, rm uint, s *csr.State) (uint32, error) {
 
 //-----------------------------------------------------------------------------
 
-// fadd_s adds two float32s
+// fadd_s adds two 32-bit floats
 func fadd_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -168,7 +192,19 @@ func fadd_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
-// fsub_s subtracts two float32s
+// fadd_d adds two 64-bit floats
+func fadd_d(a, b uint64, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.add_sf64(C.sfloat64(a), C.sfloat64(b), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x, nil
+}
+
+// fsub_s subtracts two 32-bit floats
 func fsub_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -180,9 +216,21 @@ func fsub_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
+// fsub_d subtracts two 64-bit floats
+func fsub_d(a, b uint64, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.sub_sf64(C.sfloat64(a), C.sfloat64(b), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x, nil
+}
+
 //-----------------------------------------------------------------------------
 
-// fmul_s multiplies two float32s
+// fmul_s multiplies two 32-bit floats
 func fmul_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -194,7 +242,19 @@ func fmul_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
-// fdiv_s divides two float32s
+// fmul_d multiplies two 64-bit floats
+func fmul_d(a, b uint64, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.mul_sf64(C.sfloat64(a), C.sfloat64(b), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x, nil
+}
+
+// fdiv_s divides two 32-bit floats
 func fdiv_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -206,9 +266,21 @@ func fdiv_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
+// fdiv_d divides two 64-bit floats
+func fdiv_d(a, b uint64, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.div_sf64(C.sfloat64(a), C.sfloat64(b), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x, nil
+}
+
 //-----------------------------------------------------------------------------
 
-// fmin_s returns the minimum of two float32s
+// fmin_s returns the minimum of two 32-bit floats
 func fmin_s(a, b uint32, s *csr.State) uint32 {
 	var flags C.uint32_t
 	x := uint32(C.min_sf32(C.sfloat32(a), C.sfloat32(b), &flags))
@@ -216,7 +288,7 @@ func fmin_s(a, b uint32, s *csr.State) uint32 {
 	return x
 }
 
-// fmax_s returns the maximum of two float32s
+// fmax_s returns the maximum of two 32-bit floats
 func fmax_s(a, b uint32, s *csr.State) uint32 {
 	var flags C.uint32_t
 	x := uint32(C.max_sf32(C.sfloat32(a), C.sfloat32(b), &flags))
@@ -226,14 +298,19 @@ func fmax_s(a, b uint32, s *csr.State) uint32 {
 
 //-----------------------------------------------------------------------------
 
-// fclass_s returns the class of a float32
+// fclass_s returns the class of a 32-bit float
 func fclass_s(a uint32) uint32 {
 	return uint32(C.fclass_sf32(C.sfloat32(a)))
 }
 
+// fclass_d returns the class of a 64-bit float
+func fclass_d(a uint64) uint32 {
+	return uint32(C.fclass_sf64(C.sfloat64(a)))
+}
+
 //-----------------------------------------------------------------------------
 
-// fsqrt_s returns the square root of a float32
+// fsqrt_s returns the square root of a 32-bit float
 func fsqrt_s(a uint32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -245,9 +322,21 @@ func fsqrt_s(a uint32, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
+// fsqrt_d returns the square root of a 64-bit float
+func fsqrt_d(a uint64, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.sqrt_sf64(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x, nil
+}
+
 //-----------------------------------------------------------------------------
 
-// fmadd_s returns the fused-multiply-add of float32s
+// fmadd_s returns the fused-multiply-add of 32-bit floats
 func fmadd_s(a, b, c uint32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {

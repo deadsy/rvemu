@@ -567,15 +567,16 @@ func emu32_FLW(m *RV32, ins uint) {
 }
 
 func emu32_FSW(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	imm, rs2, rs1 := decodeS(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	ex := m.Mem.Wr32(adr, uint32(m.F[rs2]))
+	m.checkMemory(adr, ex)
+	m.PC += 4
 }
 
 func emu32_FMADD_S(m *RV32, ins uint) {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	f3 := uint32(m.F[rs3])
-	x, err := fmadd_s(f1, f2, f3, rm, m.CSR)
+	x, err := fmadd_s(uint32(m.F[rs1]), uint32(m.F[rs2]), uint32(m.F[rs3]), rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -586,10 +587,7 @@ func emu32_FMADD_S(m *RV32, ins uint) {
 
 func emu32_FMSUB_S(m *RV32, ins uint) {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	f3 := uint32(m.F[rs3])
-	x, err := fmadd_s(f1, f2, neg32(f3), rm, m.CSR)
+	x, err := fmadd_s(uint32(m.F[rs1]), uint32(m.F[rs2]), neg32(uint32(m.F[rs3])), rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -600,10 +598,7 @@ func emu32_FMSUB_S(m *RV32, ins uint) {
 
 func emu32_FNMSUB_S(m *RV32, ins uint) {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	f3 := uint32(m.F[rs3])
-	x, err := fmadd_s(neg32(f1), f2, f3, rm, m.CSR)
+	x, err := fmadd_s(neg32(uint32(m.F[rs1])), uint32(m.F[rs2]), uint32(m.F[rs3]), rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -614,10 +609,7 @@ func emu32_FNMSUB_S(m *RV32, ins uint) {
 
 func emu32_FNMADD_S(m *RV32, ins uint) {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	f3 := uint32(m.F[rs3])
-	x, err := fmadd_s(neg32(f1), f2, neg32(f3), rm, m.CSR)
+	x, err := fmadd_s(neg32(uint32(m.F[rs1])), uint32(m.F[rs2]), neg32(uint32(m.F[rs3])), rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -628,9 +620,7 @@ func emu32_FNMADD_S(m *RV32, ins uint) {
 
 func emu32_FADD_S(m *RV32, ins uint) {
 	rs2, rs1, rm, rd := decodeR(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	x, err := fadd_s(f1, f2, rm, m.CSR)
+	x, err := fadd_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -641,9 +631,7 @@ func emu32_FADD_S(m *RV32, ins uint) {
 
 func emu32_FSUB_S(m *RV32, ins uint) {
 	rs2, rs1, rm, rd := decodeR(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	x, err := fsub_s(f1, f2, rm, m.CSR)
+	x, err := fsub_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -654,9 +642,7 @@ func emu32_FSUB_S(m *RV32, ins uint) {
 
 func emu32_FMUL_S(m *RV32, ins uint) {
 	rs2, rs1, rm, rd := decodeR(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	x, err := fmul_s(f1, f2, rm, m.CSR)
+	x, err := fmul_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -667,9 +653,7 @@ func emu32_FMUL_S(m *RV32, ins uint) {
 
 func emu32_FDIV_S(m *RV32, ins uint) {
 	rs2, rs1, rm, rd := decodeR(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	x, err := fdiv_s(f1, f2, rm, m.CSR)
+	x, err := fdiv_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -680,8 +664,7 @@ func emu32_FDIV_S(m *RV32, ins uint) {
 
 func emu32_FSQRT_S(m *RV32, ins uint) {
 	_, rs1, rm, rd := decodeR(ins)
-	f1 := uint32(m.F[rs1])
-	x, err := fsqrt_s(f1, rm, m.CSR)
+	x, err := fsqrt_s(uint32(m.F[rs1]), rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -713,24 +696,19 @@ func emu32_FSGNJX_S(m *RV32, ins uint) {
 
 func emu32_FMIN_S(m *RV32, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	m.F[rd] = uint64(fmin_s(f1, f2, m.CSR))
+	m.F[rd] = uint64(fmin_s(uint32(m.F[rs1]), uint32(m.F[rs2]), m.CSR))
 	m.PC += 4
 }
 
 func emu32_FMAX_S(m *RV32, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	m.F[rd] = uint64(fmax_s(f1, f2, m.CSR))
+	m.F[rd] = uint64(fmax_s(uint32(m.F[rs1]), uint32(m.F[rs2]), m.CSR))
 	m.PC += 4
 }
 
 func emu32_FCVT_W_S(m *RV32, ins uint) {
 	_, rs1, rm, rd := decodeR(ins)
-	f := uint32(m.F[rs1])
-	x, err := fcvt_w_s(f, rm, m.CSR)
+	x, err := fcvt_w_s(uint32(m.F[rs1]), rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -741,8 +719,7 @@ func emu32_FCVT_W_S(m *RV32, ins uint) {
 
 func emu32_FCVT_WU_S(m *RV32, ins uint) {
 	_, rs1, rm, rd := decodeR(ins)
-	f := uint32(m.F[rs1])
-	x, err := fcvt_wu_s(f, rm, m.CSR)
+	x, err := fcvt_wu_s(uint32(m.F[rs1]), rm, m.CSR)
 	if err != nil {
 		m.ex.N = ExIllegal
 		return
@@ -759,32 +736,25 @@ func emu32_FMV_X_W(m *RV32, ins uint) {
 
 func emu32_FEQ_S(m *RV32, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	m.wrX(rd, uint32(feq_s(f1, f2, m.CSR)))
+	m.wrX(rd, uint32(feq_s(uint32(m.F[rs1]), uint32(m.F[rs2]), m.CSR)))
 	m.PC += 4
 }
 
 func emu32_FLT_S(m *RV32, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	m.wrX(rd, uint32(flt_s(f1, f2, m.CSR)))
+	m.wrX(rd, uint32(flt_s(uint32(m.F[rs1]), uint32(m.F[rs2]), m.CSR)))
 	m.PC += 4
 }
 
 func emu32_FLE_S(m *RV32, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	f1 := uint32(m.F[rs1])
-	f2 := uint32(m.F[rs2])
-	m.wrX(rd, uint32(fle_s(f1, f2, m.CSR)))
+	m.wrX(rd, uint32(fle_s(uint32(m.F[rs1]), uint32(m.F[rs2]), m.CSR)))
 	m.PC += 4
 }
 
 func emu32_FCLASS_S(m *RV32, ins uint) {
 	_, rs1, _, rd := decodeR(ins)
-	f1 := uint32(m.F[rs1])
-	m.wrX(rd, fclass_s(f1))
+	m.wrX(rd, fclass_s(uint32(m.F[rs1])))
 	m.PC += 4
 }
 
@@ -820,11 +790,20 @@ func emu32_FMV_W_X(m *RV32, ins uint) {
 // rv32d
 
 func emu32_FLD(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	imm, rs1, rd := decodeIa(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	val, ex := m.Mem.Rd64(adr)
+	m.checkMemory(adr, ex)
+	m.F[rd] = val
+	m.PC += 4
 }
 
 func emu32_FSD(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	imm, rs2, rs1 := decodeS(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	ex := m.Mem.Wr64(adr, m.F[rs2])
+	m.checkMemory(adr, ex)
+	m.PC += 4
 }
 
 func emu32_FMADD_D(m *RV32, ins uint) {
@@ -844,23 +823,58 @@ func emu32_FNMADD_D(m *RV32, ins uint) {
 }
 
 func emu32_FADD_D(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rm, rd := decodeR(ins)
+	x, err := fadd_d(m.F[rs1], m.F[rs2], rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = x
+	m.PC += 4
 }
 
 func emu32_FSUB_D(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rm, rd := decodeR(ins)
+	x, err := fsub_d(m.F[rs1], m.F[rs2], rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = x
+	m.PC += 4
 }
 
 func emu32_FMUL_D(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rm, rd := decodeR(ins)
+	x, err := fmul_d(m.F[rs1], m.F[rs2], rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = x
+	m.PC += 4
 }
 
 func emu32_FDIV_D(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, rm, rd := decodeR(ins)
+	x, err := fdiv_d(m.F[rs1], m.F[rs2], rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = x
+	m.PC += 4
 }
 
 func emu32_FSQRT_D(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fsqrt_d(m.F[rs1], rm, m.CSR)
+	if err != nil {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.F[rd] = x
+	m.PC += 4
 }
 
 func emu32_FSGNJ_D(m *RV32, ins uint) {
@@ -892,19 +906,27 @@ func emu32_FCVT_D_S(m *RV32, ins uint) {
 }
 
 func emu32_FEQ_D(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.wrX(rd, uint32(feq_d(m.F[rs1], m.F[rs2], m.CSR)))
+	m.PC += 4
 }
 
 func emu32_FLT_D(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.wrX(rd, uint32(flt_d(m.F[rs1], m.F[rs2], m.CSR)))
+	m.PC += 4
 }
 
 func emu32_FLE_D(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.wrX(rd, uint32(fle_d(m.F[rs1], m.F[rs2], m.CSR)))
+	m.PC += 4
 }
 
 func emu32_FCLASS_D(m *RV32, ins uint) {
-	m.ex.N = ExTodo
+	_, rs1, _, rd := decodeR(ins)
+	m.wrX(rd, fclass_d(m.F[rs1]))
+	m.PC += 4
 }
 
 func emu32_FCVT_W_D(m *RV32, ins uint) {

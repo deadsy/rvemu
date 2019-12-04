@@ -540,7 +540,11 @@ func emu64_FLW(m *RV64, ins uint) {
 }
 
 func emu64_FSW(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	imm, rs2, rs1 := decodeS(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	ex := m.Mem.Wr32(adr, uint32(m.F[rs2]))
+	m.checkMemory(adr, ex)
+	m.PC += 4
 }
 
 func emu64_FMADD_S(m *RV64, ins uint) {
@@ -785,7 +789,12 @@ func emu64_FMV_W_X(m *RV64, ins uint) {
 // rv32d
 
 func emu64_FLD(m *RV64, ins uint) {
-	m.ex.N = ExTodo
+	imm, rs1, rd := decodeIa(ins)
+	adr := uint(int(m.X[rs1]) + imm)
+	val, ex := m.Mem.Rd64(adr)
+	m.checkMemory(adr, ex)
+	m.F[rd] = val
+	m.PC += 4
 }
 
 func emu64_FSD(m *RV64, ins uint) {
