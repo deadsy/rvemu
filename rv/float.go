@@ -3,6 +3,9 @@
 
 RISC-V Floating Point Routines
 
+These is glue to the C-based softfp library that does all the real work.
+See: https://bellard.org/softfp/
+
 */
 //-----------------------------------------------------------------------------
 
@@ -51,7 +54,9 @@ const (
 
 //-----------------------------------------------------------------------------
 
+const upper32 = uint64(((1 << 32) - 1) << 32)
 const mask30to0 = (1 << 31) - 1
+const mask62to0 = (1 << 63) - 1
 const f32SignMask = 1 << 31
 const f64SignMask = 1 << 63
 
@@ -222,6 +227,30 @@ func fcvt_d_s(a uint32, s *csr.State) uint64 {
 	return x
 }
 
+// fcvt_w_d converts a 64-bit float to a int32
+func fcvt_w_d(a uint64, rm uint, s *csr.State) (int32, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := int32(C.cvt_sf64_i32(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x, nil
+}
+
+// fcvt_wu_d converts a 64-bit float to a uint32
+func fcvt_wu_d(a uint64, rm uint, s *csr.State) (uint32, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint32(C.cvt_sf64_u32(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x, nil
+}
+
 //-----------------------------------------------------------------------------
 
 // fadd_s adds two 32-bit floats
@@ -332,6 +361,14 @@ func fmin_s(a, b uint32, s *csr.State) uint32 {
 	return x
 }
 
+// fmin_d returns the minimum of two 64-bit floats
+func fmin_d(a, b uint64, s *csr.State) uint64 {
+	var flags C.uint32_t
+	x := uint64(C.min_sf64(C.sfloat64(a), C.sfloat64(b), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x
+}
+
 // fmax_s returns the maximum of two 32-bit floats
 func fmax_s(a, b uint32, s *csr.State) uint32 {
 	var flags C.uint32_t
@@ -340,16 +377,24 @@ func fmax_s(a, b uint32, s *csr.State) uint32 {
 	return x
 }
 
+// fmax_d returns the maximum of two 64-bit floats
+func fmax_d(a, b uint64, s *csr.State) uint64 {
+	var flags C.uint32_t
+	x := uint64(C.max_sf64(C.sfloat64(a), C.sfloat64(b), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x
+}
+
 //-----------------------------------------------------------------------------
 
 // fclass_s returns the class of a 32-bit float
-func fclass_s(a uint32) uint32 {
-	return uint32(C.fclass_sf32(C.sfloat32(a)))
+func fclass_s(a uint32) uint {
+	return uint(C.fclass_sf32(C.sfloat32(a)))
 }
 
 // fclass_d returns the class of a 64-bit float
-func fclass_d(a uint64) uint32 {
-	return uint32(C.fclass_sf64(C.sfloat64(a)))
+func fclass_d(a uint64) uint {
+	return uint(C.fclass_sf64(C.sfloat64(a)))
 }
 
 //-----------------------------------------------------------------------------
@@ -388,6 +433,18 @@ func fmadd_s(a, b, c uint32, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.fma_sf32(C.sfloat32(a), C.sfloat32(b), C.sfloat32(c), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint(flags))
+	return x, nil
+}
+
+// fmadd_d returns the fused-multiply-add of 64-bit floats
+func fmadd_d(a, b, c uint64, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.fma_sf64(C.sfloat64(a), C.sfloat64(b), C.sfloat64(c), C.RoundingModeEnum(rm), &flags))
 	s.Wr(csr.FFLAGS, uint(flags))
 	return x, nil
 }

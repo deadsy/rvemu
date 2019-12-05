@@ -184,11 +184,11 @@ var ISArv32d = ISAModule{
 		{"0001001 rs2 rs1 rm rd 1010011 FMUL.D", daTypeRc, emu32_FMUL_D, emu64_FMUL_D},            // R
 		{"0001101 rs2 rs1 rm rd 1010011 FDIV.D", daTypeRc, emu32_FDIV_D, emu64_FDIV_D},            // R
 		{"0101101 00000 rs1 rm rd 1010011 FSQRT.D", daTypeRh, emu32_FSQRT_D, emu64_FSQRT_D},       // R
-		{"0010001 rs2 rs1 000 rd 1010011 FSGNJ.D", daNone, emu32_FSGNJ_D, emu64_FSGNJ_D},          // R
-		{"0010001 rs2 rs1 001 rd 1010011 FSGNJN.D", daNone, emu32_FSGNJN_D, emu64_FSGNJN_D},       // R
-		{"0010001 rs2 rs1 010 rd 1010011 FSGNJX.D", daNone, emu32_FSGNJX_D, emu64_FSGNJX_D},       // R
-		{"0010101 rs2 rs1 000 rd 1010011 FMIN.D", daNone, emu32_FMIN_D, emu64_FMIN_D},             // R
-		{"0010101 rs2 rs1 001 rd 1010011 FMAX.D", daNone, emu32_FMAX_D, emu64_FMAX_D},             // R
+		{"0010001 rs2 rs1 000 rd 1010011 FSGNJ.D", daTypeRc, emu32_FSGNJ_D, emu64_FSGNJ_D},        // R
+		{"0010001 rs2 rs1 001 rd 1010011 FSGNJN.D", daTypeRc, emu32_FSGNJN_D, emu64_FSGNJN_D},     // R
+		{"0010001 rs2 rs1 010 rd 1010011 FSGNJX.D", daTypeRc, emu32_FSGNJX_D, emu64_FSGNJX_D},     // R
+		{"0010101 rs2 rs1 000 rd 1010011 FMIN.D", daTypeRc, emu32_FMIN_D, emu64_FMIN_D},           // R
+		{"0010101 rs2 rs1 001 rd 1010011 FMAX.D", daTypeRc, emu32_FMAX_D, emu64_FMAX_D},           // R
 		{"0100000 00001 rs1 rm rd 1010011 FCVT.S.D", daTypeRh, emu32_FCVT_S_D, emu64_FCVT_S_D},    // R
 		{"0100001 00000 rs1 rm rd 1010011 FCVT.D.S", daTypeRh, emu32_FCVT_D_S, emu64_FCVT_D_S},    // R
 		{"1010001 rs2 rs1 010 rd 1010011 FEQ.D", daTypeRf, emu32_FEQ_D, emu64_FEQ_D},              // R

@@ -178,6 +178,8 @@ var rv32dTest = []daTest{
 	{0, 0xd2158053, "fcvt.d.wu ft0,a1"},
 	{0, 0x40117153, "fcvt.s.d ft2,ft2"},
 	{0, 0x42010153, "fcvt.d.s ft2,ft2"},
+	{0, 0x2a1001d3, "fmin.d ft3,ft0,ft1"},
+	{0, 0x2a1011d3, "fmax.d ft3,ft0,ft1"},
 }
 
 var rv32cTest = []daTest{
