@@ -311,6 +311,7 @@ const (
 	ExCSR            // CSR exception
 	ExEcall          // unrecognised ecall
 	ExBreak          // debug break point
+	ExBadReg         // bad register number (rv32e)
 	ExStuck          // stuck program counter
 )
 
