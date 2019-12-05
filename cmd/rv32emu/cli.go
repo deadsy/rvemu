@@ -263,9 +263,51 @@ var cmdMap = cli.Leaf{
 }
 
 //-----------------------------------------------------------------------------
+// breakpoints
+
+var helpBreakpointAdd = []cli.Help{}
+
+var helpBreakpointSetClr = []cli.Help{}
+
+var cmdBreakpointAdd = cli.Leaf{
+	Descr: "add a breakpoint",
+	F: func(c *cli.CLI, args []string) {
+	},
+}
+
+var cmdBreakpointSet = cli.Leaf{
+	Descr: "set a breakpoint",
+	F: func(c *cli.CLI, args []string) {
+	},
+}
+
+var cmdBreakpointClr = cli.Leaf{
+	Descr: "clear a breakpoint",
+	F: func(c *cli.CLI, args []string) {
+	},
+}
+
+var cmdBreakpointShow = cli.Leaf{
+	Descr: "show the breakpoints",
+	F: func(c *cli.CLI, args []string) {
+		m := c.User.(*userApp).mem
+		c.User.Put(fmt.Sprintf("%s\n", m.BP.Display(32)))
+	},
+}
+
+// memBreakpointMenu submenu items
+var memBreakpointMenu = cli.Menu{
+	{"add", cmdBreakpointAdd, helpBreakpointAdd},
+	{"clr", cmdBreakpointClr, helpBreakpointSetClr},
+	{"set", cmdBreakpointSet, helpBreakpointSetClr},
+	{"show", cmdBreakpointShow},
+}
+
+//-----------------------------------------------------------------------------
 
 // root menu
 var menuRoot = cli.Menu{
+	{"bp", memBreakpointMenu, "breakpoint functions"},
 	{"csr", cmdCSR},
 	{"da", cmdDisassemble, helpDisassemble},
 	{"exit", cmdExit},

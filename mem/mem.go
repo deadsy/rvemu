@@ -32,9 +32,10 @@ func (a symbolByAddr) Less(i, j int) bool { return a[i].Addr < a[j].Addr }
 
 // Memory is emulated target memory.
 type Memory struct {
-	region     []Region           // memory regions
 	Entry      uint64             // entry point from ELF
 	AddrLength int                // address bit length
+	BP         breakPoints        // break points
+	region     []Region           // memory regions
 	symByAddr  map[uint]*Symbol   // symbol table by address
 	symByName  map[string]*Symbol // symbol table by name
 	noMemory   Region             // empty memory region
@@ -44,6 +45,7 @@ type Memory struct {
 func newMemory(alen int, empty Attribute) *Memory {
 	return &Memory{
 		AddrLength: alen,
+		BP:         newBreakPoints(),
 		region:     make([]Region, 0),
 		symByAddr:  make(map[uint]*Symbol),
 		symByName:  make(map[string]*Symbol),
@@ -80,46 +82,82 @@ func (m *Memory) find(adr, size uint) Region {
 
 // RdIns reads a 32-bit instruction from memory.
 func (m *Memory) RdIns(adr uint) (uint, Exception) {
+	ex := m.BP.checkX(adr)
+	if ex != 0 {
+		return 0, ex
+	}
 	return m.find(adr, 4).RdIns(adr)
 }
 
 // Rd64 reads a 64-bit data value from memory.
 func (m *Memory) Rd64(adr uint) (uint64, Exception) {
+	ex := m.BP.checkR(adr)
+	if ex != 0 {
+		return 0, ex
+	}
 	return m.find(adr, 8).Rd64(adr)
 }
 
 // Rd32 reads a 32-bit data value from memory.
 func (m *Memory) Rd32(adr uint) (uint32, Exception) {
+	ex := m.BP.checkR(adr)
+	if ex != 0 {
+		return 0, ex
+	}
 	return m.find(adr, 4).Rd32(adr)
 }
 
 // Rd16 reads a 16-bit data value from memory.
 func (m *Memory) Rd16(adr uint) (uint16, Exception) {
+	ex := m.BP.checkR(adr)
+	if ex != 0 {
+		return 0, ex
+	}
 	return m.find(adr, 2).Rd16(adr)
 }
 
 // Rd8 reads an 8-bit data value from memory.
 func (m *Memory) Rd8(adr uint) (uint8, Exception) {
+	ex := m.BP.checkR(adr)
+	if ex != 0 {
+		return 0, ex
+	}
 	return m.find(adr, 1).Rd8(adr)
 }
 
 // Wr64 writes a 64-bit data value to memory.
 func (m *Memory) Wr64(adr uint, val uint64) Exception {
+	ex := m.BP.checkW(adr)
+	if ex != 0 {
+		return ex
+	}
 	return m.find(adr, 8).Wr64(adr, val)
 }
 
 // Wr32 writes a 32-bit data value to memory.
 func (m *Memory) Wr32(adr uint, val uint32) Exception {
+	ex := m.BP.checkW(adr)
+	if ex != 0 {
+		return ex
+	}
 	return m.find(adr, 4).Wr32(adr, val)
 }
 
 // Wr16 writes a 16-bit data value to memory.
 func (m *Memory) Wr16(adr uint, val uint16) Exception {
+	ex := m.BP.checkW(adr)
+	if ex != 0 {
+		return ex
+	}
 	return m.find(adr, 2).Wr16(adr, val)
 }
 
 // Wr8 writes an 8-bit data value to memory.
 func (m *Memory) Wr8(adr uint, val uint8) Exception {
+	ex := m.BP.checkW(adr)
+	if ex != 0 {
+		return ex
+	}
 	return m.find(adr, 1).Wr8(adr, val)
 }
 

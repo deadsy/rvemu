@@ -26,6 +26,7 @@ const (
 	ExWrite                       // can't write this memory
 	ExEmpty                       // no memory at this address
 	ExExec                        // can't read instructions from this memory
+	ExBreak                       // break on memory access
 )
 
 func (e Exception) String() string {
