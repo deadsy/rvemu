@@ -25,8 +25,8 @@ type daTest struct {
 // rv32
 
 var rv32iTest = []daTest{
-	{0, 0, "?"},
-	{0, 0xffffffff, "?"},
+	{0, 0, "unimp"},
+	{0, 0xffffffff, "unimp"},
 	{0, 0x800005b7, "lui a1,0x80000"},
 	{0, 0xdeadc7b7, "lui a5,0xdeadc"},
 	{0, 0x00000097, "auipc ra,0x0"},
@@ -192,7 +192,6 @@ var rv32dTest = []daTest{
 }
 
 var rv32cTest = []daTest{
-	{0, 0, "?"},
 	{0, 0x4705, "li a4,1"},
 	{0, 0x8082, "ret"},
 	{0, 0xce06, "sw ra,28(sp)"},
@@ -222,14 +221,34 @@ var rv32cTest = []daTest{
 	{0, 0x4388, "lw a0,0(a5)"},
 	{0, 0x9682, "jalr a3"},
 	{0, 0x9782, "jalr a5"},
+	{0x8000003e, 0xbfe5, "j 80000036"},
+	{0x80000044, 0xe101, "bnez a0,80000044"},
+	{0, 0x8f02, "jr t5"},
+	{0, 0x52fd, "li t0,-1"},
+	{0, 0x8cc9, "or s1,s1,a0"},
+	{0, 0x8ca9, "xor s1,s1,a0"},
+	{0, 0x8c89, "sub s1,s1,a0"},
+	{0, 0x983d, "andi s0,s0,-17"},
+	{0, 0x0000, "unimp"},
+	{0, 0x0505, "addi a0,a0,1"},
+	{0, 0xc1c8, "sw a0,4(a1)"},
+	{0, 0x8431, "srai s0,s0,0xc"},
+	{0, 0x8031, "srli s0,s0,0xc"},
 }
 
 var rv32cOnlyTest = []daTest{
 	{0x358, 0x3d7d, "jal ra,216"},
 }
 
-var rv32fcTest = []daTest{}
-var rv32dcTest = []daTest{}
+var rv32fcTest = []daTest{
+	{0, 0x7654, "flw fa3,44(a2)"},
+	{0, 0xfedc, "fsw fa5,60(a3)"},
+}
+
+var rv32dcTest = []daTest{
+	{0, 0x3210, "fld fa2,32(a2)"},
+	{0, 0xba98, "fsd fa4,48(a3)"},
+}
 
 //-----------------------------------------------------------------------------
 // rv64
