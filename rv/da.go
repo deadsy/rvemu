@@ -403,19 +403,14 @@ func daTypeCSa(name string, pc uint, ins uint) string {
 	return fmt.Sprintf("%s %s,%d(%s)", name, abiXName[rs2], uimm, abiXName[rs1])
 }
 
-func daTypeCSc(name string, pc uint, ins uint) string {
-	uimm, rs1, rd := decodeCS(ins)
-	return fmt.Sprintf("%s %s,%d(%s)", name, abiFName[rd], uimm, abiXName[rs1])
-}
-
-func daTypeCLa(name string, pc uint, ins uint) string {
-	uimm, rs1, rd := decodeCS(ins)
-	return fmt.Sprintf("%s %s,%d(%s)", name, abiXName[rd], uimm, abiXName[rs1])
-}
-
 func daTypeCSb(name string, pc uint, ins uint) string {
 	uimm, rs1, rs2 := decodeCSa(ins)
 	return fmt.Sprintf("%s %s,%d(%s)", name, abiXName[rs2], uimm, abiXName[rs1])
+}
+
+func daTypeCSc(name string, pc uint, ins uint) string {
+	uimm, rs1, rs2 := decodeCS(ins)
+	return fmt.Sprintf("%s %s,%d(%s)", name, abiFName[rs2], uimm, abiXName[rs1])
 }
 
 //-----------------------------------------------------------------------------

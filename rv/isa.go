@@ -205,7 +205,7 @@ var ISArv32c = ISAModule{
 	defn: []insDefn{
 		{"000 00000000 000 00 C.ILLEGAL", daTypeCIWa, emu_C_ILLEGAL},                     // CIW (Quadrant 0)
 		{"000 nzuimm[5:4|9:6|2|3] rd0 00 C.ADDI4SPN", daTypeCIWb, emu_C_ADDI4SPN},        // CIW
-		{"010 uimm[5:3] rs10 uimm[2|6] rd0 00 C.LW", daTypeCLa, emu_C_LW},                // CL
+		{"010 uimm[5:3] rs10 uimm[2|6] rd0 00 C.LW", daTypeCSa, emu_C_LW},                // CL
 		{"110 uimm[5:3] rs10 uimm[2|6] rs20 00 C.SW", daTypeCSa, emu_C_SW},               // CS
 		{"000 nzimm[5] 00000 nzimm[4:0] 01 C.NOP", daNop, emu_C_NOP},                     // CI (Quadrant 1)
 		{"000 nzimm[5] rs1/rd!=0 nzimm[4:0] 01 C.ADDI", daTypeCIc, emu_C_ADDI},           // CI
