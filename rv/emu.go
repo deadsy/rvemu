@@ -31,12 +31,6 @@ import (
 )
 
 //-----------------------------------------------------------------------------
-
-func emu_Illegal(m *RV, ins uint) {
-	m.ex.N = ExIllegal
-}
-
-//-----------------------------------------------------------------------------
 // rv32i
 
 func emu_LUI(m *RV, ins uint) {
@@ -349,7 +343,8 @@ func emu_FENCE(m *RV, ins uint) {
 }
 
 func emu_FENCE_I(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	// no-op for a sw emulator
+	m.PC += 4
 }
 
 func emu_ECALL(m *RV, ins uint) {
@@ -1112,10 +1107,6 @@ func emu_C_ADDI4SPN(m *RV, ins uint) {
 	m.PC += 2
 }
 
-func emu_C_FLD(m *RV, ins uint) {
-	m.ex.N = ExTodo
-}
-
 func emu_C_LW(m *RV, ins uint) {
 	uimm, rs1, rd := decodeCS(ins)
 	adr := uint(m.rdX(rs1)) + uimm
@@ -1125,20 +1116,12 @@ func emu_C_LW(m *RV, ins uint) {
 	m.PC += 2
 }
 
-func emu_C_FSD(m *RV, ins uint) {
-	m.ex.N = ExTodo
-}
-
 func emu_C_SW(m *RV, ins uint) {
 	uimm, rs1, rs2 := decodeCS(ins)
 	adr := uint(m.rdX(rs1)) + uimm
 	ex := m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
 	m.checkMemory(adr, ex)
 	m.PC += 2
-}
-
-func emu_C_FSW(m *RV, ins uint) {
-	m.ex.N = ExTodo
 }
 
 func emu_C_NOP(m *RV, ins uint) {
@@ -1268,10 +1251,6 @@ func emu_C_SLLI64(m *RV, ins uint) {
 	m.ex.N = ExTodo
 }
 
-func emu_C_FLDSP(m *RV, ins uint) {
-	m.ex.N = ExTodo
-}
-
 func emu_C_LWSP(m *RV, ins uint) {
 	uimm, rd := decodeCSSa(ins)
 	if rd == 0 {
@@ -1323,16 +1302,59 @@ func emu_C_ADD(m *RV, ins uint) {
 	m.PC += 2
 }
 
-func emu_C_FSDSP(m *RV, ins uint) {
-	m.ex.N = ExTodo
-}
-
 func emu_C_SWSP(m *RV, ins uint) {
 	uimm, rs2 := decodeCSSb(ins)
 	adr := uint(m.rdX(RegSp)) + uimm
 	ex := m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
 	m.checkMemory(adr, ex)
 	m.PC += 2
+}
+
+//-----------------------------------------------------------------------------
+// rv32c-only
+
+func emu_C_JAL(m *RV, ins uint) {
+	imm := decodeCJ(ins)
+	m.wrX(RegRa, m.PC+2)
+	m.PC = uint64(int(m.PC) + imm)
+}
+
+//-----------------------------------------------------------------------------
+// rv32fc
+
+func emu_C_FLW(m *RV, ins uint) {
+	m.ex.N = ExTodo
+}
+
+func emu_C_FLWSP(m *RV, ins uint) {
+	m.ex.N = ExTodo
+}
+
+func emu_C_FSW(m *RV, ins uint) {
+	m.ex.N = ExTodo
+}
+
+func emu_C_FSWSP(m *RV, ins uint) {
+	m.ex.N = ExTodo
+}
+
+//-----------------------------------------------------------------------------
+// rv32dc
+
+func emu_C_FLD(m *RV, ins uint) {
+	m.ex.N = ExTodo
+}
+
+func emu_C_FLDSP(m *RV, ins uint) {
+	m.ex.N = ExTodo
+}
+
+func emu_C_FSD(m *RV, ins uint) {
+	m.ex.N = ExTodo
+}
+
+func emu_C_FSDSP(m *RV, ins uint) {
+	m.ex.N = ExTodo
 }
 
 //-----------------------------------------------------------------------------

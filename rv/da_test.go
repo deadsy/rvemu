@@ -36,6 +36,11 @@ var rv32iTest = []daTest{
 	{0x44, 0x0100006f, "j 54"},
 	{0, 0x00008067, "ret"},
 	{0, 0x000080e7, "jalr ra"},
+	{0, 0xffe88fe7, "jalr t6,-2(a7)"},
+	{0, 0x00390f67, "jalr t5,3(s2)"},
+	{0, 0x001780e7, "jalr 1(a5)"},
+	{0, 0xfff70167, "jalr sp,-1(a4)"},
+	{0, 0x00040467, "jalr s0,s0"},
 	{0x28, 0x02e7f063, "bgeu a5,a4,48"},
 	{0x34, 0x00e7ea63, "bltu a5,a4,48"},
 	{0x334, 0xf8f74ce3, "blt a4,a5,2cc"},
@@ -117,6 +122,10 @@ var rv32iTest = []daTest{
 	{0, 0x001015f3, "fsflags a1,zero"},
 	{0, 0x00215573, "fsrmi a0,2"},
 	{0, 0x00127573, "csrrci a0,fflags,4"},
+	{0, 0xeee59583, "lh a1,-274(a1)"},
+	{0, 0x00a29a23, "sh a0,20(t0)"},
+	{0, 0x00000013, "nop"},
+	{0, 0x0000100f, "fence.i"},
 }
 
 var rv32mTest = []daTest{

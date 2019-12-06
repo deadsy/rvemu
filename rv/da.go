@@ -85,6 +85,9 @@ func daTypeIa(name string, pc uint, ins uint) string {
 
 func daTypeIb(name string, pc uint, ins uint) string {
 	imm, rs1, rd := decodeIa(ins)
+	if rs1 == 0 && imm == 0 {
+		return fmt.Sprintf("nop")
+	}
 	if rs1 == 0 {
 		return fmt.Sprintf("li %s,%d", abiXName[rd], imm)
 	}
@@ -113,9 +116,12 @@ func daTypeIe(name string, pc uint, ins uint) string {
 		if imm == 0 {
 			return fmt.Sprintf("%s %s", name, abiXName[rs1])
 		}
-		return fmt.Sprintf("%s %s,%d", name, abiXName[rs1], imm)
+		return fmt.Sprintf("%s %d(%s)", name, imm, abiXName[rs1])
 	}
-	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], abiXName[rs1], imm)
+	if imm == 0 {
+		return fmt.Sprintf("%s %s,%s", name, abiXName[rd], abiXName[rs1])
+	}
+	return fmt.Sprintf("%s %s,%d(%s)", name, abiXName[rd], imm, abiXName[rs1])
 }
 
 func daTypeIf(name string, pc uint, ins uint) string {

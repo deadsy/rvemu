@@ -239,7 +239,7 @@ var ISArv32cOnly = ISAModule{
 	name: "rv32c-only",
 	ilen: 16,
 	defn: []insDefn{
-		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", daTypeCJc, emu_Illegal}, // CJ
+		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", daTypeCJc, emu_C_JAL}, // CJ
 	},
 }
 
@@ -248,10 +248,10 @@ var ISArv32fc = ISAModule{
 	name: "rv32fc",
 	ilen: 16,
 	defn: []insDefn{
-		{"011 uimm[5:3] rs10 uimm[2|6] rd0 00 C.FLW", daNone, emu_Illegal},     // CL
-		{"011 uimm[5] rd uimm[4:2|7:6] 10 C.FLWSP", daNone, emu_Illegal},       // CSS
-		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", daTypeCSa, emu_Illegal}, // CS
-		{"111 uimm[5:2|7:6] rs2 10 C.FSWSP", daNone, emu_Illegal},              // CSS
+		{"011 uimm[5:3] rs10 uimm[2|6] rd0 00 C.FLW", daNone, emu_C_FLW},     // CL
+		{"011 uimm[5] rd uimm[4:2|7:6] 10 C.FLWSP", daNone, emu_C_FLWSP},     // CSS
+		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", daTypeCSa, emu_C_FSW}, // CS
+		{"111 uimm[5:2|7:6] rs2 10 C.FSWSP", daNone, emu_C_FSWSP},            // CSS
 	},
 }
 
