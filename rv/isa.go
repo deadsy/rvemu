@@ -248,9 +248,9 @@ var ISArv32fc = ISAModule{
 	name: "rv32fc",
 	ilen: 16,
 	defn: []insDefn{
-		{"011 uimm[5:3] rs10 uimm[2|6] rd0 00 C.FLW", daNone, emu_C_FLW},     // CL
+		{"011 uimm[5:3] rs10 uimm[2|6] rd0 00 C.FLW", daTypeCSc, emu_C_FLW},  // CL
 		{"011 uimm[5] rd uimm[4:2|7:6] 10 C.FLWSP", daNone, emu_C_FLWSP},     // CSS
-		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", daTypeCSa, emu_C_FSW}, // CS
+		{"111 uimm[5:3] rs10 uimm[2|6] rs20 00 C.FSW", daTypeCSc, emu_C_FSW}, // CS
 		{"111 uimm[5:2|7:6] rs2 10 C.FSWSP", daNone, emu_C_FSWSP},            // CSS
 	},
 }
@@ -260,10 +260,10 @@ var ISArv32dc = ISAModule{
 	name: "rv32dc",
 	ilen: 16,
 	defn: []insDefn{
-		{"001 uimm[5:3] rs10 uimm[7:6] rd0 00 C.FLD", daNone, emu_C_FLD},  // CL
-		{"001 uimm[5] rd uimm[4:3|8:6] 10 C.FLDSP", daNone, emu_C_FLDSP},  // CSS
-		{"101 uimm[5:3] rs10 uimm[7:6] rs20 00 C.FSD", daNone, emu_C_FSD}, // CS
-		{"101 uimm[5:3|8:6] rs2 10 C.FSDSP", daNone, emu_C_FSDSP},         // CSS
+		{"001 uimm[5:3] rs10 uimm[7:6] rd0 00 C.FLD", daTypeCSc, emu_C_FLD},  // CL
+		{"001 uimm[5] rd uimm[4:3|8:6] 10 C.FLDSP", daNone, emu_C_FLDSP},     // CSS
+		{"101 uimm[5:3] rs10 uimm[7:6] rs20 00 C.FSD", daTypeCSc, emu_C_FSD}, // CS
+		{"101 uimm[5:3|8:6] rs2 10 C.FSDSP", daNone, emu_C_FSDSP},            // CSS
 	},
 }
 
