@@ -126,7 +126,7 @@ var cmdGo = cli.Leaf{
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		m.PC = uint32(adr)
+		m.PC = uint64(adr)
 		for true {
 			err := m.Run()
 			if err != nil {
@@ -146,7 +146,7 @@ var cmdTrace = cli.Leaf{
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		m.PC = uint32(adr)
+		m.PC = uint64(adr)
 		for true {
 			s := m.Disassemble(uint(m.PC))
 			err := m.Run()
@@ -168,7 +168,7 @@ var cmdStep = cli.Leaf{
 			c.User.Put(fmt.Sprintf("%s\n", err))
 			return
 		}
-		m.PC = uint32(adr)
+		m.PC = uint64(adr)
 		s := m.Disassemble(adr)
 		err = m.Run()
 		c.User.Put(fmt.Sprintf("%s\n", s))

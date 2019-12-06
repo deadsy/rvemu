@@ -78,6 +78,29 @@ func rdZero(s *State) uint {
 }
 
 //-----------------------------------------------------------------------------
+// machine isa register
+
+func log2(n uint) uint {
+	if n == 0 {
+		panic("n == 0")
+	}
+	var i uint
+	for n != 0 {
+		n >>= 1
+		i++
+	}
+	return i - 1
+}
+
+func mxl(xlen uint) uint {
+	return log2(xlen) - 4
+}
+
+func rdMISA(s *State) uint {
+	return s.misa
+}
+
+//-----------------------------------------------------------------------------
 // machine exception program counter
 
 func wrMEPC(s *State, val uint) {
@@ -284,13 +307,13 @@ var lookup = map[uint]csrDefn{
 	0x144: {"sip", wrIgnore, rdZero},
 	0x180: {"satp", wrIgnore, nil},
 	// Machine CSRs 0xf00 - 0xf7f (read only)
-	0xf11: {"mvendorid", nil, nil},
-	0xf12: {"marchid", nil, nil},
-	0xf13: {"mimpid", nil, nil},
+	0xf11: {"mvendorid", nil, rdZero},
+	0xf12: {"marchid", nil, rdZero},
+	0xf13: {"mimpid", nil, rdZero},
 	0xf14: {"mhartid", nil, rdZero},
 	// Machine CSRs 0x300 - 0x3ff (read/write)
 	0x300: {"mstatus", wrMSTATUS, rdMSTATUS},
-	0x301: {"misa", wrIgnore, rdZero},
+	0x301: {"misa", wrIgnore, rdMISA},
 	0x302: {"medeleg", wrIgnore, rdZero},
 	0x303: {"mideleg", wrIgnore, rdZero},
 	0x304: {"mie", wrIgnore, nil},
@@ -482,11 +505,12 @@ type State struct {
 	mstatus  uint // machine status
 	mscratch uint // machine scratch
 	fcsr     uint // floating point control and status register
+	misa     uint // machine isa register
 }
 
 // NewState returns a CSR state object.
 func NewState(xlen uint) *State {
-	return &State{
+	s := State{
 		Priv:   PrivM, // start at machine level
 		xlen:   xlen,
 		mxlen:  xlen,
@@ -494,6 +518,8 @@ func NewState(xlen uint) *State {
 		sxlen:  xlen,
 		ialign: 16, // TODO
 	}
+	s.misa = mxl(xlen) << (s.mxlen - 2)
+	return &s
 }
 
 // Rd reads from a CSR.

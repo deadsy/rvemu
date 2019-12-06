@@ -269,8 +269,7 @@ func decodeCB(ins uint) (int, uint) {
 
 // Ecall provides pluggable ecall functions.
 type Ecall interface {
-	Call32(m *RV32)
-	Call64(m *RV64)
+	Call(m *RV)
 }
 
 //-----------------------------------------------------------------------------

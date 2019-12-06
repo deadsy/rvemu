@@ -83,9 +83,13 @@ func emu_BNE(m *RV, ins uint) {
 
 func emu_BLT(m *RV, ins uint) {
 	imm, rs2, rs1 := decodeB(ins)
-	x1 := int64(m.rdX(rs1))
-	x2 := int64(m.rdX(rs2))
-	if x1 < x2 {
+	var lt bool
+	if m.xlen == 32 {
+		lt = int32(m.rdX(rs1)) < int32(m.rdX(rs2))
+	} else {
+		lt = int64(m.rdX(rs1)) < int64(m.rdX(rs2))
+	}
+	if lt {
 		m.PC = uint64(int(m.PC) + imm)
 	} else {
 		m.PC += 4
@@ -94,9 +98,13 @@ func emu_BLT(m *RV, ins uint) {
 
 func emu_BGE(m *RV, ins uint) {
 	imm, rs2, rs1 := decodeB(ins)
-	x1 := int64(m.rdX(rs1))
-	x2 := int64(m.rdX(rs2))
-	if x1 >= x2 {
+	var ge bool
+	if m.xlen == 32 {
+		ge = int32(m.rdX(rs1)) >= int32(m.rdX(rs2))
+	} else {
+		ge = int64(m.rdX(rs1)) >= int64(m.rdX(rs2))
+	}
+	if ge {
 		m.PC = uint64(int(m.PC) + imm)
 	} else {
 		m.PC += 4
@@ -198,8 +206,14 @@ func emu_ADDI(m *RV, ins uint) {
 
 func emu_SLTI(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
+	var lt bool
+	if m.xlen == 32 {
+		lt = int32(m.rdX(rs1)) < int32(imm)
+	} else {
+		lt = int64(m.rdX(rs1)) < int64(imm)
+	}
 	var result uint64
-	if int64(m.rdX(rs1)) < int64(imm) {
+	if lt {
 		result = 1
 	}
 	m.wrX(rd, result)
@@ -208,8 +222,14 @@ func emu_SLTI(m *RV, ins uint) {
 
 func emu_SLTIU(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
+	var lt bool
+	if m.xlen == 32 {
+		lt = uint32(m.rdX(rs1)) < uint32(imm)
+	} else {
+		lt = m.rdX(rs1) < uint64(imm)
+	}
 	var result uint64
-	if m.rdX(rs1) < uint64(imm) {
+	if lt {
 		result = 1
 	}
 	m.wrX(rd, result)
@@ -248,14 +268,26 @@ func emu_SUB(m *RV, ins uint) {
 
 func emu_SLL(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	m.wrX(rd, m.rdX(rs1)<<(m.rdX(rs2)&63))
+	var shamt uint64
+	if m.xlen == 32 {
+		shamt = m.rdX(rs2) & 31
+	} else {
+		shamt = m.rdX(rs2) & 63
+	}
+	m.wrX(rd, m.rdX(rs1)<<shamt)
 	m.PC += 4
 }
 
 func emu_SLT(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
+	var lt bool
+	if m.xlen == 32 {
+		lt = int32(m.rdX(rs1)) < int32(m.rdX(rs2))
+	} else {
+		lt = int64(m.rdX(rs1)) < int64(m.rdX(rs2))
+	}
 	var result uint64
-	if int64(m.rdX(rs1)) < int64(m.rdX(rs2)) {
+	if lt {
 		result = 1
 	}
 	m.wrX(rd, result)
@@ -287,8 +319,15 @@ func emu_SRL(m *RV, ins uint) {
 
 func emu_SRA(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	shamt := m.rdX(rs2) & 63
-	m.wrX(rd, uint64(int64(m.rdX(rs1))>>shamt))
+	var x uint64
+	if m.xlen == 32 {
+		shamt := m.rdX(rs2) & 31
+		x = uint64(int32(m.rdX(rs1)) >> shamt)
+	} else {
+		shamt := m.rdX(rs2) & 63
+		x = uint64(int64(m.rdX(rs1)) >> shamt)
+	}
+	m.wrX(rd, x)
 	m.PC += 4
 }
 
@@ -318,7 +357,7 @@ func emu_ECALL(m *RV, ins uint) {
 		m.ex.N = ExEcall
 		return
 	}
-	//m.ecall.Call(m) TODO
+	m.ecall.Call(m)
 	m.PC += 4
 }
 
@@ -426,40 +465,79 @@ func emu_MUL(m *RV, ins uint) {
 
 func emu_MULH(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	a := big.Int128FromInt(int64(m.rdX(rs1)))
-	b := big.Int128FromInt(int64(m.rdX(rs2)))
-	c := a.Mul(b)
-	m.wrX(rd, uint64(c.Hi))
+	var x uint64
+	if m.xlen == 32 {
+		a := int64(int32(m.X[rs1]))
+		b := int64(int32(m.X[rs2]))
+		c := (a * b) >> 32
+		x = uint64(c)
+	} else {
+		a := big.Int128FromInt(int64(m.rdX(rs1)))
+		b := big.Int128FromInt(int64(m.rdX(rs2)))
+		c := a.Mul(b)
+		x = c.Hi
+	}
+	m.wrX(rd, x)
 	m.PC += 4
 }
 
 func emu_MULHSU(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	a := big.Int128FromInt(int64(m.rdX(rs1)))
-	b := big.Int128FromUint(m.rdX(rs2))
-	c := a.Mul(b)
-	m.wrX(rd, uint64(c.Hi))
+	var x uint64
+	if m.xlen == 32 {
+		a := int64(int32(m.X[rs1]))
+		b := int64(m.X[rs2])
+		c := (a * b) >> 32
+		x = uint64(c)
+	} else {
+		a := big.Int128FromInt(int64(m.rdX(rs1)))
+		b := big.Int128FromUint(m.rdX(rs2))
+		c := a.Mul(b)
+		x = c.Hi
+	}
+	m.wrX(rd, x)
 	m.PC += 4
 }
 
 func emu_MULHU(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	a := big.Uint128FromUint(m.rdX(rs1))
-	b := big.Uint128FromUint(m.rdX(rs2))
-	c := a.Mul(b)
-	m.wrX(rd, c.Hi)
+	var x uint64
+	if m.xlen == 32 {
+		a := uint64(m.X[rs1])
+		b := uint64(m.X[rs2])
+		c := (a * b) >> 32
+		x = uint64(c)
+	} else {
+		a := big.Uint128FromUint(m.rdX(rs1))
+		b := big.Uint128FromUint(m.rdX(rs2))
+		c := a.Mul(b)
+		x = c.Hi
+	}
+	m.wrX(rd, x)
 	m.PC += 4
 }
 
 func emu_DIV(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	result := int64(-1)
-	a := int64(m.rdX(rs1))
-	b := int64(m.rdX(rs2))
-	if b != 0 {
-		result = a / b
+	var x uint64
+	if m.xlen == 32 {
+		result := int32(-1)
+		a := int32(m.X[rs1])
+		b := int32(m.X[rs2])
+		if b != 0 {
+			result = a / b
+		}
+		x = uint64(result)
+	} else {
+		result := int64(-1)
+		a := int64(m.rdX(rs1))
+		b := int64(m.rdX(rs2))
+		if b != 0 {
+			result = a / b
+		}
+		x = uint64(result)
 	}
-	m.wrX(rd, uint64(result))
+	m.wrX(rd, x)
 	m.PC += 4
 }
 
@@ -475,12 +553,23 @@ func emu_DIVU(m *RV, ins uint) {
 
 func emu_REM(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
-	result := int64(m.rdX(rs1))
-	b := int64(m.rdX(rs2))
-	if b != 0 {
-		result %= b
+	var x uint64
+	if m.xlen == 32 {
+		result := int32(m.X[rs1])
+		b := int32(m.X[rs2])
+		if b != 0 {
+			result %= b
+		}
+		x = uint64(result)
+	} else {
+		result := int64(m.rdX(rs1))
+		b := int64(m.rdX(rs2))
+		if b != 0 {
+			result %= b
+		}
+		x = uint64(result)
 	}
-	m.wrX(rd, uint64(result))
+	m.wrX(rd, x)
 	m.PC += 4
 }
 
@@ -1090,13 +1179,27 @@ func emu_C_LUI(m *RV, ins uint) {
 
 func emu_C_SRLI(m *RV, ins uint) {
 	shamt, rd := decodeCIc(ins)
-	m.wrX(rd, m.rdX(rd)<<shamt)
+	if m.xlen == 32 && shamt > 31 {
+		m.ex.N = ExIllegal
+		return
+	}
+	m.wrX(rd, m.rdX(rd)>>shamt)
 	m.PC += 2
 }
 
 func emu_C_SRAI(m *RV, ins uint) {
 	shamt, rd := decodeCIc(ins)
-	m.wrX(rd, uint64(int64(m.rdX(rd))>>shamt))
+	var x uint64
+	if m.xlen == 32 {
+		if shamt > 31 {
+			m.ex.N = ExIllegal
+			return
+		}
+		x = uint64(int32(m.X[rd]) >> shamt)
+	} else {
+		x = uint64(int64(m.rdX(rd)) >> shamt)
+	}
+	m.wrX(rd, x)
 	m.PC += 2
 }
 
@@ -1270,7 +1373,17 @@ func emu_SRLI(m *RV, ins uint) {
 
 func emu_SRAI(m *RV, ins uint) {
 	shamt, rs1, rd := decodeIc(ins)
-	m.wrX(rd, uint64(int64(m.rdX(rs1))>>shamt))
+	var x uint64
+	if m.xlen == 32 {
+		if shamt > 31 {
+			m.ex.N = ExIllegal
+			return
+		}
+		x = uint64(int32(m.rdX(rs1)) >> shamt)
+	} else {
+		x = uint64(int64(m.rdX(rs1)) >> shamt)
+	}
+	m.wrX(rd, x)
 	m.PC += 4
 }
 
@@ -1646,7 +1759,7 @@ type RV struct {
 }
 
 // NewRV64 returns a 64-bit RISC-V CPU.
-func xNewRV64(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
+func NewRV64(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
 	m := RV{
 		xlen:  64,
 		nreg:  32,
@@ -1659,7 +1772,7 @@ func xNewRV64(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
 }
 
 // NewRV32 returns a 32-bit RISC-V CPU.
-func xNewRV32(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
+func NewRV32(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
 	m := RV{
 		xlen:  32,
 		nreg:  32,
@@ -1671,8 +1784,8 @@ func xNewRV32(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
 	return &m
 }
 
-// NewRV32E returns a 32-bit Embedded RISC-V CPU.
-func xNewRV32E(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
+// NewRV32E returns a 32-bit embedded RISC-V CPU (16 integer registers).
+func NewRV32E(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
 	m := RV{
 		xlen:  32,
 		nreg:  16,
@@ -1700,7 +1813,7 @@ func (m *RV) Run() error {
 	// lookup and emulate the instruction
 	im := m.isa.lookup(ins)
 	if im != nil {
-		//im.defn.emu(m, ins) TODO
+		im.defn.emu(m, ins)
 		m.insCount++
 	} else {
 		m.ex.N = ExIllegal

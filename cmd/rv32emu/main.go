@@ -30,7 +30,7 @@ const stackSize = 8 << 10
 // userApp is state associated with the user application.
 type userApp struct {
 	mem *mem.Memory
-	cpu *rv.RV32
+	cpu *rv.RV
 }
 
 // newUserApp returns a user application.

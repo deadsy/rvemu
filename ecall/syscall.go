@@ -20,50 +20,33 @@ package ecall
 import "github.com/deadsy/riscv/rv"
 
 //-----------------------------------------------------------------------------
-// 32-bit system calls
+// system calls
 
-func sc32_close(m *rv.RV32) {
+func sc_close(m *rv.RV) {
 	m.SetBreak()
 }
 
-func sc32_fstat(m *rv.RV32) {
+func sc_fstat(m *rv.RV) {
 	m.SetBreak()
 }
 
-func sc32_exit(m *rv.RV32) {
-	m.Exit(0)
-}
-
-//-----------------------------------------------------------------------------
-// 64-bit system calls
-
-func sc64_close(m *rv.RV64) {
-	m.SetBreak()
-}
-
-func sc64_fstat(m *rv.RV64) {
-	m.SetBreak()
-}
-
-func sc64_exit(m *rv.RV64) {
+func sc_exit(m *rv.RV) {
 	m.Exit(0)
 }
 
 //-----------------------------------------------------------------------------
 
-type scFunc32 func(m *rv.RV32)
-type scFunc64 func(m *rv.RV64)
+type scFunc func(m *rv.RV)
 
 type scEntry struct {
 	name string
-	sc32 scFunc32
-	sc64 scFunc64
+	sc   scFunc
 }
 
 var scTable = map[uint]scEntry{
-	57: {"close", sc32_close, sc64_close},
-	80: {"fstat", sc32_fstat, sc64_fstat},
-	93: {"exit", sc32_exit, sc64_exit},
+	57: {"close", sc_close},
+	80: {"fstat", sc_fstat},
+	93: {"exit", sc_exit},
 }
 
 func scLookup(n uint) *scEntry {
@@ -84,21 +67,12 @@ func NewSyscall() *Syscall {
 	return &Syscall{}
 }
 
-// Call32 is a 32-bit ecall.
-func (sc *Syscall) Call32(m *rv.RV32) {
+// Call is an ecall handler.
+func (sc *Syscall) Call(m *rv.RV) {
 	n := uint(m.X[rv.RegA7])
 	e := scLookup(n)
 	if e != nil {
-		e.sc32(m)
-	}
-}
-
-// Call64 is a 64-bit ecall.
-func (sc *Syscall) Call64(m *rv.RV64) {
-	n := uint(m.X[rv.RegA7])
-	e := scLookup(n)
-	if e != nil {
-		e.sc64(m)
+		e.sc(m)
 	}
 }
 

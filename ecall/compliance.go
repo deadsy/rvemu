@@ -28,13 +28,8 @@ func NewCompliance() *Compliance {
 	return &Compliance{}
 }
 
-// Call32 is a 32-bit ecall.
-func (c *Compliance) Call32(m *rv.RV32) {
-	m.Exit(m.X[rv.RegGp])
-}
-
-// Call64 is a 64-bit ecall.
-func (c *Compliance) Call64(m *rv.RV64) {
+// Call is an ecall.
+func (c *Compliance) Call(m *rv.RV) {
 	m.Exit(m.X[rv.RegGp])
 }
 
