@@ -31,14 +31,16 @@ const insLimit = 20000
 
 //-----------------------------------------------------------------------------
 
-const elf_suffix = ".elf"
-const sig_suffix = ".signature.output"
+const elfSuffix = ".elf"
+const sigSuffix = ".signature.output"
 
-func getTestCases(path string) ([]string, error) {
+func getTestCases(testPath string) ([]string, error) {
 	x := []string{}
-	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if strings.HasSuffix(path, elf_suffix) {
-			x = append(x, strings.TrimSuffix(path, elf_suffix))
+	err := filepath.Walk(testPath, func(path string, info os.FileInfo, err error) error {
+		if strings.HasSuffix(path, elfSuffix) {
+			testName := strings.TrimPrefix(path, testPath+"/")
+			testName = strings.TrimSuffix(testName, elfSuffix)
+			x = append(x, testName)
 		}
 		return nil
 	})
@@ -46,6 +48,17 @@ func getTestCases(path string) ([]string, error) {
 		return nil, err
 	}
 	return x, nil
+}
+
+// needsTextWrite returns true if a test needs a writeable text section.
+func needsTextWrite(name string) bool {
+	wr := map[string]bool{
+		"rv32ui/fence_i":            true,
+		"rv32Zifencei/I-FENCE.I-01": true,
+		"rv32i/I-AUIPC-01":          true,
+		"rv32uc/rvc":                true,
+	}
+	return wr[name]
 }
 
 //-----------------------------------------------------------------------------
@@ -57,7 +70,7 @@ func compareSlice32(a, b []uint32) error {
 	}
 	for i := range a {
 		if a[i] != b[i] {
-			return fmt.Errorf("a[%d] != b[%d], %08x != %08x", i, i, a[i], b[i])
+			return fmt.Errorf("x[%d] %08x (expected) != %08x (actual)", i, a[i], b[i])
 		}
 	}
 	return nil
@@ -95,12 +108,15 @@ func getResults(m *mem.Memory) ([]uint32, error) {
 	if start >= end {
 		return nil, errors.New("result length <= 0")
 	}
-	return m.RangeRd32(start, (end-start)>>2), nil
+	return m.Rd32Range(start, (end-start)>>2), nil
 }
 
 //-----------------------------------------------------------------------------
 
-func TestRV32(name string) error {
+func TestRV32(base, name string) error {
+
+	elfFilename := base + "/" + name + elfSuffix
+	sigFilename := base + "/" + name + sigSuffix
 
 	// create the ISA
 	isa := rv.NewISA()
@@ -114,9 +130,14 @@ func TestRV32(name string) error {
 	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
 	// load the elf file
-	_, err = m.LoadELF(name+elf_suffix, elf.ELFCLASS32)
+	_, err = m.LoadELF(elfFilename, elf.ELFCLASS32)
 	if err != nil {
 		return err
+	}
+
+	// some tests need a writeable .text* section
+	if needsTextWrite(name) {
+		m.SetAttr(".text.init", mem.AttrRWX)
 	}
 
 	// create the cpu
@@ -146,12 +167,12 @@ func TestRV32(name string) error {
 		return err
 	}
 	// get the signature results from the file
-	sig, err := getSignature(name + sig_suffix)
+	sig, err := getSignature(sigFilename)
 	if err != nil {
 		return err
 	}
 	// compare the result and signature
-	err = compareSlice32(result, sig)
+	err = compareSlice32(sig, result)
 	if err != nil {
 		return err
 	}
@@ -161,7 +182,10 @@ func TestRV32(name string) error {
 
 //-----------------------------------------------------------------------------
 
-func TestRV64(name string) error {
+func TestRV64(base, name string) error {
+
+	elfFilename := base + "/" + name + elfSuffix
+	sigFilename := base + "/" + name + sigSuffix
 
 	// create the ISA
 	isa := rv.NewISA()
@@ -175,9 +199,14 @@ func TestRV64(name string) error {
 	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
 	// load the elf file
-	_, err = m.LoadELF(name+elf_suffix, elf.ELFCLASS64)
+	_, err = m.LoadELF(elfFilename, elf.ELFCLASS64)
 	if err != nil {
 		return err
+	}
+
+	// some tests need a writeable .text* section
+	if needsTextWrite(name) {
+		m.SetAttr(".text.init", mem.AttrRWX)
 	}
 
 	// create the cpu
@@ -207,7 +236,7 @@ func TestRV64(name string) error {
 		return err
 	}
 	// get the signature results from the file
-	sig, err := getSignature(name + sig_suffix)
+	sig, err := getSignature(sigFilename)
 	if err != nil {
 		return err
 	}
@@ -220,11 +249,13 @@ func TestRV64(name string) error {
 	return nil
 }
 
-func Test(base string) error {
-	if strings.Contains(base, "rv32") {
-		return TestRV32(base)
+//-----------------------------------------------------------------------------
+
+func Test(base, name string) error {
+	if strings.Contains(name, "rv32") {
+		return TestRV32(base, name)
 	}
-	return TestRV64(base)
+	return TestRV64(base, name)
 }
 
 //-----------------------------------------------------------------------------
@@ -233,8 +264,8 @@ func main() {
 	// command line flags
 	path := flag.String("p", "test", "path to compliance tests")
 	flag.Parse()
-
-	testCases, err := getTestCases(*path)
+	testPath := filepath.Clean(*path)
+	testCases, err := getTestCases(testPath)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
@@ -244,8 +275,9 @@ func main() {
 	fail := 0
 
 	for _, name := range testCases {
-		err := Test(name)
-		fmt.Printf("%-50s ", name)
+		err := Test(testPath, name)
+		testName := fmt.Sprintf("%s/%s", testPath, name)
+		fmt.Printf("%-50s ", testName)
 		if err != nil {
 			fmt.Printf("FAIL %s\n", err)
 			fail++

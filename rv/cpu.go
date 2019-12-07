@@ -276,13 +276,14 @@ type Ecall interface {
 // memory exceptions
 
 type memoryException struct {
-	addr uint          // memory address that caused the exception
-	ex   mem.Exception // exception bitmap
+	addr  uint          // memory address that caused the exception
+	ex    mem.Exception // exception bitmap
+	sname string        // name of the section containing the exception address
 }
 
 func (e memoryException) String() string {
 	// TODO - fix the 64-bit address case
-	return fmt.Sprintf("%s @ %08x", e.ex, e.addr)
+	return fmt.Sprintf("%s @ %08x (%s)", e.ex, e.addr, e.sname)
 }
 
 //-----------------------------------------------------------------------------
@@ -342,9 +343,9 @@ func (e *Exception) Error() string {
 	case ExTodo:
 		return "unimplemented instruction at PC " + pcStr
 	case ExMemory:
-		return fmt.Sprintf("memory exception at PC %s (%s)", pcStr, e.mem)
+		return fmt.Sprintf("memory exception at PC %s, %s", pcStr, e.mem)
 	case ExCSR:
-		return fmt.Sprintf("csr exception at PC %s (%s)", pcStr, e.csr)
+		return fmt.Sprintf("csr exception at PC %s, %s", pcStr, e.csr)
 	case ExEcall:
 		return "unrecognized ecall at PC " + pcStr
 	case ExBreak:

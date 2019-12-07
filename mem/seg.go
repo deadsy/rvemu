@@ -24,7 +24,6 @@ const (
 	ExAlign Exception = 1 << iota // misaligned read/write
 	ExRead                        // can't read this memory
 	ExWrite                       // can't write this memory
-	ExEmpty                       // no memory at this address
 	ExExec                        // can't read instructions from this memory
 	ExBreak                       // break on memory access
 )
@@ -39,9 +38,6 @@ func (e Exception) String() string {
 	}
 	if e&ExWrite != 0 {
 		s = append(s, "write")
-	}
-	if e&ExEmpty != 0 {
-		s = append(s, "empty")
 	}
 	if e&ExExec != 0 {
 		s = append(s, "exec")
@@ -141,6 +137,7 @@ func (a regionByStart) Less(i, j int) bool { return a[i].start < a[j].start }
 // Region is an interface to a contiguous region of memory.
 type Region interface {
 	Info() *RegionInfo
+	SetAttr(attr Attribute)
 	RdIns(adr uint) (uint, Exception)
 	Rd64(adr uint) (uint64, Exception)
 	Rd32(adr uint) (uint32, Exception)
@@ -273,6 +270,11 @@ func newEmpty(attr Attribute) *empty {
 	}
 }
 
+// SetAttr sets the attributes for the empty region.
+func (m *empty) SetAttr(attr Attribute) {
+	m.attr = attr
+}
+
 // Info returns the information for the empty region.
 func (m *empty) Info() *RegionInfo {
 	return &RegionInfo{
@@ -288,47 +290,47 @@ func (m *empty) In(adr, size uint) bool {
 
 // RdIns reads a 32-bit instruction from memory.
 func (m *empty) RdIns(adr uint) (uint, Exception) {
-	return math.MaxUint32, rdInsException(adr, m.attr) | ExEmpty
+	return math.MaxUint32, rdInsException(adr, m.attr)
 }
 
 // Rd64 reads a 64-bit data value from memory.
 func (m *empty) Rd64(adr uint) (uint64, Exception) {
-	return math.MaxUint64, rdException(adr, m.attr, 8) | ExEmpty
+	return math.MaxUint64, rdException(adr, m.attr, 8)
 }
 
 // Rd32 reads a 32-bit data value from memory.
 func (m *empty) Rd32(adr uint) (uint32, Exception) {
-	return math.MaxUint32, rdException(adr, m.attr, 4) | ExEmpty
+	return math.MaxUint32, rdException(adr, m.attr, 4)
 }
 
 // Rd16 reads a 16-bit data value from memory.
 func (m *empty) Rd16(adr uint) (uint16, Exception) {
-	return math.MaxUint16, rdException(adr, m.attr, 2) | ExEmpty
+	return math.MaxUint16, rdException(adr, m.attr, 2)
 }
 
 // Rd8 reads an 8-bit data value from memory.
 func (m *empty) Rd8(adr uint) (uint8, Exception) {
-	return math.MaxUint8, rdException(adr, m.attr, 1) | ExEmpty
+	return math.MaxUint8, rdException(adr, m.attr, 1)
 }
 
 // Wr64 writes a 64-bit data value to memory.
 func (m *empty) Wr64(adr uint, val uint64) Exception {
-	return wrException(adr, m.attr, 8) | ExEmpty
+	return wrException(adr, m.attr, 8)
 }
 
 // Wr32 writes a 32-bit data value to memory.
 func (m *empty) Wr32(adr uint, val uint32) Exception {
-	return wrException(adr, m.attr, 4) | ExEmpty
+	return wrException(adr, m.attr, 4)
 }
 
 // Wr16 writes a 16-bit data value to memory.
 func (m *empty) Wr16(adr uint, val uint16) Exception {
-	return wrException(adr, m.attr, 2) | ExEmpty
+	return wrException(adr, m.attr, 2)
 }
 
 // Wr8 writes an 8-bit data value to memory.
 func (m *empty) Wr8(adr uint, val uint8) Exception {
-	return wrException(adr, m.attr, 1) | ExEmpty
+	return wrException(adr, m.attr, 1)
 }
 
 //-----------------------------------------------------------------------------

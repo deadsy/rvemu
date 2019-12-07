@@ -1734,7 +1734,7 @@ func (m *RV) checkMemory(adr uint, ex mem.Exception) {
 		return
 	}
 	m.ex.N = ExMemory
-	m.ex.mem = memoryException{adr, ex}
+	m.ex.mem = memoryException{adr, ex, m.Mem.GetSectionName(adr)}
 }
 
 //-----------------------------------------------------------------------------
