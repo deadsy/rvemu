@@ -24,6 +24,7 @@ package rv
 
 import (
 	"math"
+	"sync"
 
 	"github.com/deadsy/riscv/big"
 	"github.com/deadsy/riscv/csr"
@@ -591,39 +592,120 @@ func emu_SC_W(m *RV, ins uint) {
 }
 
 func emu_AMOSWAP_W(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	ex = m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint64(int32(t)))
+	m.amo.Unlock()
+	m.PC += 4
 }
 
 func emu_AMOADD_W(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	ex = m.Mem.Wr32(adr, t+uint32(m.rdX(rs2)))
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint64(int32(t)))
+	m.amo.Unlock()
+	m.PC += 4
 }
 
 func emu_AMOXOR_W(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	ex = m.Mem.Wr32(adr, t^uint32(m.rdX(rs2)))
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint64(int32(t)))
+	m.amo.Unlock()
+	m.PC += 4
 }
 
 func emu_AMOAND_W(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	ex = m.Mem.Wr32(adr, t&uint32(m.rdX(rs2)))
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint64(int32(t)))
+	m.amo.Unlock()
+	m.PC += 4
 }
 
 func emu_AMOOR_W(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	ex = m.Mem.Wr32(adr, t|uint32(m.rdX(rs2)))
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint64(int32(t)))
+	m.amo.Unlock()
+	m.PC += 4
 }
 
 func emu_AMOMIN_W(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	ex = m.Mem.Wr32(adr, uint32(minInt32(int32(t), int32(m.rdX(rs2)))))
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint64(int32(t)))
+	m.amo.Unlock()
+	m.PC += 4
 }
 
 func emu_AMOMAX_W(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	ex = m.Mem.Wr32(adr, uint32(maxInt32(int32(t), int32(m.rdX(rs2)))))
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint64(int32(t)))
+	m.amo.Unlock()
+	m.PC += 4
 }
 
 func emu_AMOMINU_W(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	ex = m.Mem.Wr32(adr, uint32(minUint32(t, uint32(m.rdX(rs2)))))
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint64(int32(t)))
+	m.amo.Unlock()
+	m.PC += 4
 }
 
 func emu_AMOMAXU_W(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, ex := m.Mem.Rd32(adr)
+	m.checkMemory(adr, ex)
+	ex = m.Mem.Wr32(adr, uint32(maxUint32(t, uint32(m.rdX(rs2)))))
+	m.checkMemory(adr, ex)
+	m.wrX(rd, uint64(int32(t)))
+	m.amo.Unlock()
+	m.PC += 4
 }
 
 //-----------------------------------------------------------------------------
@@ -1731,7 +1813,7 @@ func (m *RV) rdX(i uint) uint64 {
 
 // checkMemory records a memory exception.
 func (m *RV) checkMemory(adr uint, ex mem.Exception) {
-	if ex == 0 {
+	if ex == 0 || m.ex.N != 0 {
 		return
 	}
 	m.ex.N = ExMemory
@@ -1765,6 +1847,36 @@ func (m *RV) checkCSR(reg uint, ex csr.Exception) {
 
 //-----------------------------------------------------------------------------
 
+func maxInt32(a, b int32) int32 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func minInt32(a, b int32) int32 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxUint32(a, b uint32) uint32 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func minUint32(a, b uint32) uint32 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+//-----------------------------------------------------------------------------
+
 // RV is a RISC-V CPU.
 type RV struct {
 	X        [32]uint64  // integer registers
@@ -1772,6 +1884,7 @@ type RV struct {
 	PC       uint64      // program counter
 	Mem      *mem.Memory // memory of the target system
 	CSR      *csr.State  // CSR state
+	amo      sync.Mutex  // lock for atomic operations
 	insCount uint        // number of instructions run
 	lastPC   uint64      // stuck PC detection
 	xlen     uint        // bit length of integer registers

@@ -140,6 +140,9 @@ var rv32aTest = []daTest{
 	{0, 0x100526af, "lr.w a3,(a0)"},
 	{0, 0x18c526af, "sc.w a3,a2,(a0)"},
 	{0, 0x0c55232f, "amoswap.w t1,t0,(a0)"},
+	{0, 0x60b6a72f, "amoand.w a4,a1,(a3)"},
+	{0, 0x00b6a72f, "amoadd.w a4,a1,(a3)"},
+	{0, 0xe0b6a72f, "amomaxu.w a4,a1,(a3)"},
 }
 
 var rv32fTest = []daTest{
