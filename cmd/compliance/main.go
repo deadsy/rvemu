@@ -50,15 +50,21 @@ func getTestCases(testPath string) ([]string, error) {
 	return x, nil
 }
 
-// needsTextWrite returns true if a test needs a writeable text section.
-func needsTextWrite(name string) bool {
-	wr := map[string]bool{
-		"rv32ui/fence_i":            true,
-		"rv32Zifencei/I-FENCE.I-01": true,
-		"rv32i/I-AUIPC-01":          true,
-		"rv32uc/rvc":                true,
+//-----------------------------------------------------------------------------
+
+// testFixups applies per-test environment tweaks
+func testFixups(m *rv.RV, name string) {
+	switch name {
+	case "rv32uc/rvc",
+		"rv32i/I-AUIPC-01",
+		"rv32Zifencei/I-FENCE.I-01",
+		"rv32ui/fence_i":
+		m.Mem.SetAttr(".text.init", mem.AttrRWX)
+	case "rv32i/I-SB-01",
+		"rv32i/I-SH-01",
+		"rv32i/I-SW-01":
+		m.Mem.Add(mem.NewSection(".fixup", 0x80001ffc, 4, mem.AttrRW))
 	}
-	return wr[name]
 }
 
 //-----------------------------------------------------------------------------
@@ -135,13 +141,11 @@ func TestRV32(base, name string) error {
 		return err
 	}
 
-	// some tests need a writeable .text* section
-	if needsTextWrite(name) {
-		m.SetAttr(".text.init", mem.AttrRWX)
-	}
-
 	// create the cpu
 	cpu := rv.NewRV32(isa, m, ecall.NewCompliance())
+
+	// apply per test fixups
+	testFixups(cpu, name)
 
 	// run the emulation
 	var ins int
@@ -204,13 +208,11 @@ func TestRV64(base, name string) error {
 		return err
 	}
 
-	// some tests need a writeable .text* section
-	if needsTextWrite(name) {
-		m.SetAttr(".text.init", mem.AttrRWX)
-	}
-
 	// create the cpu
 	cpu := rv.NewRV64(isa, m, ecall.NewCompliance())
+
+	// apply per test fixups
+	testFixups(cpu, name)
 
 	// run the emulation
 	var ins int

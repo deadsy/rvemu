@@ -53,8 +53,9 @@ func emu_JAL(m *RV, ins uint) {
 
 func emu_JALR(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
-	m.wrX(rd, uint64(m.PC+4))
+	t := m.PC + 4
 	m.PC = uint64((int(m.rdX(rs1)) + imm) & ^1)
+	m.wrX(rd, t)
 }
 
 func emu_BEQ(m *RV, ins uint) {
