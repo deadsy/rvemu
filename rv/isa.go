@@ -62,9 +62,9 @@ var ISArv32i = ISAModule{
 		{"imm[11:0] rs1 100 rd 0010011 XORI", daTypeIf, emu_XORI},                  // I
 		{"imm[11:0] rs1 110 rd 0010011 ORI", daTypeIa, emu_ORI},                    // I
 		{"imm[11:0] rs1 111 rd 0010011 ANDI", daTypeIa, emu_ANDI},                  // I
-		{"0000000 shamt5 rs1 001 rd 0010011 SLLI", daTypeId, emu_SLLI},             // I
-		{"0000000 shamt5 rs1 101 rd 0010011 SRLI", daTypeId, emu_SRLI},             // I
-		{"0100000 shamt5 rs1 101 rd 0010011 SRAI", daTypeId, emu_SRAI},             // I
+		{"0000000 shamt5 rs1 001 rd 0010011 SLLI", daTypeId, emu_SLLI32},           // I
+		{"0000000 shamt5 rs1 101 rd 0010011 SRLI", daTypeId, emu_SRLI32},           // I
+		{"0100000 shamt5 rs1 101 rd 0010011 SRAI", daTypeId, emu_SRAI32},           // I
 		{"0000000 rs2 rs1 000 rd 0110011 ADD", daTypeRa, emu_ADD},                  // R
 		{"0100000 rs2 rs1 000 rd 0110011 SUB", daTypeRa, emu_SUB},                  // R
 		{"0000000 rs2 rs1 001 rd 0110011 SLL", daTypeRa, emu_SLL},                  // R
@@ -278,9 +278,9 @@ var ISArv64i = ISAModule{
 		{"imm[11:0] rs1 110 rd 0000011 LWU", daTypeIa, emu_LWU},          // I
 		{"imm[11:0] rs1 011 rd 0000011 LD", daTypeIa, emu_LD},            // I
 		{"imm[11:5] rs2 rs1 011 imm[4:0] 0100011 SD", daTypeSa, emu_SD},  // S
-		{"000000 shamt6 rs1 001 rd 0010011 SLLI", daTypeId, emu_SLLI},    // I
-		{"000000 shamt6 rs1 101 rd 0010011 SRLI", daTypeId, emu_SRLI},    // I
-		{"010000 shamt6 rs1 101 rd 0010011 SRAI", daTypeId, emu_SRAI},    // I
+		{"000000 shamt6 rs1 001 rd 0010011 SLLI", daTypeId, emu_SLLI64},  // I
+		{"000000 shamt6 rs1 101 rd 0010011 SRLI", daTypeId, emu_SRLI64},  // I
+		{"010000 shamt6 rs1 101 rd 0010011 SRAI", daTypeId, emu_SRAI64},  // I
 		{"imm[11:0] rs1 000 rd 0011011 ADDIW", daTypeIa, emu_ADDIW},      // I
 		{"0000000 shamt5 rs1 001 rd 0011011 SLLIW", daTypeId, emu_SLLIW}, // I
 		{"0000000 shamt5 rs1 101 rd 0011011 SRLIW", daTypeId, emu_SRLIW}, // I

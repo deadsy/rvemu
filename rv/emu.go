@@ -250,6 +250,24 @@ func emu_ANDI(m *RV, ins uint) {
 	m.PC += 4
 }
 
+func emu_SLLI32(m *RV, ins uint) {
+	shamt, rs1, rd := decodeIc(ins)
+	m.wrX(rd, m.rdX(rs1)<<shamt)
+	m.PC += 4
+}
+
+func emu_SRLI32(m *RV, ins uint) {
+	shamt, rs1, rd := decodeIc(ins)
+	m.wrX(rd, m.rdX(rs1)>>shamt)
+	m.PC += 4
+}
+
+func emu_SRAI32(m *RV, ins uint) {
+	shamt, rs1, rd := decodeIc(ins)
+	m.wrX(rd, uint64(int32(m.rdX(rs1))>>shamt))
+	m.PC += 4
+}
+
 func emu_ADD(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, m.rdX(rs1)+m.rdX(rs2))
@@ -1464,31 +1482,21 @@ func emu_SD(m *RV, ins uint) {
 	m.PC += 4
 }
 
-func emu_SLLI(m *RV, ins uint) {
+func emu_SLLI64(m *RV, ins uint) {
 	shamt, rs1, rd := decodeIc(ins)
 	m.wrX(rd, m.rdX(rs1)<<shamt)
 	m.PC += 4
 }
 
-func emu_SRLI(m *RV, ins uint) {
+func emu_SRLI64(m *RV, ins uint) {
 	shamt, rs1, rd := decodeIc(ins)
 	m.wrX(rd, m.rdX(rs1)>>shamt)
 	m.PC += 4
 }
 
-func emu_SRAI(m *RV, ins uint) {
+func emu_SRAI64(m *RV, ins uint) {
 	shamt, rs1, rd := decodeIc(ins)
-	var x uint64
-	if m.xlen == 32 {
-		if shamt > 31 {
-			m.ex.N = ExIllegal
-			return
-		}
-		x = uint64(int32(m.rdX(rs1)) >> shamt)
-	} else {
-		x = uint64(int64(m.rdX(rs1)) >> shamt)
-	}
-	m.wrX(rd, x)
+	m.wrX(rd, uint64(int64(m.rdX(rs1))>>shamt))
 	m.PC += 4
 }
 
