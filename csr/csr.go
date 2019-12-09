@@ -11,6 +11,8 @@ package csr
 import (
 	"fmt"
 	"strings"
+
+	cli "github.com/deadsy/go-cli"
 )
 
 //-----------------------------------------------------------------------------
@@ -18,7 +20,7 @@ import (
 // Exception is a bit mask of CSR exceptions.
 type Exception uint
 
-// Exception values.
+// CSR Exception values.
 const (
 	ExTodo      Exception = 1 << iota // csr not implemented
 	ExPrivilege                       // insufficient privilege
@@ -78,6 +80,54 @@ func rdZero(s *State) uint {
 }
 
 //-----------------------------------------------------------------------------
+// mcause register
+
+// mcause interrupts
+const (
+	IntUserSoftware       = 0  // User software interrupt
+	IntSupervisorSoftware = 1  // Supervisor software interrupt
+	IntMachineSoftware    = 3  // Machine software interrupt
+	IntUserTimer          = 4  // User timer interrupt
+	IntSupervisorTimer    = 5  // Supervisor timer interrupt
+	IntMachineTimer       = 7  // Machine timer interrupt
+	IntUserExternal       = 8  // User external interrupt
+	IntSupervisorExternal = 9  // Supervisor external interrupt
+	IntMachineExternal    = 11 // Machine external interrupt
+)
+
+// SetInterrupt sets an interrupt code in mcause.
+func (s *State) SetInterrupt(x uint) {
+	s.mcause = (1 << (s.mxlen - 1)) | x
+}
+
+// mcause exceptions
+const (
+	ExInsAddrMisaligned   = 0  // Instruction address misaligned
+	ExInsAccessFault      = 1  // Instruction access fault
+	ExInsIllegal          = 2  // Illegal instruction
+	ExBreakpoint          = 3  // Breakpoint
+	ExLoadAddrMisaligned  = 4  // Load address misaligned
+	ExLoadAccessFault     = 5  // Load access fault
+	ExStoreAddrMisaligned = 6  // Store/AMO address misaligned
+	ExStoreAccessFault    = 7  // Store/AMO access fault
+	ExEnvCallUMode        = 8  // Environment call from U-mode
+	ExEnvCallSMode        = 9  // Environment call from S-mode
+	ExEncCallMMode        = 11 // Environment call from M-mode
+	ExInsPageFault        = 12 // Instruction page fault
+	ExLoadPageFault       = 13 // Load page fault
+	ExStorePageFault      = 15 // Store/AMO page fault
+)
+
+// SetException sets an exception code in mcause.
+func (s *State) SetException(x uint) {
+	s.mcause = (0 << (s.mxlen - 1)) | x
+}
+
+func rdMCAUSE(s *State) uint {
+	return s.mcause
+}
+
+//-----------------------------------------------------------------------------
 // machine isa register
 
 func log2(n uint) uint {
@@ -94,6 +144,10 @@ func log2(n uint) uint {
 
 func mxl(xlen uint) uint {
 	return log2(xlen) - 4
+}
+
+func initMISA(s *State) {
+	s.misa = mxl(s.xlen) << (s.mxlen - 2)
 }
 
 func rdMISA(s *State) uint {
@@ -353,7 +407,7 @@ var lookup = map[uint]csrDefn{
 	0x33f: {"mhpmevent31", nil, nil},
 	0x340: {"mscratch", wrMSCRATCH, rdMSCRATCH},
 	0x341: {"mepc", wrMEPC, rdMEPC},
-	0x342: {"mcause", nil, nil},
+	0x342: {"mcause", nil, rdMCAUSE},
 	0x343: {"mtval", nil, nil},
 	0x344: {"mip", nil, nil},
 	0x380: {"mbase", nil, nil},
@@ -476,6 +530,13 @@ func Name(reg uint) string {
 	return fmt.Sprintf("0x%03x", reg)
 }
 
+// access returns the access string of a given CSR.
+func access(reg uint) string {
+	mode := [4]string{"u", "s", "h", "m"}[(reg>>8)&3]
+	rw := [4]string{"rw", "rw", "rw", "r_"}[(reg>>10)&3]
+	return mode + rw
+}
+
 //-----------------------------------------------------------------------------
 
 // canAccess returns true if the register can be accessed at the current privilege level.
@@ -506,11 +567,12 @@ type State struct {
 	mscratch uint // machine scratch
 	fcsr     uint // floating point control and status register
 	misa     uint // machine isa register
+	mcause   uint // machine cause register
 }
 
 // NewState returns a CSR state object.
 func NewState(xlen uint) *State {
-	s := State{
+	s := &State{
 		Priv:   PrivM, // start at machine level
 		xlen:   xlen,
 		mxlen:  xlen,
@@ -518,8 +580,8 @@ func NewState(xlen uint) *State {
 		sxlen:  xlen,
 		ialign: 16, // TODO
 	}
-	s.misa = mxl(xlen) << (s.mxlen - 2)
-	return &s
+	initMISA(s)
+	return s
 }
 
 // Rd reads from a CSR.
@@ -574,18 +636,27 @@ func (s *State) Clr(reg, bits uint) Exception {
 
 // Display displays the CSR state.
 func (s *State) Display() string {
-	x := []string{}
-	var fmtx string
-	if s.mxlen == 32 {
-		fmtx = "%-8s %08x"
+	// allow all reads
+	savedPriv := s.Priv
+	s.Priv = PrivM
+	// read all registers
+	x := [][]string{}
+	for reg := uint(0); reg < 4096; reg++ {
+		val, ex := s.Rd(reg)
+		if ex == ExTodo || ex == ExNoRead {
+			continue
+		}
+		regStr := fmt.Sprintf("%03x %s %s", reg, access(reg), Name(reg))
+		valStr := "0"
+		if val != 0 {
+			valStr = fmt.Sprintf("%08x", val)
+		}
+		x = append(x, []string{regStr, valStr})
 	}
-	if s.mxlen == 64 {
-		fmtx = "%-8s %016x"
-	}
-	x = append(x, fmt.Sprintf(fmtx, "mepc", s.mepc))
-	x = append(x, fmt.Sprintf(fmtx, "mtvec", s.mtvec))
-	x = append(x, fmt.Sprintf(fmtx, "mstatus", s.mstatus))
-	return strings.Join(x, "\n")
+	// restore privilege
+	s.Priv = savedPriv
+	// return the table string
+	return cli.TableString(x, []int{0, 0}, 1)
 }
 
 // MRET performs an MRET operation.

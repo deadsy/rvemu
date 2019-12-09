@@ -343,7 +343,7 @@ func daTypeCIh(name string, pc uint, ins uint) string {
 // Type CIW Decodes
 
 func daTypeCIWa(name string, pc uint, ins uint) string {
-	return "unimp"
+	return "illegal"
 }
 
 func daTypeCIWb(name string, pc uint, ins uint) string {
@@ -478,7 +478,7 @@ func (isa *ISA) daInstruction(pc uint, ins uint) string {
 	if im != nil {
 		return im.defn.da(im.name, pc, ins)
 	}
-	return "unimp"
+	return "illegal"
 }
 
 //-----------------------------------------------------------------------------
