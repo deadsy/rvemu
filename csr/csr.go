@@ -169,6 +169,17 @@ func rdMEPC(s *State) uint {
 }
 
 //-----------------------------------------------------------------------------
+// machine trap value register
+
+func wrMTVAL(s *State, val uint) {
+	s.mtval = val
+}
+
+func rdMTVAL(s *State) uint {
+	return s.mtval
+}
+
+//-----------------------------------------------------------------------------
 // machine trap vector
 
 func wrMTVEC(s *State, val uint) {
@@ -408,7 +419,7 @@ var lookup = map[uint]csrDefn{
 	0x340: {"mscratch", wrMSCRATCH, rdMSCRATCH},
 	0x341: {"mepc", wrMEPC, rdMEPC},
 	0x342: {"mcause", nil, rdMCAUSE},
-	0x343: {"mtval", nil, nil},
+	0x343: {"mtval", wrMTVAL, rdMTVAL},
 	0x344: {"mip", nil, nil},
 	0x380: {"mbase", nil, nil},
 	0x381: {"mbound", nil, nil},
@@ -562,7 +573,8 @@ type State struct {
 	sxlen    uint // supervisor register length
 	ialign   uint // instruction alignment 16/32
 	mepc     uint // machine exception program counter
-	mtvec    uint // machine trap-vector base-address register
+	mtvec    uint // machine trap vector base address register
+	mtval    uint // machine trap value register
 	mstatus  uint // machine status
 	mscratch uint // machine scratch
 	fcsr     uint // floating point control and status register
