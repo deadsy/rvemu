@@ -17,33 +17,33 @@ import (
 
 //-----------------------------------------------------------------------------
 
-// Exception is a bit mask of CSR exceptions.
-type Exception uint
+// Error is a bitmap of CSR access errors.
+type Error uint
 
-// CSR Exception values.
+// CSR Error values.
 const (
-	ExTodo      Exception = 1 << iota // csr not implemented
-	ExPrivilege                       // insufficient privilege
-	ExReadOnly                        // trying to write a read-only register
-	ExNoRead                          // no read function (todo)
-	ExNoWrite                         // no write function (todo)
+	ErrTodo      Error = 1 << iota // csr not implemented
+	ErrPrivilege                   // insufficient privilege
+	ErrReadOnly                    // trying to write a read-only register
+	ErrNoRead                      // no read function (todo)
+	ErrNoWrite                     // no write function (todo)
 )
 
-func (e Exception) String() string {
+func (e Error) String() string {
 	s := []string{}
-	if e&ExTodo != 0 {
+	if e&ErrTodo != 0 {
 		s = append(s, "not implemented")
 	}
-	if e&ExPrivilege != 0 {
+	if e&ErrPrivilege != 0 {
 		s = append(s, "insufficient privilege")
 	}
-	if e&ExReadOnly != 0 {
+	if e&ErrReadOnly != 0 {
 		s = append(s, "read only")
 	}
-	if e&ExNoRead != 0 {
+	if e&ErrNoRead != 0 {
 		s = append(s, "no read function")
 	}
-	if e&ExNoWrite != 0 {
+	if e&ErrNoWrite != 0 {
 		s = append(s, "no write function")
 	}
 	return strings.Join(s, ",")
@@ -102,20 +102,20 @@ func (s *State) SetInterrupt(x uint) {
 
 // mcause exceptions
 const (
-	ExInsAddrMisaligned   = 0  // Instruction address misaligned
-	ExInsAccessFault      = 1  // Instruction access fault
-	ExInsIllegal          = 2  // Illegal instruction
-	ExBreakpoint          = 3  // Breakpoint
-	ExLoadAddrMisaligned  = 4  // Load address misaligned
-	ExLoadAccessFault     = 5  // Load access fault
-	ExStoreAddrMisaligned = 6  // Store/AMO address misaligned
-	ExStoreAccessFault    = 7  // Store/AMO access fault
-	ExEnvCallUMode        = 8  // Environment call from U-mode
-	ExEnvCallSMode        = 9  // Environment call from S-mode
-	ExEncCallMMode        = 11 // Environment call from M-mode
-	ExInsPageFault        = 12 // Instruction page fault
-	ExLoadPageFault       = 13 // Load page fault
-	ExStorePageFault      = 15 // Store/AMO page fault
+	ExInsAddrMisaligned         = 0  // Instruction address misaligned
+	ExInsAccessFault            = 1  // Instruction access fault
+	ExInsIllegal                = 2  // Illegal instruction
+	ExBreakpoint                = 3  // Breakpoint
+	ExLoadAddrMisaligned        = 4  // Load address misaligned
+	ExLoadAccessFault           = 5  // Load access fault
+	ExStoreAddrMisaligned       = 6  // Store/AMO address misaligned
+	ExStoreAccessFault          = 7  // Store/AMO access fault
+	ExEnvCallFromUserMode       = 8  // Environment call from U-mode
+	ExEnvCallFromSupervisorMode = 9  // Environment call from S-mode
+	ExEnvCallFromMachineMode    = 11 // Environment call from M-mode
+	ExInsPageFault              = 12 // Instruction page fault
+	ExLoadPageFault             = 13 // Load page fault
+	ExStorePageFault            = 15 // Store/AMO page fault
 )
 
 // SetException sets an exception code in mcause.
@@ -130,20 +130,8 @@ func rdMCAUSE(s *State) uint {
 //-----------------------------------------------------------------------------
 // machine isa register
 
-func log2(n uint) uint {
-	if n == 0 {
-		panic("n == 0")
-	}
-	var i uint
-	for n != 0 {
-		n >>= 1
-		i++
-	}
-	return i - 1
-}
-
 func mxl(xlen uint) uint {
-	return log2(xlen) - 4
+	return map[uint]uint{32: 1, 64: 2, 128: 3}[xlen]
 }
 
 func initMISA(s *State) {
@@ -597,51 +585,51 @@ func NewState(xlen uint) *State {
 }
 
 // Rd reads from a CSR.
-func (s *State) Rd(reg uint) (uint, Exception) {
+func (s *State) Rd(reg uint) (uint, Error) {
 	if !s.canAccess(reg) {
-		return 0, ExPrivilege
+		return 0, ErrPrivilege
 	}
 	if x, ok := lookup[reg]; ok {
 		if x.rd == nil {
-			return 0, ExNoRead
+			return 0, ErrNoRead
 		}
 		return x.rd(s), 0
 	}
-	return 0, ExTodo
+	return 0, ErrTodo
 }
 
 // Wr writes to a CSR.
-func (s *State) Wr(reg, val uint) Exception {
+func (s *State) Wr(reg, val uint) Error {
 	if !canWr(reg) {
-		return ExReadOnly
+		return ErrReadOnly
 	}
 	if !s.canAccess(reg) {
-		return ExPrivilege
+		return ErrPrivilege
 	}
 	if x, ok := lookup[reg]; ok {
 		if x.wr == nil {
-			return ExNoWrite
+			return ErrNoWrite
 		}
 		x.wr(s, val)
 		return 0
 	}
-	return ExTodo
+	return ErrTodo
 }
 
 // Set sets bits in a CSR.
-func (s *State) Set(reg, bits uint) Exception {
-	val, ex := s.Rd(reg)
-	if ex != 0 {
-		return ex
+func (s *State) Set(reg, bits uint) Error {
+	val, err := s.Rd(reg)
+	if err != 0 {
+		return err
 	}
 	return s.Wr(reg, val|bits)
 }
 
 // Clr clears bits in a CSR.
-func (s *State) Clr(reg, bits uint) Exception {
-	val, ex := s.Rd(reg)
-	if ex != 0 {
-		return ex
+func (s *State) Clr(reg, bits uint) Error {
+	val, err := s.Rd(reg)
+	if err != 0 {
+		return err
 	}
 	return s.Wr(reg, val & ^bits)
 }
@@ -654,8 +642,8 @@ func (s *State) Display() string {
 	// read all registers
 	x := [][]string{}
 	for reg := uint(0); reg < 4096; reg++ {
-		val, ex := s.Rd(reg)
-		if ex == ExTodo || ex == ExNoRead {
+		val, err := s.Rd(reg)
+		if err == ErrTodo || err == ErrNoRead {
 			continue
 		}
 		regStr := fmt.Sprintf("%03x %s %s", reg, access(reg), Name(reg))
@@ -672,9 +660,9 @@ func (s *State) Display() string {
 }
 
 // MRET performs an MRET operation.
-func (s *State) MRET() (uint, Exception) {
+func (s *State) MRET() (uint, Error) {
 	if !s.canAccess(MSTATUS) {
-		return 0, ExPrivilege
+		return 0, ErrPrivilege
 	}
 	s.Priv = s.mstatusRdMPP()
 	s.mstatusWrMIE(s.mstatusRdMPIE())

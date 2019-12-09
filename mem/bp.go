@@ -77,13 +77,13 @@ func (b breakPoints) Clr(addr uint) {
 
 //-----------------------------------------------------------------------------
 
-func (b breakPoints) check(addr uint, access Attribute) Exception {
+func (b breakPoints) check(addr uint, access Attribute) Error {
 	if bp, ok := b[addr]; ok {
 		if access&bp.access != 0 {
 			if bp.state == bpBreak {
 				// skip so we don't immediately re-break.
 				bp.state = bpSkip
-				return ExBreak
+				return ErrBreak
 			}
 			if bp.state == bpSkip {
 				// break on the next access.
@@ -94,26 +94,26 @@ func (b breakPoints) check(addr uint, access Attribute) Exception {
 	return 0
 }
 
-func (b breakPoints) checkR(addr uint) Exception {
-	ex := b.check(addr, AttrR)
-	if ex != 0 {
-		return ex | ExRead
+func (b breakPoints) checkR(addr uint) Error {
+	err := b.check(addr, AttrR)
+	if err != 0 {
+		return err | ErrRead
 	}
 	return 0
 }
 
-func (b breakPoints) checkW(addr uint) Exception {
-	ex := b.check(addr, AttrW)
-	if ex != 0 {
-		return ex | ExWrite
+func (b breakPoints) checkW(addr uint) Error {
+	err := b.check(addr, AttrW)
+	if err != 0 {
+		return err | ErrWrite
 	}
 	return 0
 }
 
-func (b breakPoints) checkX(addr uint) Exception {
-	ex := b.check(addr, AttrX)
-	if ex != 0 {
-		return ex | ExExec
+func (b breakPoints) checkX(addr uint) Error {
+	err := b.check(addr, AttrX)
+	if err != 0 {
+		return err | ErrExec
 	}
 	return 0
 }

@@ -273,58 +273,58 @@ type Ecall interface {
 }
 
 //-----------------------------------------------------------------------------
-// memory exceptions
+// memory errors
 
-type memoryException struct {
-	addr  uint          // memory address that caused the exception
-	ex    mem.Exception // exception bitmap
-	sname string        // name of the section containing the exception address
+type memoryError struct {
+	addr  uint      // memory address that caused the exception
+	err   mem.Error // error bitmap
+	sname string    // name of the section containing the exception address
 }
 
-func (e memoryException) String() string {
+func (e memoryError) String() string {
 	// TODO - fix the 64-bit address case
-	return fmt.Sprintf("%s @ %08x (%s)", e.ex, e.addr, e.sname)
+	return fmt.Sprintf("%s @ %08x (%s)", e.err, e.addr, e.sname)
 }
 
 //-----------------------------------------------------------------------------
-// CSR exceptions
+// CSR errors
 
-type csrException struct {
-	reg uint          // CSR causing the exception
-	ex  csr.Exception // exception bitmap
+type csrError struct {
+	reg uint      // CSR causing the exception
+	err csr.Error // error bitmap
 }
 
-func (e csrException) String() string {
+func (e csrError) String() string {
 	// TODO - fix the 64-bit address case
-	return fmt.Sprintf("%s: %s", csr.Name(e.reg), e.ex)
+	return fmt.Sprintf("%s: %s", csr.Name(e.reg), e.err)
 }
 
 //-----------------------------------------------------------------------------
 
-// Exception numbers.
+// Emulation error numbers.
 const (
-	ExNone    = iota // normal (0)
-	ExIllegal        // illegal instruction
-	ExExit           // exit from emulation
-	ExTodo           // unimplemented instruction
-	ExMemory         // memory exception
-	ExCSR            // CSR exception
-	ExEcall          // unrecognised ecall
-	ExBreak          // debug break point
-	ExBadReg         // bad register number (rv32e)
-	ExStuck          // stuck program counter
+	ErrNone    = iota // normal (0)
+	ErrIllegal        // illegal instruction
+	ErrExit           // exit from emulation
+	ErrTodo           // unimplemented instruction
+	ErrMemory         // memory exception
+	ErrCSR            // CSR exception
+	ErrEcall          // unrecognised ecall
+	ErrBreak          // debug break point
+	ErrBadReg         // bad register number (rv32e)
+	ErrStuck          // stuck program counter
 )
 
-// Exception is a general emulation exception.
-type Exception struct {
-	N    int             // exception number
-	alen int             // address length
-	pc   uint            // program counter at which exception occurrred
-	mem  memoryException // memory exception info
-	csr  csrException    // csr exception info
+// Error is a general emulation error.
+type Error struct {
+	N    int         // error number
+	alen int         // address length
+	pc   uint        // program counter at which error occurrred
+	mem  memoryError // memory error info
+	csr  csrError    // csr error info
 }
 
-func (e *Exception) Error() string {
+func (e *Error) Error() string {
 
 	pcStr := ""
 	if e.alen == 32 {
@@ -334,21 +334,21 @@ func (e *Exception) Error() string {
 	}
 
 	switch e.N {
-	case ExNone:
+	case ErrNone:
 		return ""
-	case ExIllegal:
+	case ErrIllegal:
 		return "illegal instruction at PC " + pcStr
-	case ExExit:
+	case ErrExit:
 		return "exit at PC " + pcStr
-	case ExTodo:
+	case ErrTodo:
 		return "unimplemented instruction at PC " + pcStr
-	case ExMemory:
+	case ErrMemory:
 		return fmt.Sprintf("memory exception at PC %s, %s", pcStr, e.mem)
-	case ExCSR:
+	case ErrCSR:
 		return fmt.Sprintf("csr exception at PC %s, %s", pcStr, e.csr)
-	case ExEcall:
+	case ErrEcall:
 		return "unrecognized ecall at PC " + pcStr
-	case ExBreak:
+	case ErrBreak:
 		return "breakpoint at PC " + pcStr
 	}
 

@@ -16,30 +16,30 @@ import (
 
 //-----------------------------------------------------------------------------
 
-// Exception is a bit mask of memory access exceptions.
-type Exception uint
+// Error is a bit mask of memory access errors.
+type Error uint
 
-// Exception values.
+// Error values.
 const (
-	ExAlign Exception = 1 << iota // misaligned read/write
-	ExRead                        // can't read this memory
-	ExWrite                       // can't write this memory
-	ExExec                        // can't read instructions from this memory
-	ExBreak                       // break on memory access
+	ErrAlign Error = 1 << iota // misaligned read/write
+	ErrRead                    // can't read this memory
+	ErrWrite                   // can't write this memory
+	ErrExec                    // can't read instructions from this memory
+	ErrBreak                   // break on memory access
 )
 
-func (e Exception) String() string {
+func (e Error) String() string {
 	s := make([]string, 0)
-	if e&ExAlign != 0 {
+	if e&ErrAlign != 0 {
 		s = append(s, "align")
 	}
-	if e&ExRead != 0 {
+	if e&ErrRead != 0 {
 		s = append(s, "read")
 	}
-	if e&ExWrite != 0 {
+	if e&ErrWrite != 0 {
 		s = append(s, "write")
 	}
-	if e&ExExec != 0 {
+	if e&ErrExec != 0 {
 		s = append(s, "exec")
 	}
 	return strings.Join(s, ",")
@@ -84,38 +84,38 @@ func (a Attribute) String() string {
 }
 
 //-----------------------------------------------------------------------------
-// memory access exceptions
+// memory access errors
 
-func wrException(adr uint, attr Attribute, align uint) Exception {
-	var ex Exception
+func wrError(adr uint, attr Attribute, align uint) Error {
+	var err Error
 	if attr&AttrW == 0 {
-		ex |= ExWrite
+		err |= ErrWrite
 	}
 	if adr&(align-1) != 0 {
-		ex |= ExAlign
+		err |= ErrAlign
 	}
-	return ex
+	return err
 }
 
-func rdException(adr uint, attr Attribute, align uint) Exception {
-	var ex Exception
+func rdError(adr uint, attr Attribute, align uint) Error {
+	var err Error
 	if attr&AttrR == 0 {
-		ex |= ExRead
+		err |= ErrRead
 	}
 	if adr&(align-1) != 0 {
-		ex |= ExAlign
+		err |= ErrAlign
 	}
-	return ex
+	return err
 }
 
-func rdInsException(adr uint, attr Attribute) Exception {
+func rdInsError(adr uint, attr Attribute) Error {
 	// rv32c has mixed 32/16 bit instruction streams so
 	// we allow 32-bit reads on 2 byte address boundaries.
-	ex := rdException(adr, attr, 2)
+	err := rdError(adr, attr, 2)
 	if attr&AttrX == 0 {
-		ex |= ExExec
+		err |= ErrExec
 	}
-	return ex
+	return err
 }
 
 //-----------------------------------------------------------------------------
@@ -138,15 +138,15 @@ func (a regionByStart) Less(i, j int) bool { return a[i].start < a[j].start }
 type Region interface {
 	Info() *RegionInfo
 	SetAttr(attr Attribute)
-	RdIns(adr uint) (uint, Exception)
-	Rd64(adr uint) (uint64, Exception)
-	Rd32(adr uint) (uint32, Exception)
-	Rd16(adr uint) (uint16, Exception)
-	Rd8(adr uint) (uint8, Exception)
-	Wr64(adr uint, val uint64) Exception
-	Wr32(adr uint, val uint32) Exception
-	Wr16(adr uint, val uint16) Exception
-	Wr8(adr uint, val uint8) Exception
+	RdIns(adr uint) (uint, Error)
+	Rd64(adr uint) (uint64, Error)
+	Rd32(adr uint) (uint32, Error)
+	Rd16(adr uint) (uint16, Error)
+	Rd8(adr uint) (uint8, Error)
+	Wr64(adr uint, val uint64) Error
+	Wr32(adr uint, val uint32) Error
+	Wr16(adr uint, val uint16) Error
+	Wr8(adr uint, val uint8) Error
 	In(adr, size uint) bool
 }
 
@@ -198,60 +198,60 @@ func (m *Section) In(adr, size uint) bool {
 }
 
 // RdIns reads a 32-bit instruction from memory.
-func (m *Section) RdIns(adr uint) (uint, Exception) {
-	return uint(binary.LittleEndian.Uint32(m.mem[adr-m.start:])), rdInsException(adr, m.attr)
+func (m *Section) RdIns(adr uint) (uint, Error) {
+	return uint(binary.LittleEndian.Uint32(m.mem[adr-m.start:])), rdInsError(adr, m.attr)
 }
 
 // Rd64 reads a 64-bit data value from memory.
-func (m *Section) Rd64(adr uint) (uint64, Exception) {
-	return binary.LittleEndian.Uint64(m.mem[adr-m.start:]), rdException(adr, m.attr, 8)
+func (m *Section) Rd64(adr uint) (uint64, Error) {
+	return binary.LittleEndian.Uint64(m.mem[adr-m.start:]), rdError(adr, m.attr, 8)
 }
 
 // Rd32 reads a 32-bit data value from memory.
-func (m *Section) Rd32(adr uint) (uint32, Exception) {
-	return binary.LittleEndian.Uint32(m.mem[adr-m.start:]), rdException(adr, m.attr, 4)
+func (m *Section) Rd32(adr uint) (uint32, Error) {
+	return binary.LittleEndian.Uint32(m.mem[adr-m.start:]), rdError(adr, m.attr, 4)
 }
 
 // Rd16 reads a 16-bit data value from memory.
-func (m *Section) Rd16(adr uint) (uint16, Exception) {
-	return binary.LittleEndian.Uint16(m.mem[adr-m.start:]), rdException(adr, m.attr, 2)
+func (m *Section) Rd16(adr uint) (uint16, Error) {
+	return binary.LittleEndian.Uint16(m.mem[adr-m.start:]), rdError(adr, m.attr, 2)
 }
 
 // Rd8 reads an 8-bit data value from memory.
-func (m *Section) Rd8(adr uint) (uint8, Exception) {
-	return m.mem[adr-m.start], rdException(adr, m.attr, 1)
+func (m *Section) Rd8(adr uint) (uint8, Error) {
+	return m.mem[adr-m.start], rdError(adr, m.attr, 1)
 }
 
 // Wr64 writes a 64-bit data value to memory.
-func (m *Section) Wr64(adr uint, val uint64) Exception {
+func (m *Section) Wr64(adr uint, val uint64) Error {
 	if m.attr&AttrW != 0 {
 		binary.LittleEndian.PutUint64(m.mem[adr-m.start:], val)
 	}
-	return wrException(adr, m.attr, 8)
+	return wrError(adr, m.attr, 8)
 }
 
 // Wr32 writes a 32-bit data value to memory.
-func (m *Section) Wr32(adr uint, val uint32) Exception {
+func (m *Section) Wr32(adr uint, val uint32) Error {
 	if m.attr&AttrW != 0 {
 		binary.LittleEndian.PutUint32(m.mem[adr-m.start:], val)
 	}
-	return wrException(adr, m.attr, 4)
+	return wrError(adr, m.attr, 4)
 }
 
 // Wr16 writes a 16-bit data value to memory.
-func (m *Section) Wr16(adr uint, val uint16) Exception {
+func (m *Section) Wr16(adr uint, val uint16) Error {
 	if m.attr&AttrW != 0 {
 		binary.LittleEndian.PutUint16(m.mem[adr-m.start:], val)
 	}
-	return wrException(adr, m.attr, 2)
+	return wrError(adr, m.attr, 2)
 }
 
 // Wr8 writes an 8-bit data value to memory.
-func (m *Section) Wr8(adr uint, val uint8) Exception {
+func (m *Section) Wr8(adr uint, val uint8) Error {
 	if m.attr&AttrW != 0 {
 		m.mem[adr-m.start] = val
 	}
-	return wrException(adr, m.attr, 1)
+	return wrError(adr, m.attr, 1)
 }
 
 //-----------------------------------------------------------------------------
@@ -289,48 +289,48 @@ func (m *empty) In(adr, size uint) bool {
 }
 
 // RdIns reads a 32-bit instruction from memory.
-func (m *empty) RdIns(adr uint) (uint, Exception) {
-	return math.MaxUint32, rdInsException(adr, m.attr)
+func (m *empty) RdIns(adr uint) (uint, Error) {
+	return math.MaxUint32, rdInsError(adr, m.attr)
 }
 
 // Rd64 reads a 64-bit data value from memory.
-func (m *empty) Rd64(adr uint) (uint64, Exception) {
-	return math.MaxUint64, rdException(adr, m.attr, 8)
+func (m *empty) Rd64(adr uint) (uint64, Error) {
+	return math.MaxUint64, rdError(adr, m.attr, 8)
 }
 
 // Rd32 reads a 32-bit data value from memory.
-func (m *empty) Rd32(adr uint) (uint32, Exception) {
-	return math.MaxUint32, rdException(adr, m.attr, 4)
+func (m *empty) Rd32(adr uint) (uint32, Error) {
+	return math.MaxUint32, rdError(adr, m.attr, 4)
 }
 
 // Rd16 reads a 16-bit data value from memory.
-func (m *empty) Rd16(adr uint) (uint16, Exception) {
-	return math.MaxUint16, rdException(adr, m.attr, 2)
+func (m *empty) Rd16(adr uint) (uint16, Error) {
+	return math.MaxUint16, rdError(adr, m.attr, 2)
 }
 
 // Rd8 reads an 8-bit data value from memory.
-func (m *empty) Rd8(adr uint) (uint8, Exception) {
-	return math.MaxUint8, rdException(adr, m.attr, 1)
+func (m *empty) Rd8(adr uint) (uint8, Error) {
+	return math.MaxUint8, rdError(adr, m.attr, 1)
 }
 
 // Wr64 writes a 64-bit data value to memory.
-func (m *empty) Wr64(adr uint, val uint64) Exception {
-	return wrException(adr, m.attr, 8)
+func (m *empty) Wr64(adr uint, val uint64) Error {
+	return wrError(adr, m.attr, 8)
 }
 
 // Wr32 writes a 32-bit data value to memory.
-func (m *empty) Wr32(adr uint, val uint32) Exception {
-	return wrException(adr, m.attr, 4)
+func (m *empty) Wr32(adr uint, val uint32) Error {
+	return wrError(adr, m.attr, 4)
 }
 
 // Wr16 writes a 16-bit data value to memory.
-func (m *empty) Wr16(adr uint, val uint16) Exception {
-	return wrException(adr, m.attr, 2)
+func (m *empty) Wr16(adr uint, val uint16) Error {
+	return wrError(adr, m.attr, 2)
 }
 
 // Wr8 writes an 8-bit data value to memory.
-func (m *empty) Wr8(adr uint, val uint8) Exception {
-	return wrException(adr, m.attr, 1)
+func (m *empty) Wr8(adr uint, val uint8) Error {
+	return wrError(adr, m.attr, 1)
 }
 
 //-----------------------------------------------------------------------------

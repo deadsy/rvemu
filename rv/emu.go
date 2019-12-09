@@ -137,8 +137,8 @@ func emu_LB(m *RV, ins uint) {
 func emu_LH(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	val, ex := m.Mem.Rd16(adr)
-	m.checkMemory(adr, ex)
+	val, err := m.Mem.Rd16(adr)
+	m.checkMemory(adr, err)
 	m.wrX(rd, uint64(int16(val)))
 	m.PC += 4
 }
@@ -388,7 +388,7 @@ func emu_FENCE_I(m *RV, ins uint) {
 
 func emu_ECALL(m *RV, ins uint) {
 	if m.ecall == nil {
-		m.ex.N = ExEcall
+		m.err.N = ErrEcall
 		return
 	}
 	m.ecall.Call(m)
@@ -396,7 +396,7 @@ func emu_ECALL(m *RV, ins uint) {
 }
 
 func emu_EBREAK(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_CSRRW(m *RV, ins uint) {
@@ -459,33 +459,33 @@ func emu_CSRRCI(m *RV, ins uint) {
 // rv32i privileged
 
 func emu_URET(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_SRET(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_MRET(m *RV, ins uint) {
-	pc, ex := m.CSR.MRET()
-	m.checkCSR(csr.MSTATUS, ex)
+	pc, err := m.CSR.MRET()
+	m.checkCSR(csr.MSTATUS, err)
 	m.PC = uint64(pc)
 }
 
 func emu_WFI(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_SFENCE_VMA(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_HFENCE_BVMA(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_HFENCE_GVMA(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 //-----------------------------------------------------------------------------
@@ -621,11 +621,11 @@ func emu_REMU(m *RV, ins uint) {
 // rv32a
 
 func emu_LR_W(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_SC_W(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_AMOSWAP_W(m *RV, ins uint) {
@@ -1218,7 +1218,7 @@ func emu_FCVT_D_WU(m *RV, ins uint) {
 // rv32c
 
 func emu_C_ILLEGAL(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_C_ADDI4SPN(m *RV, ins uint) {
@@ -1368,7 +1368,7 @@ func emu_C_SLLI(m *RV, ins uint) {
 }
 
 func emu_C_SLLI64(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_C_LWSP(m *RV, ins uint) {
@@ -1402,7 +1402,7 @@ func emu_C_MV(m *RV, ins uint) {
 }
 
 func emu_C_EBREAK(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_C_JALR(m *RV, ins uint) {
@@ -1443,45 +1443,45 @@ func emu_C_JAL(m *RV, ins uint) {
 // rv32fc
 
 func emu_C_FLW(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_C_FLWSP(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_C_FSW(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_C_FSWSP(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv32dc
 
 func emu_C_FLD(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_C_FLDSP(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_C_FSD(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_C_FSDSP(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv64i
 
 func emu_LWU(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_LD(m *RV, ins uint) {
@@ -1639,93 +1639,93 @@ func emu_REMUW(m *RV, ins uint) {
 // rv64a
 
 func emu_LR_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_SC_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_AMOSWAP_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_AMOADD_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_AMOXOR_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_AMOAND_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_AMOOR_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_AMOMIN_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_AMOMAX_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_AMOMINU_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_AMOMAXU_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv64f
 
 func emu_FCVT_L_S(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_FCVT_LU_S(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_FCVT_S_L(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_FCVT_S_LU(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 //-----------------------------------------------------------------------------
 // rv64d
 
 func emu_FCVT_L_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_FCVT_LU_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_FMV_X_D(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_FCVT_D_L(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_FCVT_D_LU(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_FMV_D_X(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 //-----------------------------------------------------------------------------
@@ -1780,11 +1780,11 @@ func emu_C_SD(m *RV, ins uint) {
 }
 
 func emu_C_SUBW(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 func emu_C_ADDW(m *RV, ins uint) {
-	m.ex.N = ExTodo
+	m.err.N = ErrTodo
 }
 
 //-----------------------------------------------------------------------------
@@ -1797,7 +1797,7 @@ func (m *RV) wrX(i uint, val uint64) {
 		return
 	}
 	if m.nreg == 16 && i >= 16 {
-		m.ex.N = ExBadReg
+		m.err.N = ErrBadReg
 		return
 	}
 	if m.xlen == 32 {
@@ -1809,7 +1809,7 @@ func (m *RV) wrX(i uint, val uint64) {
 // rdX reads an integer register
 func (m *RV) rdX(i uint) uint64 {
 	if m.nreg == 16 && i >= 16 {
-		m.ex.N = ExBadReg
+		m.err.N = ErrBadReg
 		return 0
 	}
 	if m.xlen == 32 {
@@ -1822,19 +1822,20 @@ func (m *RV) rdX(i uint) uint64 {
 
 // illegalInstruction
 func (m *RV) illegalInstruction() {
-	m.ex.N = ExIllegal
+	m.err.N = ErrIllegal
 	m.CSR.SetException(csr.ExInsIllegal)
 }
 
 //-----------------------------------------------------------------------------
 
 // checkMemory records a memory exception.
-func (m *RV) checkMemory(adr uint, ex mem.Exception) {
-	if ex == 0 || m.ex.N != 0 {
-		return
+func (m *RV) checkMemory(adr uint, err mem.Error) bool {
+	if err == 0 {
+		return false
 	}
-	m.ex.N = ExMemory
-	m.ex.mem = memoryException{adr, ex, m.Mem.GetSectionName(adr)}
+	m.err.N = ErrMemory
+	m.err.mem = memoryError{adr, err, m.Mem.GetSectionName(adr)}
+	return true
 }
 
 //-----------------------------------------------------------------------------
@@ -1842,24 +1843,25 @@ func (m *RV) checkMemory(adr uint, ex mem.Exception) {
 
 // rdCSR reads a CSR.
 func (m *RV) rdCSR(reg uint) uint64 {
-	val, ex := m.CSR.Rd(reg)
-	m.checkCSR(reg, ex)
+	val, err := m.CSR.Rd(reg)
+	m.checkCSR(reg, err)
 	return uint64(val)
 }
 
 // wrCSR writes a CSR.
 func (m *RV) wrCSR(reg uint, val uint64) {
-	ex := m.CSR.Wr(reg, uint(val))
-	m.checkCSR(reg, ex)
+	err := m.CSR.Wr(reg, uint(val))
+	m.checkCSR(reg, err)
 }
 
 // checkCSR records a csr exception.
-func (m *RV) checkCSR(reg uint, ex csr.Exception) {
-	if ex == 0 {
-		return
+func (m *RV) checkCSR(reg uint, err csr.Error) bool {
+	if err == 0 {
+		return false
 	}
-	m.ex.N = ExCSR
-	m.ex.csr = csrException{reg, ex}
+	m.err.N = ErrCSR
+	m.err.csr = csrError{reg, err}
+	return true
 }
 
 //-----------------------------------------------------------------------------
@@ -1906,7 +1908,7 @@ type RV struct {
 	lastPC   uint64      // stuck PC detection
 	xlen     uint        // bit length of integer registers
 	nreg     uint        // number of integer registers
-	ex       Exception   // emulation exceptions
+	err      Error       // emulation errors
 	isa      *ISA        // ISA implemented for the CPU
 	ecall    Ecall       // ecall interface
 }
@@ -1954,13 +1956,12 @@ func NewRV32E(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
 func (m *RV) Run() error {
 
 	// set the pc for the exception (if there is one)
-	m.ex.pc = uint(m.PC)
+	m.err.pc = uint(m.PC)
 
 	// read the next instruction
-	ins, ex := m.Mem.RdIns(uint(m.PC))
-	if ex != 0 {
-		m.checkMemory(uint(m.PC), ex)
-		return &m.ex
+	ins, err := m.Mem.RdIns(uint(m.PC))
+	if m.checkMemory(uint(m.PC), err) {
+		return &m.err
 	}
 
 	// lookup and emulate the instruction
@@ -1973,14 +1974,14 @@ func (m *RV) Run() error {
 	}
 
 	// check exception flags
-	if m.ex.N != 0 {
-		return &m.ex
+	if m.err.N != 0 {
+		return &m.err
 	}
 
 	// stuck PC detection
 	if m.PC == m.lastPC {
-		m.ex.N = ExStuck
-		return &m.ex
+		m.err.N = ErrStuck
+		return &m.err
 	}
 	m.lastPC = m.PC
 
@@ -2017,17 +2018,17 @@ func (m *RV) Reset() {
 	m.CSR = csr.NewState(m.xlen)
 	m.insCount = 0
 	m.lastPC = 0
-	m.ex = Exception{alen: int(m.xlen)}
+	m.err = Error{alen: int(m.xlen)}
 }
 
 // Exit sets a status code and exits the emulation
 func (m *RV) Exit(status uint64) {
-	m.ex.N = ExExit
+	m.err.N = ErrExit
 }
 
 // SetBreak sets the break flag.
 func (m *RV) SetBreak() {
-	m.ex.N = ExBreak
+	m.err.N = ErrBreak
 }
 
 //-----------------------------------------------------------------------------

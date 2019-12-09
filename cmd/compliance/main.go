@@ -160,8 +160,8 @@ func TestRV32(base, name string) error {
 	}
 
 	// check for a normal exit
-	ex := err.(*rv.Exception)
-	if ex.N != rv.ExExit {
+	e := err.(*rv.Error)
+	if e.N != rv.ErrExit {
 		return err
 	}
 
@@ -227,8 +227,8 @@ func TestRV64(base, name string) error {
 	}
 
 	// check for a normal exit
-	ex := err.(*rv.Exception)
-	if ex.N != rv.ExExit {
+	e := err.(*rv.Error)
+	if e.N != rv.ErrExit {
 		return err
 	}
 
