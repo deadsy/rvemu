@@ -458,20 +458,6 @@ func (da *Disassembly) String() string {
 
 //-----------------------------------------------------------------------------
 
-func daDump32(pc uint, ins uint, alen int) string {
-	if alen == 32 {
-		return fmt.Sprintf("%08x: %08x", pc, uint32(ins))
-	}
-	return fmt.Sprintf("%016x: %08x", pc, uint32(ins))
-}
-
-func daDump16(pc uint, ins uint, alen int) string {
-	if alen == 32 {
-		return fmt.Sprintf("%08x: %04x    ", pc, uint16(ins))
-	}
-	return fmt.Sprintf("%016x: %04x    ", pc, uint16(ins))
-}
-
 // daInstruction returns the disassembly for a 16/32-bit instruction.
 func (isa *ISA) daInstruction(pc uint, ins uint) string {
 	im := isa.lookup(ins)
@@ -493,12 +479,13 @@ func (isa *ISA) Disassemble(m *mem.Memory, adr uint) *Disassembly {
 	}
 	// instruction
 	ins, _ := m.RdIns(adr)
+	pcStr := m.AddrStr(adr)
 	if ins&3 == 3 {
-		da.Dump = daDump32(adr, ins, m.AddrLength)
+		da.Dump = fmt.Sprintf("%s: %08x", pcStr, uint32(ins))
 		da.Assembly = isa.daInstruction(adr, ins)
 		da.Length = 4
 	} else {
-		da.Dump = daDump16(adr, ins, m.AddrLength)
+		da.Dump = fmt.Sprintf("%s: %04x    ", pcStr, uint16(ins))
 		da.Assembly = isa.daInstruction(adr, ins)
 		da.Length = 2
 	}

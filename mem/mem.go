@@ -32,28 +32,28 @@ func (a symbolByAddr) Less(i, j int) bool { return a[i].Addr < a[j].Addr }
 
 // Memory is emulated target memory.
 type Memory struct {
-	Entry      uint64             // entry point from ELF
-	AddrLength int                // address bit length
-	BP         breakPoints        // break points
-	region     []Region           // memory regions
-	symByAddr  map[uint]*Symbol   // symbol table by address
-	symByName  map[string]*Symbol // symbol table by name
-	noMemory   Region             // empty memory region
+	Entry     uint64             // entry point from ELF
+	BP        breakPoints        // break points
+	alen      uint               // address bit length
+	region    []Region           // memory regions
+	symByAddr map[uint]*Symbol   // symbol table by address
+	symByName map[string]*Symbol // symbol table by name
+	noMemory  Region             // empty memory region
 }
 
 // newMemory returns a memory object.
-func newMemory(alen int, empty Attribute) *Memory {
+func newMemory(alen uint, empty Attribute) *Memory {
 	return &Memory{
-		AddrLength: alen,
-		BP:         newBreakPoints(),
-		region:     make([]Region, 0),
-		symByAddr:  make(map[uint]*Symbol),
-		symByName:  make(map[string]*Symbol),
-		noMemory:   newEmpty(empty),
+		alen:      alen,
+		BP:        newBreakPoints(),
+		region:    make([]Region, 0),
+		symByAddr: make(map[uint]*Symbol),
+		symByName: make(map[string]*Symbol),
+		noMemory:  newEmpty(empty),
 	}
 }
 
-// NewMem64 returns memory with a 32-bit address bus.
+// NewMem32 returns memory with a 32-bit address bus.
 func NewMem32(empty Attribute) *Memory {
 	return newMemory(32, empty)
 }
@@ -61,6 +61,14 @@ func NewMem32(empty Attribute) *Memory {
 // NewMem64 returns memory with a 64-bit address bus.
 func NewMem64(empty Attribute) *Memory {
 	return newMemory(64, empty)
+}
+
+// AddrStr returns a string for the address.
+func (m *Memory) AddrStr(addr uint) string {
+	if m.alen == 32 {
+		return fmt.Sprintf("%08x", addr)
+	}
+	return fmt.Sprintf("%016x", addr)
 }
 
 // Add a memory region to the memory.

@@ -34,12 +34,7 @@ func (m *Memory) Map() string {
 	// display string
 	s := make([][]string, len(regions))
 	for i, r := range regions {
-		var addrStr string
-		if m.AddrLength == 32 {
-			addrStr = fmt.Sprintf("%08x %08x", r.start, r.end)
-		} else {
-			addrStr = fmt.Sprintf("%016x %016x", r.start, r.end)
-		}
+		addrStr := fmt.Sprintf("%s %s", m.AddrStr(r.start), m.AddrStr(r.end))
 		attrStr := r.attr.String()
 		sizeStr := fmt.Sprintf("(%d bytes)", r.end-r.start+1)
 		s[i] = []string{r.name, addrStr, attrStr, sizeStr}
@@ -64,12 +59,7 @@ func (m *Memory) Symbols() string {
 	// display string
 	s := make([][]string, len(symbols))
 	for i, se := range symbols {
-		var addrStr string
-		if m.AddrLength == 32 {
-			addrStr = fmt.Sprintf("%08x", se.Addr)
-		} else {
-			addrStr = fmt.Sprintf("%016x", se.Addr)
-		}
+		addrStr := fmt.Sprintf("%s", m.AddrStr(se.Addr))
 		sizeStr := fmt.Sprintf("(%d)", se.Size)
 		s[i] = []string{addrStr, sizeStr, util.GreenString(se.Name)}
 	}
@@ -90,7 +80,7 @@ func (m *Memory) Display(adr, size, width uint) string {
 
 	// build the header
 	var hdr, fmtx string
-	if m.AddrLength == 32 {
+	if m.alen == 32 {
 		hdr = "addr      "
 		fmtx = "%08x  "
 	} else {
@@ -160,7 +150,7 @@ func (m *Memory) Display(adr, size, width uint) string {
 			s = append(s, fmt.Sprintf(fmtx, adr, dataStr))
 		}
 		adr += 16
-		adr &= (1 << m.AddrLength) - 1
+		adr &= (1 << m.alen) - 1
 	}
 	return strings.Join(s, "\n")
 }
