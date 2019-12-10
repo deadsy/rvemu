@@ -128,8 +128,8 @@ func emu_BGEU(m *RV, ins uint) {
 func emu_LB(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	val, ex := m.Mem.Rd8(adr)
-	m.checkMemory(adr, ex)
+	val, err := m.Mem.Rd8(adr)
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int8(val)))
 	m.PC += 4
 }
@@ -138,7 +138,7 @@ func emu_LH(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
 	val, err := m.Mem.Rd16(adr)
-	m.checkMemory(adr, err)
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int16(val)))
 	m.PC += 4
 }
@@ -146,8 +146,8 @@ func emu_LH(m *RV, ins uint) {
 func emu_LW(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	val, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
+	val, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int(val)))
 	m.PC += 4
 }
@@ -155,8 +155,8 @@ func emu_LW(m *RV, ins uint) {
 func emu_LBU(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	val, ex := m.Mem.Rd8(adr)
-	m.checkMemory(adr, ex)
+	val, err := m.Mem.Rd8(adr)
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(val))
 	m.PC += 4
 }
@@ -164,8 +164,8 @@ func emu_LBU(m *RV, ins uint) {
 func emu_LHU(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	val, ex := m.Mem.Rd16(adr)
-	m.checkMemory(adr, ex)
+	val, err := m.Mem.Rd16(adr)
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(val))
 	m.PC += 4
 }
@@ -173,24 +173,24 @@ func emu_LHU(m *RV, ins uint) {
 func emu_SB(m *RV, ins uint) {
 	imm, rs2, rs1 := decodeS(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	ex := m.Mem.Wr8(adr, uint8(m.rdX(rs2)))
-	m.checkMemory(adr, ex)
+	err := m.Mem.Wr8(adr, uint8(m.rdX(rs2)))
+	m.setError(ErrMemory, err)
 	m.PC += 4
 }
 
 func emu_SH(m *RV, ins uint) {
 	imm, rs2, rs1 := decodeS(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	ex := m.Mem.Wr16(adr, uint16(m.rdX(rs2)))
-	m.checkMemory(adr, ex)
+	err := m.Mem.Wr16(adr, uint16(m.rdX(rs2)))
+	m.setError(ErrMemory, err)
 	m.PC += 4
 }
 
 func emu_SW(m *RV, ins uint) {
 	imm, rs2, rs1 := decodeS(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	ex := m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
-	m.checkMemory(adr, ex)
+	err := m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
+	m.setError(ErrMemory, err)
 	m.PC += 4
 }
 
@@ -468,7 +468,7 @@ func emu_SRET(m *RV, ins uint) {
 
 func emu_MRET(m *RV, ins uint) {
 	pc, err := m.CSR.MRET()
-	m.checkCSR(csr.MSTATUS, err)
+	m.setError(ErrCSR, err)
 	m.PC = uint64(pc)
 }
 
@@ -632,10 +632,10 @@ func emu_AMOSWAP_W(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
 	m.amo.Lock()
 	adr := uint(m.rdX(rs1))
-	t, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
-	ex = m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
-	m.checkMemory(adr, ex)
+	t, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
+	err = m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int32(t)))
 	m.amo.Unlock()
 	m.PC += 4
@@ -645,10 +645,10 @@ func emu_AMOADD_W(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
 	m.amo.Lock()
 	adr := uint(m.rdX(rs1))
-	t, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
-	ex = m.Mem.Wr32(adr, t+uint32(m.rdX(rs2)))
-	m.checkMemory(adr, ex)
+	t, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
+	err = m.Mem.Wr32(adr, t+uint32(m.rdX(rs2)))
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int32(t)))
 	m.amo.Unlock()
 	m.PC += 4
@@ -658,10 +658,10 @@ func emu_AMOXOR_W(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
 	m.amo.Lock()
 	adr := uint(m.rdX(rs1))
-	t, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
-	ex = m.Mem.Wr32(adr, t^uint32(m.rdX(rs2)))
-	m.checkMemory(adr, ex)
+	t, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
+	err = m.Mem.Wr32(adr, t^uint32(m.rdX(rs2)))
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int32(t)))
 	m.amo.Unlock()
 	m.PC += 4
@@ -671,10 +671,10 @@ func emu_AMOAND_W(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
 	m.amo.Lock()
 	adr := uint(m.rdX(rs1))
-	t, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
-	ex = m.Mem.Wr32(adr, t&uint32(m.rdX(rs2)))
-	m.checkMemory(adr, ex)
+	t, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
+	err = m.Mem.Wr32(adr, t&uint32(m.rdX(rs2)))
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int32(t)))
 	m.amo.Unlock()
 	m.PC += 4
@@ -684,10 +684,10 @@ func emu_AMOOR_W(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
 	m.amo.Lock()
 	adr := uint(m.rdX(rs1))
-	t, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
-	ex = m.Mem.Wr32(adr, t|uint32(m.rdX(rs2)))
-	m.checkMemory(adr, ex)
+	t, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
+	err = m.Mem.Wr32(adr, t|uint32(m.rdX(rs2)))
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int32(t)))
 	m.amo.Unlock()
 	m.PC += 4
@@ -697,10 +697,10 @@ func emu_AMOMIN_W(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
 	m.amo.Lock()
 	adr := uint(m.rdX(rs1))
-	t, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
-	ex = m.Mem.Wr32(adr, uint32(minInt32(int32(t), int32(m.rdX(rs2)))))
-	m.checkMemory(adr, ex)
+	t, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
+	err = m.Mem.Wr32(adr, uint32(minInt32(int32(t), int32(m.rdX(rs2)))))
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int32(t)))
 	m.amo.Unlock()
 	m.PC += 4
@@ -710,10 +710,10 @@ func emu_AMOMAX_W(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
 	m.amo.Lock()
 	adr := uint(m.rdX(rs1))
-	t, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
-	ex = m.Mem.Wr32(adr, uint32(maxInt32(int32(t), int32(m.rdX(rs2)))))
-	m.checkMemory(adr, ex)
+	t, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
+	err = m.Mem.Wr32(adr, uint32(maxInt32(int32(t), int32(m.rdX(rs2)))))
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int32(t)))
 	m.amo.Unlock()
 	m.PC += 4
@@ -723,10 +723,10 @@ func emu_AMOMINU_W(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
 	m.amo.Lock()
 	adr := uint(m.rdX(rs1))
-	t, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
-	ex = m.Mem.Wr32(adr, uint32(minUint32(t, uint32(m.rdX(rs2)))))
-	m.checkMemory(adr, ex)
+	t, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
+	err = m.Mem.Wr32(adr, uint32(minUint32(t, uint32(m.rdX(rs2)))))
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int32(t)))
 	m.amo.Unlock()
 	m.PC += 4
@@ -736,10 +736,10 @@ func emu_AMOMAXU_W(m *RV, ins uint) {
 	rs2, rs1, _, rd := decodeR(ins)
 	m.amo.Lock()
 	adr := uint(m.rdX(rs1))
-	t, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
-	ex = m.Mem.Wr32(adr, uint32(maxUint32(t, uint32(m.rdX(rs2)))))
-	m.checkMemory(adr, ex)
+	t, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
+	err = m.Mem.Wr32(adr, uint32(maxUint32(t, uint32(m.rdX(rs2)))))
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int32(t)))
 	m.amo.Unlock()
 	m.PC += 4
@@ -751,8 +751,8 @@ func emu_AMOMAXU_W(m *RV, ins uint) {
 func emu_FLW(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	x, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
+	x, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
 }
@@ -760,8 +760,8 @@ func emu_FLW(m *RV, ins uint) {
 func emu_FSW(m *RV, ins uint) {
 	imm, rs2, rs1 := decodeS(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	ex := m.Mem.Wr32(adr, uint32(m.F[rs2]))
-	m.checkMemory(adr, ex)
+	err := m.Mem.Wr32(adr, uint32(m.F[rs2]))
+	m.setError(ErrMemory, err)
 	m.PC += 4
 }
 
@@ -983,8 +983,8 @@ func emu_FMV_W_X(m *RV, ins uint) {
 func emu_FLD(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	x, ex := m.Mem.Rd64(adr)
-	m.checkMemory(adr, ex)
+	x, err := m.Mem.Rd64(adr)
+	m.setError(ErrMemory, err)
 	m.F[rd] = x
 	m.PC += 4
 }
@@ -992,8 +992,8 @@ func emu_FLD(m *RV, ins uint) {
 func emu_FSD(m *RV, ins uint) {
 	imm, rs2, rs1 := decodeS(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	ex := m.Mem.Wr64(adr, m.F[rs2])
-	m.checkMemory(adr, ex)
+	err := m.Mem.Wr64(adr, m.F[rs2])
+	m.setError(ErrMemory, err)
 	m.PC += 4
 }
 
@@ -1230,8 +1230,8 @@ func emu_C_ADDI4SPN(m *RV, ins uint) {
 func emu_C_LW(m *RV, ins uint) {
 	uimm, rs1, rd := decodeCS(ins)
 	adr := uint(m.rdX(rs1)) + uimm
-	val, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
+	val, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int(val)))
 	m.PC += 2
 }
@@ -1239,8 +1239,8 @@ func emu_C_LW(m *RV, ins uint) {
 func emu_C_SW(m *RV, ins uint) {
 	uimm, rs1, rs2 := decodeCS(ins)
 	adr := uint(m.rdX(rs1)) + uimm
-	ex := m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
-	m.checkMemory(adr, ex)
+	err := m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
+	m.setError(ErrMemory, err)
 	m.PC += 2
 }
 
@@ -1378,8 +1378,8 @@ func emu_C_LWSP(m *RV, ins uint) {
 		return
 	}
 	adr := uint(m.rdX(RegSp)) + uimm
-	val, ex := m.Mem.Rd32(adr)
-	m.checkMemory(adr, ex)
+	val, err := m.Mem.Rd32(adr)
+	m.setError(ErrMemory, err)
 	m.wrX(rd, uint64(int(val)))
 	m.PC += 2
 }
@@ -1425,8 +1425,8 @@ func emu_C_ADD(m *RV, ins uint) {
 func emu_C_SWSP(m *RV, ins uint) {
 	uimm, rs2 := decodeCSSb(ins)
 	adr := uint(m.rdX(RegSp)) + uimm
-	ex := m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
-	m.checkMemory(adr, ex)
+	err := m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
+	m.setError(ErrMemory, err)
 	m.PC += 2
 }
 
@@ -1487,8 +1487,8 @@ func emu_LWU(m *RV, ins uint) {
 func emu_LD(m *RV, ins uint) {
 	imm, rs1, rd := decodeIa(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	val, ex := m.Mem.Rd64(adr)
-	m.checkMemory(adr, ex)
+	val, err := m.Mem.Rd64(adr)
+	m.setError(ErrMemory, err)
 	m.wrX(rd, val)
 	m.PC += 4
 }
@@ -1496,8 +1496,8 @@ func emu_LD(m *RV, ins uint) {
 func emu_SD(m *RV, ins uint) {
 	imm, rs2, rs1 := decodeS(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
-	ex := m.Mem.Wr64(adr, m.rdX(rs2))
-	m.checkMemory(adr, ex)
+	err := m.Mem.Wr64(adr, m.rdX(rs2))
+	m.setError(ErrMemory, err)
 	m.PC += 4
 }
 
@@ -1744,8 +1744,8 @@ func emu_C_ADDIW(m *RV, ins uint) {
 func emu_C_LDSP(m *RV, ins uint) {
 	uimm, rd := decodeCIg(ins)
 	adr := uint(m.rdX(RegSp)) + uimm
-	val, ex := m.Mem.Rd64(adr)
-	m.checkMemory(adr, ex)
+	val, err := m.Mem.Rd64(adr)
+	m.setError(ErrMemory, err)
 	if rd != 0 {
 		m.wrX(rd, val)
 	} else {
@@ -1757,16 +1757,16 @@ func emu_C_LDSP(m *RV, ins uint) {
 func emu_C_SDSP(m *RV, ins uint) {
 	uimm, rs2 := decodeCSSc(ins)
 	adr := uint(m.rdX(RegSp)) + uimm
-	ex := m.Mem.Wr64(adr, m.rdX(rs2))
-	m.checkMemory(adr, ex)
+	err := m.Mem.Wr64(adr, m.rdX(rs2))
+	m.setError(ErrMemory, err)
 	m.PC += 2
 }
 
 func emu_C_LD(m *RV, ins uint) {
 	uimm, rs1, rd := decodeCSa(ins)
 	adr := uint(m.rdX(rs1)) + uimm
-	val, ex := m.Mem.Rd64(adr)
-	m.checkMemory(adr, ex)
+	val, err := m.Mem.Rd64(adr)
+	m.setError(ErrMemory, err)
 	m.wrX(rd, val)
 	m.PC += 2
 }
@@ -1774,8 +1774,8 @@ func emu_C_LD(m *RV, ins uint) {
 func emu_C_SD(m *RV, ins uint) {
 	uimm, rs1, rs2 := decodeCSa(ins)
 	adr := uint(m.rdX(rs1)) + uimm
-	ex := m.Mem.Wr64(adr, m.rdX(rs2))
-	m.checkMemory(adr, ex)
+	err := m.Mem.Wr64(adr, m.rdX(rs2))
+	m.setError(ErrMemory, err)
 	m.PC += 2
 }
 
@@ -1827,41 +1827,19 @@ func (m *RV) illegalInstruction() {
 }
 
 //-----------------------------------------------------------------------------
-
-// checkMemory records a memory exception.
-func (m *RV) checkMemory(adr uint, err mem.Error) bool {
-	if err == 0 {
-		return false
-	}
-	m.err.N = ErrMemory
-	m.err.mem = memoryError{adr, err, m.Mem.GetSectionName(adr)}
-	return true
-}
-
-//-----------------------------------------------------------------------------
 // CSR access
 
 // rdCSR reads a CSR.
 func (m *RV) rdCSR(reg uint) uint64 {
 	val, err := m.CSR.Rd(reg)
-	m.checkCSR(reg, err)
+	m.setError(ErrCSR, err)
 	return uint64(val)
 }
 
 // wrCSR writes a CSR.
 func (m *RV) wrCSR(reg uint, val uint64) {
 	err := m.CSR.Wr(reg, uint(val))
-	m.checkCSR(reg, err)
-}
-
-// checkCSR records a csr exception.
-func (m *RV) checkCSR(reg uint, err csr.Error) bool {
-	if err == 0 {
-		return false
-	}
-	m.err.N = ErrCSR
-	m.err.csr = csrError{reg, err}
-	return true
+	m.setError(ErrCSR, err)
 }
 
 //-----------------------------------------------------------------------------
@@ -1960,7 +1938,8 @@ func (m *RV) Run() error {
 
 	// read the next instruction
 	ins, err := m.Mem.RdIns(uint(m.PC))
-	if m.checkMemory(uint(m.PC), err) {
+	if err != nil {
+		m.setError(ErrMemory, err)
 		return &m.err
 	}
 

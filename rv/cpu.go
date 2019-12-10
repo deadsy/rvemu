@@ -12,9 +12,6 @@ import (
 	"fmt"
 	"math"
 	"strings"
-
-	"github.com/deadsy/riscv/csr"
-	"github.com/deadsy/riscv/mem"
 )
 
 //-----------------------------------------------------------------------------
@@ -273,33 +270,6 @@ type Ecall interface {
 }
 
 //-----------------------------------------------------------------------------
-// memory errors
-
-type memoryError struct {
-	addr  uint      // memory address that caused the exception
-	err   mem.Error // error bitmap
-	sname string    // name of the section containing the exception address
-}
-
-func (e memoryError) String() string {
-	// TODO - fix the 64-bit address case
-	return fmt.Sprintf("%s @ %08x (%s)", e.err, e.addr, e.sname)
-}
-
-//-----------------------------------------------------------------------------
-// CSR errors
-
-type csrError struct {
-	reg uint      // CSR causing the exception
-	err csr.Error // error bitmap
-}
-
-func (e csrError) String() string {
-	// TODO - fix the 64-bit address case
-	return fmt.Sprintf("%s: %s", csr.Name(e.reg), e.err)
-}
-
-//-----------------------------------------------------------------------------
 
 // Emulation error numbers.
 const (
@@ -317,11 +287,10 @@ const (
 
 // Error is a general emulation error.
 type Error struct {
-	N    int         // error number
-	alen int         // address length
-	pc   uint        // program counter at which error occurrred
-	mem  memoryError // memory error info
-	csr  csrError    // csr error info
+	N    int   // error number
+	alen int   // address length
+	pc   uint  // program counter at which error occurrred
+	err  error // sub error
 }
 
 func (e *Error) Error() string {
@@ -343,9 +312,9 @@ func (e *Error) Error() string {
 	case ErrTodo:
 		return "unimplemented instruction at PC " + pcStr
 	case ErrMemory:
-		return fmt.Sprintf("memory exception at PC %s, %s", pcStr, e.mem)
+		return fmt.Sprintf("memory exception at PC %s, %s", pcStr, e.err)
 	case ErrCSR:
-		return fmt.Sprintf("csr exception at PC %s, %s", pcStr, e.csr)
+		return fmt.Sprintf("csr exception at PC %s, %s", pcStr, e.err)
 	case ErrEcall:
 		return "unrecognized ecall at PC " + pcStr
 	case ErrBreak:
@@ -353,6 +322,14 @@ func (e *Error) Error() string {
 	}
 
 	return "unknown exception at PC " + pcStr
+}
+
+func (m *RV) setError(n int, err error) {
+	if err == nil || m.err.err != nil {
+		return
+	}
+	m.err.N = n
+	m.err.err = err
 }
 
 //-----------------------------------------------------------------------------

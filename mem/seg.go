@@ -10,39 +10,45 @@ package mem
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math"
 	"strings"
 )
 
 //-----------------------------------------------------------------------------
 
-// Error is a bit mask of memory access errors.
-type Error uint
+// Error is a memory acccess error.
+type Error struct {
+	n    uint   // bitmap of memory errors
+	addr uint   // memory address causing the error
+	name string // section name for the address
+}
 
-// Error values.
+// Memory error bits.
 const (
-	ErrAlign Error = 1 << iota // misaligned read/write
-	ErrRead                    // can't read this memory
-	ErrWrite                   // can't write this memory
-	ErrExec                    // can't read instructions from this memory
-	ErrBreak                   // break on memory access
+	ErrAlign = 1 << iota // misaligned read/write
+	ErrRead              // can't read this memory
+	ErrWrite             // can't write this memory
+	ErrExec              // can't read instructions from this memory
+	ErrBreak             // break on memory access
 )
 
-func (e Error) String() string {
+func (e *Error) Error() string {
 	s := make([]string, 0)
-	if e&ErrAlign != 0 {
+	if e.n&ErrAlign != 0 {
 		s = append(s, "align")
 	}
-	if e&ErrRead != 0 {
+	if e.n&ErrRead != 0 {
 		s = append(s, "read")
 	}
-	if e&ErrWrite != 0 {
+	if e.n&ErrWrite != 0 {
 		s = append(s, "write")
 	}
-	if e&ErrExec != 0 {
+	if e.n&ErrExec != 0 {
 		s = append(s, "exec")
 	}
-	return strings.Join(s, ",")
+	errStr := strings.Join(s, ",")
+	return fmt.Sprintf("%s @ %08x (%s)", errStr, e.addr, e.name)
 }
 
 //-----------------------------------------------------------------------------
@@ -86,34 +92,40 @@ func (a Attribute) String() string {
 //-----------------------------------------------------------------------------
 // memory access errors
 
-func wrError(adr uint, attr Attribute, align uint) Error {
-	var err Error
+func wrError(addr uint, attr Attribute, name string, align uint) error {
+	var n uint
 	if attr&AttrW == 0 {
-		err |= ErrWrite
+		n |= ErrWrite
 	}
-	if adr&(align-1) != 0 {
-		err |= ErrAlign
+	if addr&(align-1) != 0 {
+		n |= ErrAlign
 	}
-	return err
+	if n != 0 {
+		return &Error{n, addr, name}
+	}
+	return nil
 }
 
-func rdError(adr uint, attr Attribute, align uint) Error {
-	var err Error
+func rdError(addr uint, attr Attribute, name string, align uint) error {
+	var n uint
 	if attr&AttrR == 0 {
-		err |= ErrRead
+		n |= ErrRead
 	}
-	if adr&(align-1) != 0 {
-		err |= ErrAlign
+	if addr&(align-1) != 0 {
+		n |= ErrAlign
 	}
-	return err
+	if n != 0 {
+		return &Error{n, addr, name}
+	}
+	return nil
 }
 
-func rdInsError(adr uint, attr Attribute) Error {
+func rdInsError(addr uint, attr Attribute, name string) error {
 	// rv32c has mixed 32/16 bit instruction streams so
 	// we allow 32-bit reads on 2 byte address boundaries.
-	err := rdError(adr, attr, 2)
-	if attr&AttrX == 0 {
-		err |= ErrExec
+	err := rdError(addr, attr, name, 2)
+	if err != nil && attr&AttrX == 0 {
+		err.(*Error).n |= ErrExec
 	}
 	return err
 }
@@ -138,15 +150,15 @@ func (a regionByStart) Less(i, j int) bool { return a[i].start < a[j].start }
 type Region interface {
 	Info() *RegionInfo
 	SetAttr(attr Attribute)
-	RdIns(adr uint) (uint, Error)
-	Rd64(adr uint) (uint64, Error)
-	Rd32(adr uint) (uint32, Error)
-	Rd16(adr uint) (uint16, Error)
-	Rd8(adr uint) (uint8, Error)
-	Wr64(adr uint, val uint64) Error
-	Wr32(adr uint, val uint32) Error
-	Wr16(adr uint, val uint16) Error
-	Wr8(adr uint, val uint8) Error
+	RdIns(adr uint) (uint, error)
+	Rd64(adr uint) (uint64, error)
+	Rd32(adr uint) (uint32, error)
+	Rd16(adr uint) (uint16, error)
+	Rd8(adr uint) (uint8, error)
+	Wr64(adr uint, val uint64) error
+	Wr32(adr uint, val uint32) error
+	Wr16(adr uint, val uint16) error
+	Wr8(adr uint, val uint8) error
 	In(adr, size uint) bool
 }
 
@@ -198,60 +210,60 @@ func (m *Section) In(adr, size uint) bool {
 }
 
 // RdIns reads a 32-bit instruction from memory.
-func (m *Section) RdIns(adr uint) (uint, Error) {
-	return uint(binary.LittleEndian.Uint32(m.mem[adr-m.start:])), rdInsError(adr, m.attr)
+func (m *Section) RdIns(adr uint) (uint, error) {
+	return uint(binary.LittleEndian.Uint32(m.mem[adr-m.start:])), rdInsError(adr, m.attr, m.name)
 }
 
 // Rd64 reads a 64-bit data value from memory.
-func (m *Section) Rd64(adr uint) (uint64, Error) {
-	return binary.LittleEndian.Uint64(m.mem[adr-m.start:]), rdError(adr, m.attr, 8)
+func (m *Section) Rd64(adr uint) (uint64, error) {
+	return binary.LittleEndian.Uint64(m.mem[adr-m.start:]), rdError(adr, m.attr, m.name, 8)
 }
 
 // Rd32 reads a 32-bit data value from memory.
-func (m *Section) Rd32(adr uint) (uint32, Error) {
-	return binary.LittleEndian.Uint32(m.mem[adr-m.start:]), rdError(adr, m.attr, 4)
+func (m *Section) Rd32(adr uint) (uint32, error) {
+	return binary.LittleEndian.Uint32(m.mem[adr-m.start:]), rdError(adr, m.attr, m.name, 4)
 }
 
 // Rd16 reads a 16-bit data value from memory.
-func (m *Section) Rd16(adr uint) (uint16, Error) {
-	return binary.LittleEndian.Uint16(m.mem[adr-m.start:]), rdError(adr, m.attr, 2)
+func (m *Section) Rd16(adr uint) (uint16, error) {
+	return binary.LittleEndian.Uint16(m.mem[adr-m.start:]), rdError(adr, m.attr, m.name, 2)
 }
 
 // Rd8 reads an 8-bit data value from memory.
-func (m *Section) Rd8(adr uint) (uint8, Error) {
-	return m.mem[adr-m.start], rdError(adr, m.attr, 1)
+func (m *Section) Rd8(adr uint) (uint8, error) {
+	return m.mem[adr-m.start], rdError(adr, m.attr, m.name, 1)
 }
 
 // Wr64 writes a 64-bit data value to memory.
-func (m *Section) Wr64(adr uint, val uint64) Error {
+func (m *Section) Wr64(adr uint, val uint64) error {
 	if m.attr&AttrW != 0 {
 		binary.LittleEndian.PutUint64(m.mem[adr-m.start:], val)
 	}
-	return wrError(adr, m.attr, 8)
+	return wrError(adr, m.attr, m.name, 8)
 }
 
 // Wr32 writes a 32-bit data value to memory.
-func (m *Section) Wr32(adr uint, val uint32) Error {
+func (m *Section) Wr32(adr uint, val uint32) error {
 	if m.attr&AttrW != 0 {
 		binary.LittleEndian.PutUint32(m.mem[adr-m.start:], val)
 	}
-	return wrError(adr, m.attr, 4)
+	return wrError(adr, m.attr, m.name, 4)
 }
 
 // Wr16 writes a 16-bit data value to memory.
-func (m *Section) Wr16(adr uint, val uint16) Error {
+func (m *Section) Wr16(adr uint, val uint16) error {
 	if m.attr&AttrW != 0 {
 		binary.LittleEndian.PutUint16(m.mem[adr-m.start:], val)
 	}
-	return wrError(adr, m.attr, 2)
+	return wrError(adr, m.attr, m.name, 2)
 }
 
 // Wr8 writes an 8-bit data value to memory.
-func (m *Section) Wr8(adr uint, val uint8) Error {
+func (m *Section) Wr8(adr uint, val uint8) error {
 	if m.attr&AttrW != 0 {
 		m.mem[adr-m.start] = val
 	}
-	return wrError(adr, m.attr, 1)
+	return wrError(adr, m.attr, m.name, 1)
 }
 
 //-----------------------------------------------------------------------------
@@ -261,12 +273,14 @@ func (m *Section) Wr8(adr uint, val uint8) Error {
 // empty memory region.
 type empty struct {
 	attr Attribute // bitmask of attributes
+	name string
 }
 
 // newEmpty allocates and returns the empty memory region.
 func newEmpty(attr Attribute) *empty {
 	return &empty{
 		attr: attr,
+		name: "empty",
 	}
 }
 
@@ -278,7 +292,7 @@ func (m *empty) SetAttr(attr Attribute) {
 // Info returns the information for the empty region.
 func (m *empty) Info() *RegionInfo {
 	return &RegionInfo{
-		name: "empty",
+		name: m.name,
 		attr: m.attr,
 	}
 }
@@ -289,48 +303,48 @@ func (m *empty) In(adr, size uint) bool {
 }
 
 // RdIns reads a 32-bit instruction from memory.
-func (m *empty) RdIns(adr uint) (uint, Error) {
-	return math.MaxUint32, rdInsError(adr, m.attr)
+func (m *empty) RdIns(adr uint) (uint, error) {
+	return math.MaxUint32, rdInsError(adr, m.attr, m.name)
 }
 
 // Rd64 reads a 64-bit data value from memory.
-func (m *empty) Rd64(adr uint) (uint64, Error) {
-	return math.MaxUint64, rdError(adr, m.attr, 8)
+func (m *empty) Rd64(adr uint) (uint64, error) {
+	return math.MaxUint64, rdError(adr, m.attr, m.name, 8)
 }
 
 // Rd32 reads a 32-bit data value from memory.
-func (m *empty) Rd32(adr uint) (uint32, Error) {
-	return math.MaxUint32, rdError(adr, m.attr, 4)
+func (m *empty) Rd32(adr uint) (uint32, error) {
+	return math.MaxUint32, rdError(adr, m.attr, m.name, 4)
 }
 
 // Rd16 reads a 16-bit data value from memory.
-func (m *empty) Rd16(adr uint) (uint16, Error) {
-	return math.MaxUint16, rdError(adr, m.attr, 2)
+func (m *empty) Rd16(adr uint) (uint16, error) {
+	return math.MaxUint16, rdError(adr, m.attr, m.name, 2)
 }
 
 // Rd8 reads an 8-bit data value from memory.
-func (m *empty) Rd8(adr uint) (uint8, Error) {
-	return math.MaxUint8, rdError(adr, m.attr, 1)
+func (m *empty) Rd8(adr uint) (uint8, error) {
+	return math.MaxUint8, rdError(adr, m.attr, m.name, 1)
 }
 
 // Wr64 writes a 64-bit data value to memory.
-func (m *empty) Wr64(adr uint, val uint64) Error {
-	return wrError(adr, m.attr, 8)
+func (m *empty) Wr64(adr uint, val uint64) error {
+	return wrError(adr, m.attr, m.name, 8)
 }
 
 // Wr32 writes a 32-bit data value to memory.
-func (m *empty) Wr32(adr uint, val uint32) Error {
-	return wrError(adr, m.attr, 4)
+func (m *empty) Wr32(adr uint, val uint32) error {
+	return wrError(adr, m.attr, m.name, 4)
 }
 
 // Wr16 writes a 16-bit data value to memory.
-func (m *empty) Wr16(adr uint, val uint16) Error {
-	return wrError(adr, m.attr, 2)
+func (m *empty) Wr16(adr uint, val uint16) error {
+	return wrError(adr, m.attr, m.name, 2)
 }
 
 // Wr8 writes an 8-bit data value to memory.
-func (m *empty) Wr8(adr uint, val uint8) Error {
-	return wrError(adr, m.attr, 1)
+func (m *empty) Wr8(adr uint, val uint8) error {
+	return wrError(adr, m.attr, m.name, 1)
 }
 
 //-----------------------------------------------------------------------------

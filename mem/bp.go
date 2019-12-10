@@ -77,13 +77,13 @@ func (b breakPoints) Clr(addr uint) {
 
 //-----------------------------------------------------------------------------
 
-func (b breakPoints) check(addr uint, access Attribute) Error {
+func (b breakPoints) check(addr uint, access Attribute) *Error {
 	if bp, ok := b[addr]; ok {
 		if access&bp.access != 0 {
 			if bp.state == bpBreak {
 				// skip so we don't immediately re-break.
 				bp.state = bpSkip
-				return ErrBreak
+				return &Error{ErrBreak, addr, ""}
 			}
 			if bp.state == bpSkip {
 				// break on the next access.
@@ -91,31 +91,34 @@ func (b breakPoints) check(addr uint, access Attribute) Error {
 			}
 		}
 	}
-	return 0
+	return nil
 }
 
-func (b breakPoints) checkR(addr uint) Error {
+func (b breakPoints) checkR(addr uint) error {
 	err := b.check(addr, AttrR)
-	if err != 0 {
-		return err | ErrRead
+	if err != nil {
+		err.n |= ErrRead
+		return err
 	}
-	return 0
+	return nil
 }
 
-func (b breakPoints) checkW(addr uint) Error {
+func (b breakPoints) checkW(addr uint) error {
 	err := b.check(addr, AttrW)
-	if err != 0 {
-		return err | ErrWrite
+	if err != nil {
+		err.n |= ErrWrite
+		return err
 	}
-	return 0
+	return nil
 }
 
-func (b breakPoints) checkX(addr uint) Error {
+func (b breakPoints) checkX(addr uint) error {
 	err := b.check(addr, AttrX)
-	if err != 0 {
-		return err | ErrExec
+	if err != nil {
+		err.n |= ErrExec
+		return err
 	}
-	return 0
+	return nil
 }
 
 //-----------------------------------------------------------------------------

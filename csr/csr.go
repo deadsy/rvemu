@@ -17,36 +17,39 @@ import (
 
 //-----------------------------------------------------------------------------
 
-// Error is a bitmap of CSR access errors.
-type Error uint
+// Error is a CSR access error.
+type Error struct {
+	reg uint // csr register number
+	n   uint // bitmap of csr access errors
+}
 
-// CSR Error values.
+// CSR error bits.
 const (
-	ErrTodo      Error = 1 << iota // csr not implemented
-	ErrPrivilege                   // insufficient privilege
-	ErrReadOnly                    // trying to write a read-only register
-	ErrNoRead                      // no read function (todo)
-	ErrNoWrite                     // no write function (todo)
+	ErrTodo      = 1 << iota // csr not implemented
+	ErrPrivilege             // insufficient privilege
+	ErrReadOnly              // trying to write a read-only register
+	ErrNoRead                // no read function (todo)
+	ErrNoWrite               // no write function (todo)
 )
 
-func (e Error) String() string {
+func (e *Error) Error() string {
 	s := []string{}
-	if e&ErrTodo != 0 {
+	if e.n&ErrTodo != 0 {
 		s = append(s, "not implemented")
 	}
-	if e&ErrPrivilege != 0 {
+	if e.n&ErrPrivilege != 0 {
 		s = append(s, "insufficient privilege")
 	}
-	if e&ErrReadOnly != 0 {
+	if e.n&ErrReadOnly != 0 {
 		s = append(s, "read only")
 	}
-	if e&ErrNoRead != 0 {
+	if e.n&ErrNoRead != 0 {
 		s = append(s, "no read function")
 	}
-	if e&ErrNoWrite != 0 {
+	if e.n&ErrNoWrite != 0 {
 		s = append(s, "no write function")
 	}
-	return strings.Join(s, ",")
+	return fmt.Sprintf("%s: %s", Name(e.reg), strings.Join(s, ","))
 }
 
 //-----------------------------------------------------------------------------
@@ -585,50 +588,50 @@ func NewState(xlen uint) *State {
 }
 
 // Rd reads from a CSR.
-func (s *State) Rd(reg uint) (uint, Error) {
+func (s *State) Rd(reg uint) (uint, error) {
 	if !s.canAccess(reg) {
-		return 0, ErrPrivilege
+		return 0, &Error{reg, ErrPrivilege}
 	}
 	if x, ok := lookup[reg]; ok {
 		if x.rd == nil {
-			return 0, ErrNoRead
+			return 0, &Error{reg, ErrNoRead}
 		}
-		return x.rd(s), 0
+		return x.rd(s), nil
 	}
-	return 0, ErrTodo
+	return 0, &Error{reg, ErrTodo}
 }
 
 // Wr writes to a CSR.
-func (s *State) Wr(reg, val uint) Error {
+func (s *State) Wr(reg, val uint) error {
 	if !canWr(reg) {
-		return ErrReadOnly
+		return &Error{reg, ErrReadOnly}
 	}
 	if !s.canAccess(reg) {
-		return ErrPrivilege
+		return &Error{reg, ErrPrivilege}
 	}
 	if x, ok := lookup[reg]; ok {
 		if x.wr == nil {
-			return ErrNoWrite
+			return &Error{reg, ErrNoWrite}
 		}
 		x.wr(s, val)
-		return 0
+		return nil
 	}
-	return ErrTodo
+	return &Error{reg, ErrTodo}
 }
 
 // Set sets bits in a CSR.
-func (s *State) Set(reg, bits uint) Error {
+func (s *State) Set(reg, bits uint) error {
 	val, err := s.Rd(reg)
-	if err != 0 {
+	if err != nil {
 		return err
 	}
 	return s.Wr(reg, val|bits)
 }
 
 // Clr clears bits in a CSR.
-func (s *State) Clr(reg, bits uint) Error {
+func (s *State) Clr(reg, bits uint) error {
 	val, err := s.Rd(reg)
-	if err != 0 {
+	if err != nil {
 		return err
 	}
 	return s.Wr(reg, val & ^bits)
@@ -643,7 +646,8 @@ func (s *State) Display() string {
 	x := [][]string{}
 	for reg := uint(0); reg < 4096; reg++ {
 		val, err := s.Rd(reg)
-		if err == ErrTodo || err == ErrNoRead {
+		e := err.(*Error)
+		if e.n == ErrTodo || e.n == ErrNoRead {
 			continue
 		}
 		regStr := fmt.Sprintf("%03x %s %s", reg, access(reg), Name(reg))
@@ -660,15 +664,15 @@ func (s *State) Display() string {
 }
 
 // MRET performs an MRET operation.
-func (s *State) MRET() (uint, Error) {
+func (s *State) MRET() (uint, error) {
 	if !s.canAccess(MSTATUS) {
-		return 0, ErrPrivilege
+		return 0, &Error{MSTATUS, ErrPrivilege}
 	}
 	s.Priv = s.mstatusRdMPP()
 	s.mstatusWrMIE(s.mstatusRdMPIE())
 	s.mstatusWrMPIE(1)
 	s.mstatusWrMPP(PrivU)
-	return rdMEPC(s), 0
+	return rdMEPC(s), nil
 }
 
 //-----------------------------------------------------------------------------

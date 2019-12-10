@@ -109,45 +109,45 @@ func (m *Memory) GetSectionName(adr uint) string {
 // read functions
 
 // RdIns reads a 32-bit instruction from memory.
-func (m *Memory) RdIns(adr uint) (uint, Error) {
+func (m *Memory) RdIns(adr uint) (uint, error) {
 	err := m.BP.checkX(adr)
-	if err != 0 {
+	if err != nil {
 		return 0, err
 	}
 	return m.findByAddr(adr, 4).RdIns(adr)
 }
 
 // Rd64 reads a 64-bit data value from memory.
-func (m *Memory) Rd64(adr uint) (uint64, Error) {
+func (m *Memory) Rd64(adr uint) (uint64, error) {
 	err := m.BP.checkR(adr)
-	if err != 0 {
+	if err != nil {
 		return 0, err
 	}
 	return m.findByAddr(adr, 8).Rd64(adr)
 }
 
 // Rd32 reads a 32-bit data value from memory.
-func (m *Memory) Rd32(adr uint) (uint32, Error) {
+func (m *Memory) Rd32(adr uint) (uint32, error) {
 	err := m.BP.checkR(adr)
-	if err != 0 {
+	if err != nil {
 		return 0, err
 	}
 	return m.findByAddr(adr, 4).Rd32(adr)
 }
 
 // Rd16 reads a 16-bit data value from memory.
-func (m *Memory) Rd16(adr uint) (uint16, Error) {
+func (m *Memory) Rd16(adr uint) (uint16, error) {
 	err := m.BP.checkR(adr)
-	if err != 0 {
+	if err != nil {
 		return 0, err
 	}
 	return m.findByAddr(adr, 2).Rd16(adr)
 }
 
 // Rd8 reads an 8-bit data value from memory.
-func (m *Memory) Rd8(adr uint) (uint8, Error) {
+func (m *Memory) Rd8(adr uint) (uint8, error) {
 	err := m.BP.checkR(adr)
-	if err != 0 {
+	if err != nil {
 		return 0, err
 	}
 	return m.findByAddr(adr, 1).Rd8(adr)
@@ -166,36 +166,36 @@ func (m *Memory) Rd32Range(adr, n uint) []uint32 {
 // write functions
 
 // Wr64 writes a 64-bit data value to memory.
-func (m *Memory) Wr64(adr uint, val uint64) Error {
+func (m *Memory) Wr64(adr uint, val uint64) error {
 	err := m.BP.checkW(adr)
-	if err != 0 {
+	if err != nil {
 		return err
 	}
 	return m.findByAddr(adr, 8).Wr64(adr, val)
 }
 
 // Wr32 writes a 32-bit data value to memory.
-func (m *Memory) Wr32(adr uint, val uint32) Error {
+func (m *Memory) Wr32(adr uint, val uint32) error {
 	err := m.BP.checkW(adr)
-	if err != 0 {
+	if err != nil {
 		return err
 	}
 	return m.findByAddr(adr, 4).Wr32(adr, val)
 }
 
 // Wr16 writes a 16-bit data value to memory.
-func (m *Memory) Wr16(adr uint, val uint16) Error {
+func (m *Memory) Wr16(adr uint, val uint16) error {
 	err := m.BP.checkW(adr)
-	if err != 0 {
+	if err != nil {
 		return err
 	}
 	return m.findByAddr(adr, 2).Wr16(adr, val)
 }
 
 // Wr8 writes an 8-bit data value to memory.
-func (m *Memory) Wr8(adr uint, val uint8) Error {
+func (m *Memory) Wr8(adr uint, val uint8) error {
 	err := m.BP.checkW(adr)
-	if err != 0 {
+	if err != nil {
 		return err
 	}
 	return m.findByAddr(adr, 1).Wr8(adr, val)
