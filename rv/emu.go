@@ -463,7 +463,9 @@ func emu_URET(m *RV, ins uint) {
 }
 
 func emu_SRET(m *RV, ins uint) {
-	m.err.N = ErrTodo
+	pc, err := m.CSR.SRET()
+	m.setError(ErrCSR, err)
+	m.PC = uint64(pc)
 }
 
 func emu_MRET(m *RV, ins uint) {

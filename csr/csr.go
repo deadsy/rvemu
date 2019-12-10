@@ -68,6 +68,7 @@ const (
 	FFLAGS  = 0x001
 	FRM     = 0x002
 	FCSR    = 0x003
+	SSTATUS = 0x100
 	MSTATUS = 0x300
 )
 
@@ -193,6 +194,31 @@ func rdMSCRATCH(s *State) uint {
 }
 
 //-----------------------------------------------------------------------------
+// sscratch
+
+func wrSSCRATCH(s *State, val uint) {
+	s.sscratch = val
+}
+
+func rdSSCRATCH(s *State) uint {
+	return s.sscratch
+}
+
+//-----------------------------------------------------------------------------
+// supervisor exception program counter
+
+func wrSEPC(s *State, val uint) {
+	s.sepc = val & ^uint(1)
+}
+
+func rdSEPC(s *State) uint {
+	if s.ialign == 32 {
+		return s.sepc & ^uint(3)
+	}
+	return s.sepc
+}
+
+//-----------------------------------------------------------------------------
 // fcsr
 
 const frmMask = uint(7 << 5)
@@ -257,6 +283,59 @@ func (s *State) mstatusRdMPIE() uint {
 func (s *State) mstatusWrMPIE(x uint) {
 	s.mstatus &= ^uint(1 << 7)
 	s.mstatus |= (x & 1) << 7
+}
+
+//-----------------------------------------------------------------------------
+// machine exception/interrupt delegation registers
+
+func wrMEDELEG(s *State, x uint) {
+	s.medeleg = x
+}
+
+func rdMEDELEG(s *State) uint {
+	return s.medeleg
+}
+
+func wrMIDELEG(s *State, x uint) {
+	s.mideleg = x
+}
+
+func rdMIDELEG(s *State) uint {
+	return s.mideleg
+}
+
+//-----------------------------------------------------------------------------
+// sstatus
+
+func wrSSTATUS(s *State, x uint) {
+	s.sstatus = x
+}
+
+func rdSSTATUS(s *State) uint {
+	return s.sstatus
+}
+
+func (s *State) sstatusRdSPP() uint {
+	return (s.sstatus >> 8) & 1
+}
+
+func (s *State) sstatusWrSPP(x uint) {
+	s.sstatus &= ^uint(1 << 8)
+	s.sstatus |= (x & 1) << 8
+}
+
+func (s *State) sstatusWrSIE(x uint) {
+	s.sstatus &= ^uint(1 << 1)
+	s.sstatus |= (x & 1) << 1
+}
+
+func (s *State) sstatusRdSPIE() uint {
+	return (s.sstatus >> 5) & 1
+}
+
+func (s *State) sstatusWrSPIE(x uint) {
+	s.sstatus &= ^uint(1 << 5)
+	s.sstatus |= (x & 1) << 5
 }
 
 //-----------------------------------------------------------------------------
@@ -350,14 +429,14 @@ var lookup = map[uint]csrDefn{
 	0xc9e: {"hpmcounter30h", nil, nil},
 	0xc9f: {"hpmcounter31h", nil, nil},
 	// Supervisor CSRs 0x100 - 0x1ff (read/write)
-	0x100: {"sstatus", wrIgnore, rdZero},
+	0x100: {"sstatus", wrSSTATUS, rdSSTATUS},
 	0x102: {"sedeleg", wrIgnore, rdZero},
 	0x103: {"sideleg", wrIgnore, rdZero},
 	0x104: {"sie", wrIgnore, rdZero},
 	0x105: {"stvec", wrIgnore, rdZero},
 	0x106: {"scounteren", nil, nil},
-	0x140: {"sscratch", nil, nil},
-	0x141: {"sepc", nil, nil},
+	0x140: {"sscratch", wrSSCRATCH, rdSSCRATCH},
+	0x141: {"sepc", wrSEPC, rdSEPC},
 	0x142: {"scause", nil, nil},
 	0x143: {"stval", nil, nil},
 	0x144: {"sip", wrIgnore, rdZero},
@@ -370,8 +449,8 @@ var lookup = map[uint]csrDefn{
 	// Machine CSRs 0x300 - 0x3ff (read/write)
 	0x300: {"mstatus", wrMSTATUS, rdMSTATUS},
 	0x301: {"misa", wrIgnore, rdMISA},
-	0x302: {"medeleg", wrIgnore, rdZero},
-	0x303: {"mideleg", wrIgnore, rdZero},
+	0x302: {"medeleg", wrMEDELEG, rdMEDELEG},
+	0x303: {"mideleg", wrMIDELEG, rdMIDELEG},
 	0x304: {"mie", wrIgnore, nil},
 	0x305: {"mtvec", wrMTVEC, rdMTVEC},
 	0x306: {"mcounteren", nil, nil},
@@ -563,14 +642,19 @@ type State struct {
 	uxlen    uint // user register length
 	sxlen    uint // supervisor register length
 	ialign   uint // instruction alignment 16/32
+	fcsr     uint // floating point control and status register
 	mepc     uint // machine exception program counter
 	mtvec    uint // machine trap vector base address register
 	mtval    uint // machine trap value register
 	mstatus  uint // machine status
 	mscratch uint // machine scratch
-	fcsr     uint // floating point control and status register
 	misa     uint // machine isa register
 	mcause   uint // machine cause register
+	medeleg  uint // machine exception delegation register
+	mideleg  uint // machine interrupt delegation register
+	sscratch uint // supervisor scratch
+	sepc     uint // supervisor exception program counter
+	sstatus  uint // supervisor status
 }
 
 // NewState returns a CSR state object.
@@ -646,9 +730,11 @@ func (s *State) Display() string {
 	x := [][]string{}
 	for reg := uint(0); reg < 4096; reg++ {
 		val, err := s.Rd(reg)
-		e := err.(*Error)
-		if e.n == ErrTodo || e.n == ErrNoRead {
-			continue
+		if err != nil {
+			e := err.(*Error)
+			if e.n == ErrTodo || e.n == ErrNoRead {
+				continue
+			}
 		}
 		regStr := fmt.Sprintf("%03x %s %s", reg, access(reg), Name(reg))
 		valStr := "0"
@@ -663,6 +749,8 @@ func (s *State) Display() string {
 	return cli.TableString(x, []int{0, 0}, 1)
 }
 
+//-----------------------------------------------------------------------------
+
 // MRET performs an MRET operation.
 func (s *State) MRET() (uint, error) {
 	if !s.canAccess(MSTATUS) {
@@ -673,6 +761,18 @@ func (s *State) MRET() (uint, error) {
 	s.mstatusWrMPIE(1)
 	s.mstatusWrMPP(PrivU)
 	return rdMEPC(s), nil
+}
+
+// SRET performs an SRET operation.
+func (s *State) SRET() (uint, error) {
+	if !s.canAccess(SSTATUS) {
+		return 0, &Error{SSTATUS, ErrPrivilege}
+	}
+	s.Priv = s.sstatusRdSPP()
+	s.sstatusWrSIE(s.sstatusRdSPIE())
+	s.sstatusWrSPIE(1)
+	s.sstatusWrSPP(0)
+	return rdSEPC(s), nil
 }
 
 //-----------------------------------------------------------------------------
