@@ -280,7 +280,6 @@ const (
 	ErrCSR                   // CSR exception
 	ErrExit                  // exit from emulation
 	ErrTodo                  // unimplemented instruction
-	ErrBadReg                // bad register number (rv32e)
 	ErrStuck                 // stuck program counter
 )
 
@@ -294,31 +293,30 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-
 	pcStr := ""
 	if e.alen == 32 {
 		pcStr = fmt.Sprintf("%08x", e.pc)
 	} else {
 		pcStr = fmt.Sprintf("%016x", e.pc)
 	}
-
 	switch e.Type {
 	case ErrIllegal:
 		return "illegal instruction at PC " + pcStr
-	case ErrExit:
-		return "exit at PC " + pcStr
-	case ErrTodo:
-		return "unimplemented instruction at PC " + pcStr
 	case ErrMemory:
 		return fmt.Sprintf("memory exception at PC %s, %s", pcStr, e.err)
-	case ErrCSR:
-		return fmt.Sprintf("csr exception at PC %s, %s", pcStr, e.err)
 	case ErrEcall:
 		return "unrecognized ecall at PC " + pcStr
 	case ErrBreak:
 		return "breakpoint at PC " + pcStr
+	case ErrCSR:
+		return fmt.Sprintf("csr exception at PC %s, %s", pcStr, e.err)
+	case ErrExit:
+		return "exit at PC " + pcStr
+	case ErrTodo:
+		return "unimplemented instruction at PC " + pcStr
+	case ErrStuck:
+		return "stuck at PC " + pcStr
 	}
-
 	return "unknown exception at PC " + pcStr
 }
 

@@ -347,6 +347,60 @@ func (s *State) sstatusWrSPIE(x uint) {
 }
 
 //-----------------------------------------------------------------------------
+// u/s/m interrupt enable
+
+func rdUIE(s *State) uint {
+	return s.mie // TODO mask
+}
+
+func rdSIE(s *State) uint {
+	return s.mie // TODO mask
+}
+
+func rdMIE(s *State) uint {
+	return s.mie
+}
+
+func wrUIE(s *State, x uint) {
+	s.mie = x // TODO mask
+}
+
+func wrSIE(s *State, x uint) {
+	s.mie = x // TODO mask
+}
+
+func wrMIE(s *State, x uint) {
+	s.mie = x
+}
+
+//-----------------------------------------------------------------------------
+// u/s/m interrupt pending
+
+func rdUIP(s *State) uint {
+	return s.mip // TODO mask
+}
+
+func rdSIP(s *State) uint {
+	return s.mip // TODO mask
+}
+
+func rdMIP(s *State) uint {
+	return s.mip
+}
+
+func wrUIP(s *State, x uint) {
+	s.mip = x // TODO mask
+}
+
+func wrSIP(s *State, x uint) {
+	s.mip = x // TODO mask
+}
+
+func wrMIP(s *State, x uint) {
+	s.mip = x
+}
+
+//-----------------------------------------------------------------------------
 
 type wrFunc func(s *State, val uint)
 type rdFunc func(s *State) uint
@@ -363,13 +417,13 @@ var lookup = map[uint]csrDefn{
 	0x001: {"fflags", wrFFLAGS, rdFFLAGS},
 	0x002: {"frm", wrFRM, rdFRM},
 	0x003: {"fcsr", wrFCSR, rdFCSR},
-	0x004: {"uie", nil, nil},
+	0x004: {"uie", wrUIE, rdUIE},
 	0x005: {"utvec", nil, nil},
 	0x040: {"uscratch", nil, nil},
 	0x041: {"uepc", nil, nil},
 	0x042: {"ucause", nil, nil},
 	0x043: {"utval", nil, nil},
-	0x044: {"uip", nil, nil},
+	0x044: {"uip", wrUIP, rdUIP},
 	// User CSRs 0xc00 - 0xc7f (read only)
 	0xc00: {"cycle", nil, nil},
 	0xc01: {"time", nil, nil},
@@ -440,14 +494,14 @@ var lookup = map[uint]csrDefn{
 	0x100: {"sstatus", wrSSTATUS, rdSSTATUS},
 	0x102: {"sedeleg", wrIgnore, rdZero},
 	0x103: {"sideleg", wrIgnore, rdZero},
-	0x104: {"sie", wrIgnore, rdZero},
+	0x104: {"sie", wrSIE, rdSIE},
 	0x105: {"stvec", wrIgnore, rdZero},
 	0x106: {"scounteren", nil, nil},
 	0x140: {"sscratch", wrSSCRATCH, rdSSCRATCH},
 	0x141: {"sepc", wrSEPC, rdSEPC},
 	0x142: {"scause", nil, nil},
 	0x143: {"stval", nil, nil},
-	0x144: {"sip", wrIgnore, rdZero},
+	0x144: {"sip", wrSIP, rdSIP},
 	0x180: {"satp", wrIgnore, nil},
 	// Machine CSRs 0xf00 - 0xf7f (read only)
 	0xf11: {"mvendorid", nil, rdZero},
@@ -459,7 +513,7 @@ var lookup = map[uint]csrDefn{
 	0x301: {"misa", wrIgnore, rdMISA},
 	0x302: {"medeleg", wrMEDELEG, rdMEDELEG},
 	0x303: {"mideleg", wrMIDELEG, rdMIDELEG},
-	0x304: {"mie", wrIgnore, nil},
+	0x304: {"mie", wrMIE, rdMIE},
 	0x305: {"mtvec", wrMTVEC, rdMTVEC},
 	0x306: {"mcounteren", nil, nil},
 	0x320: {"mucounteren", nil, nil},
@@ -498,7 +552,7 @@ var lookup = map[uint]csrDefn{
 	0x341: {"mepc", wrMEPC, rdMEPC},
 	0x342: {"mcause", nil, rdMCAUSE},
 	0x343: {"mtval", wrMTVAL, rdMTVAL},
-	0x344: {"mip", nil, nil},
+	0x344: {"mip", wrMIP, rdMIP},
 	0x380: {"mbase", nil, nil},
 	0x381: {"mbound", nil, nil},
 	0x382: {"mibase", nil, nil},
@@ -660,6 +714,8 @@ type State struct {
 	mcause   uint // machine cause register
 	medeleg  uint // machine exception delegation register
 	mideleg  uint // machine interrupt delegation register
+	mie      uint // m/s/u interrupt enable register
+	mip      uint // m/s/u interrupt pending register
 	sscratch uint // supervisor scratch
 	sepc     uint // supervisor exception program counter
 	sstatus  uint // supervisor status

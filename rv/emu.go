@@ -2167,14 +2167,14 @@ func (m *RV) errHandler(err error) error {
 	// handle the error
 	switch e.Type {
 	case ErrIllegal:
-		m.CSR.Exception(m.PC, csr.ExInsIllegal, e.ins)
+		m.PC = m.CSR.Exception(m.PC, csr.ExInsIllegal, e.ins)
 		return nil
 	}
 
 	return err
 }
 
-// SetHandler sets the mask for which errors will be handled with cpu exceptions.
+// SetHandler sets the mask for errors to be handled with cpu exceptions.
 func (m *RV) SetHandler(mask uint) {
 	m.errMask = mask
 }
