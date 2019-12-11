@@ -75,7 +75,8 @@ func neg64(a uint64) uint64 {
 func getRoundingMode(rm uint, s *csr.State) (uint, error) {
 	// with dynamic rounding rm = FRM
 	if rm == frmDYN {
-		rm, _ = s.Rd(csr.FRM)
+		x, _ := s.Rd(csr.FRM)
+		rm = uint(x)
 	}
 	if rm > frmRRM {
 		return 0, errors.New("illegal")
@@ -89,7 +90,7 @@ func getRoundingMode(rm uint, s *csr.State) (uint, error) {
 func feq_s(a, b uint32, s *csr.State) uint {
 	var flags C.uint32_t
 	x := uint(C.eq_quiet_sf32(C.sfloat32(a), C.sfloat32(b), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x
 }
 
@@ -97,7 +98,7 @@ func feq_s(a, b uint32, s *csr.State) uint {
 func flt_s(a, b uint32, s *csr.State) uint {
 	var flags C.uint32_t
 	x := uint(C.lt_sf32(C.sfloat32(a), C.sfloat32(b), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x
 }
 
@@ -105,7 +106,7 @@ func flt_s(a, b uint32, s *csr.State) uint {
 func fle_s(a, b uint32, s *csr.State) uint {
 	var flags C.uint32_t
 	x := uint(C.le_sf32(C.sfloat32(a), C.sfloat32(b), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x
 }
 
@@ -113,7 +114,7 @@ func fle_s(a, b uint32, s *csr.State) uint {
 func feq_d(a, b uint64, s *csr.State) uint {
 	var flags C.uint32_t
 	x := uint(C.eq_quiet_sf64(C.sfloat64(a), C.sfloat64(b), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x
 }
 
@@ -121,7 +122,7 @@ func feq_d(a, b uint64, s *csr.State) uint {
 func flt_d(a, b uint64, s *csr.State) uint {
 	var flags C.uint32_t
 	x := uint(C.lt_sf64(C.sfloat64(a), C.sfloat64(b), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x
 }
 
@@ -129,7 +130,7 @@ func flt_d(a, b uint64, s *csr.State) uint {
 func fle_d(a, b uint64, s *csr.State) uint {
 	var flags C.uint32_t
 	x := uint(C.le_sf64(C.sfloat64(a), C.sfloat64(b), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x
 }
 
@@ -143,7 +144,7 @@ func fcvt_s_w(a int32, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.cvt_i32_sf32(C.int32_t(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -155,7 +156,7 @@ func fcvt_d_w(a int32, rm uint, s *csr.State) (uint64, error) {
 	}
 	var flags C.uint32_t
 	x := uint64(C.cvt_i32_sf64(C.int32_t(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -167,7 +168,7 @@ func fcvt_s_wu(a uint32, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.cvt_u32_sf32(C.uint32_t(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -179,7 +180,7 @@ func fcvt_d_wu(a uint32, rm uint, s *csr.State) (uint64, error) {
 	}
 	var flags C.uint32_t
 	x := uint64(C.cvt_u32_sf64(C.uint32_t(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -191,7 +192,7 @@ func fcvt_w_s(a uint32, rm uint, s *csr.State) (int32, error) {
 	}
 	var flags C.uint32_t
 	x := int32(C.cvt_sf32_i32(C.sfloat32(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -203,7 +204,7 @@ func fcvt_wu_s(a uint32, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.cvt_sf32_u32(C.sfloat32(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -215,7 +216,7 @@ func fcvt_s_d(a uint64, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.cvt_sf64_sf32(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -223,7 +224,7 @@ func fcvt_s_d(a uint64, rm uint, s *csr.State) (uint32, error) {
 func fcvt_d_s(a uint32, s *csr.State) uint64 {
 	var flags C.uint32_t
 	x := uint64(C.cvt_sf32_sf64(C.sfloat32(a), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x
 }
 
@@ -235,7 +236,7 @@ func fcvt_w_d(a uint64, rm uint, s *csr.State) (int32, error) {
 	}
 	var flags C.uint32_t
 	x := int32(C.cvt_sf64_i32(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -247,7 +248,7 @@ func fcvt_wu_d(a uint64, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.cvt_sf64_u32(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -261,7 +262,7 @@ func fadd_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.add_sf32(C.sfloat32(a), C.sfloat32(b), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -273,7 +274,7 @@ func fadd_d(a, b uint64, rm uint, s *csr.State) (uint64, error) {
 	}
 	var flags C.uint32_t
 	x := uint64(C.add_sf64(C.sfloat64(a), C.sfloat64(b), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -285,7 +286,7 @@ func fsub_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.sub_sf32(C.sfloat32(a), C.sfloat32(b), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -297,7 +298,7 @@ func fsub_d(a, b uint64, rm uint, s *csr.State) (uint64, error) {
 	}
 	var flags C.uint32_t
 	x := uint64(C.sub_sf64(C.sfloat64(a), C.sfloat64(b), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -311,7 +312,7 @@ func fmul_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.mul_sf32(C.sfloat32(a), C.sfloat32(b), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -323,7 +324,7 @@ func fmul_d(a, b uint64, rm uint, s *csr.State) (uint64, error) {
 	}
 	var flags C.uint32_t
 	x := uint64(C.mul_sf64(C.sfloat64(a), C.sfloat64(b), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -335,7 +336,7 @@ func fdiv_s(a, b uint32, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.div_sf32(C.sfloat32(a), C.sfloat32(b), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -347,7 +348,7 @@ func fdiv_d(a, b uint64, rm uint, s *csr.State) (uint64, error) {
 	}
 	var flags C.uint32_t
 	x := uint64(C.div_sf64(C.sfloat64(a), C.sfloat64(b), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -357,7 +358,7 @@ func fdiv_d(a, b uint64, rm uint, s *csr.State) (uint64, error) {
 func fmin_s(a, b uint32, s *csr.State) uint32 {
 	var flags C.uint32_t
 	x := uint32(C.min_sf32(C.sfloat32(a), C.sfloat32(b), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x
 }
 
@@ -365,7 +366,7 @@ func fmin_s(a, b uint32, s *csr.State) uint32 {
 func fmin_d(a, b uint64, s *csr.State) uint64 {
 	var flags C.uint32_t
 	x := uint64(C.min_sf64(C.sfloat64(a), C.sfloat64(b), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x
 }
 
@@ -373,7 +374,7 @@ func fmin_d(a, b uint64, s *csr.State) uint64 {
 func fmax_s(a, b uint32, s *csr.State) uint32 {
 	var flags C.uint32_t
 	x := uint32(C.max_sf32(C.sfloat32(a), C.sfloat32(b), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x
 }
 
@@ -381,7 +382,7 @@ func fmax_s(a, b uint32, s *csr.State) uint32 {
 func fmax_d(a, b uint64, s *csr.State) uint64 {
 	var flags C.uint32_t
 	x := uint64(C.max_sf64(C.sfloat64(a), C.sfloat64(b), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x
 }
 
@@ -407,7 +408,7 @@ func fsqrt_s(a uint32, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.sqrt_sf32(C.sfloat32(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -419,7 +420,7 @@ func fsqrt_d(a uint64, rm uint, s *csr.State) (uint64, error) {
 	}
 	var flags C.uint32_t
 	x := uint64(C.sqrt_sf64(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -433,7 +434,7 @@ func fmadd_s(a, b, c uint32, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.fma_sf32(C.sfloat32(a), C.sfloat32(b), C.sfloat32(c), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
@@ -445,7 +446,7 @@ func fmadd_d(a, b, c uint64, rm uint, s *csr.State) (uint64, error) {
 	}
 	var flags C.uint32_t
 	x := uint64(C.fma_sf64(C.sfloat64(a), C.sfloat64(b), C.sfloat64(c), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint(flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 

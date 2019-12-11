@@ -22,21 +22,21 @@ import "github.com/deadsy/riscv/rv"
 //-----------------------------------------------------------------------------
 // system calls
 
-func sc_close(m *rv.RV) {
-	m.SetBreak()
+func sc_close(m *rv.RV) error {
+	return m.Break()
 }
 
-func sc_fstat(m *rv.RV) {
-	m.SetBreak()
+func sc_fstat(m *rv.RV) error {
+	return m.Break()
 }
 
-func sc_exit(m *rv.RV) {
-	m.Exit(0)
+func sc_exit(m *rv.RV) error {
+	return m.Exit(0)
 }
 
 //-----------------------------------------------------------------------------
 
-type scFunc func(m *rv.RV)
+type scFunc func(m *rv.RV) error
 
 type scEntry struct {
 	name string
@@ -68,12 +68,13 @@ func NewSyscall() *Syscall {
 }
 
 // Call is an ecall handler.
-func (sc *Syscall) Call(m *rv.RV) {
+func (sc *Syscall) Call(m *rv.RV) error {
 	n := uint(m.X[rv.RegA7])
 	e := scLookup(n)
 	if e != nil {
-		e.sc(m)
+		return e.sc(m)
 	}
+	return nil
 }
 
 //-----------------------------------------------------------------------------

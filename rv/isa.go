@@ -14,7 +14,7 @@ package rv
 type daFunc func(name string, pc, ins uint) string
 
 // emuFunc is an emulation function
-type emuFunc func(m *RV, ins uint)
+type emuFunc func(m *RV, ins uint) error
 
 // insDefn is the definition of an instruction
 type insDefn struct {

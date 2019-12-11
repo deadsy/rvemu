@@ -29,8 +29,8 @@ func NewCompliance() *Compliance {
 }
 
 // Call is an ecall.
-func (c *Compliance) Call(m *rv.RV) {
-	m.Exit(m.X[rv.RegGp])
+func (c *Compliance) Call(m *rv.RV) error {
+	return m.Exit(m.X[rv.RegGp])
 }
 
 //-----------------------------------------------------------------------------

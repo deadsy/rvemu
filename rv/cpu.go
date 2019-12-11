@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"math"
 	"strings"
+
+	"github.com/deadsy/riscv/csr"
 )
 
 //-----------------------------------------------------------------------------
@@ -266,7 +268,7 @@ func decodeCB(ins uint) (int, uint) {
 
 // Ecall provides pluggable ecall functions.
 type Ecall interface {
-	Call(m *RV)
+	Call(m *RV) error
 }
 
 //-----------------------------------------------------------------------------
@@ -287,10 +289,10 @@ const (
 
 // Error is a general emulation error.
 type Error struct {
-	N    int   // error number
-	alen int   // address length
-	pc   uint  // program counter at which error occurrred
-	err  error // sub error
+	N    int    // error number
+	alen uint   // address length
+	pc   uint64 // program counter at which error occurrred
+	err  error  // sub error
 }
 
 func (e *Error) Error() string {
@@ -324,12 +326,73 @@ func (e *Error) Error() string {
 	return "unknown exception at PC " + pcStr
 }
 
-func (m *RV) setError(n int, err error) {
-	if err == nil || m.err.err != nil {
-		return
+func (m *RV) errIllegal() error {
+	m.CSR.SetException(csr.ExInsIllegal)
+	return &Error{
+		N:    ErrIllegal,
+		alen: m.xlen,
+		pc:   m.PC,
 	}
-	m.err.N = n
-	m.err.err = err
+}
+
+func (m *RV) errEcall() error {
+	return &Error{
+		N:    ErrEcall,
+		alen: m.xlen,
+		pc:   m.PC,
+	}
+}
+
+func (m *RV) errMemory(err error) error {
+	return &Error{
+		N:    ErrMemory,
+		alen: m.xlen,
+		pc:   m.PC,
+		err:  err,
+	}
+}
+
+func (m *RV) errCSR(err error) error {
+	return &Error{
+		N:    ErrCSR,
+		alen: m.xlen,
+		pc:   m.PC,
+		err:  err,
+	}
+}
+
+func (m *RV) errStuckPC() error {
+	return &Error{
+		N:    ErrStuck,
+		alen: m.xlen,
+		pc:   m.PC,
+	}
+}
+
+func (m *RV) errTodo() error {
+	return &Error{
+		N:    ErrTodo,
+		alen: m.xlen,
+		pc:   m.PC,
+	}
+}
+
+// Exit returns an error to indicate an emulation exit.
+func (m *RV) Exit(status uint64) error {
+	return &Error{
+		N:    ErrExit,
+		alen: m.xlen,
+		pc:   m.PC,
+	}
+}
+
+// Break returns an error to indicate an emulation break.
+func (m *RV) Break() error {
+	return &Error{
+		N:    ErrBreak,
+		alen: m.xlen,
+		pc:   m.PC,
+	}
 }
 
 //-----------------------------------------------------------------------------

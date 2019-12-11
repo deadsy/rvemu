@@ -672,7 +672,7 @@ func NewState(xlen uint) *State {
 }
 
 // Rd reads from a CSR.
-func (s *State) Rd(reg uint) (uint, error) {
+func (s *State) Rd(reg uint) (uint64, error) {
 	if !s.canAccess(reg) {
 		return 0, &Error{reg, ErrPrivilege}
 	}
@@ -680,13 +680,13 @@ func (s *State) Rd(reg uint) (uint, error) {
 		if x.rd == nil {
 			return 0, &Error{reg, ErrNoRead}
 		}
-		return x.rd(s), nil
+		return uint64(x.rd(s)), nil
 	}
 	return 0, &Error{reg, ErrTodo}
 }
 
 // Wr writes to a CSR.
-func (s *State) Wr(reg, val uint) error {
+func (s *State) Wr(reg uint, val uint64) error {
 	if !canWr(reg) {
 		return &Error{reg, ErrReadOnly}
 	}
@@ -697,14 +697,14 @@ func (s *State) Wr(reg, val uint) error {
 		if x.wr == nil {
 			return &Error{reg, ErrNoWrite}
 		}
-		x.wr(s, val)
+		x.wr(s, uint(val))
 		return nil
 	}
 	return &Error{reg, ErrTodo}
 }
 
 // Set sets bits in a CSR.
-func (s *State) Set(reg, bits uint) error {
+func (s *State) Set(reg uint, bits uint64) error {
 	val, err := s.Rd(reg)
 	if err != nil {
 		return err
@@ -713,7 +713,7 @@ func (s *State) Set(reg, bits uint) error {
 }
 
 // Clr clears bits in a CSR.
-func (s *State) Clr(reg, bits uint) error {
+func (s *State) Clr(reg uint, bits uint64) error {
 	val, err := s.Rd(reg)
 	if err != nil {
 		return err
