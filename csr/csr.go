@@ -70,6 +70,10 @@ const (
 	FCSR    = 0x003
 	SSTATUS = 0x100
 	MSTATUS = 0x300
+	MTVEC   = 0x305
+	MEPC    = 0x341
+	MCAUSE  = 0x342
+	MTVAL   = 0x343
 )
 
 //-----------------------------------------------------------------------------
@@ -100,7 +104,7 @@ const (
 )
 
 // SetInterrupt sets an interrupt code in mcause.
-func (s *State) SetInterrupt(x uint) {
+func (s *State) setInterrupt(x uint) {
 	s.mcause = (1 << (s.mxlen - 1)) | x
 }
 
@@ -123,7 +127,7 @@ const (
 )
 
 // SetException sets an exception code in mcause.
-func (s *State) SetException(x uint) {
+func (s *State) setException(x uint) {
 	s.mcause = (0 << (s.mxlen - 1)) | x
 }
 
@@ -269,6 +273,10 @@ func (s *State) mstatusRdMPP() uint {
 func (s *State) mstatusWrMPP(x uint) {
 	s.mstatus &= ^uint(3 << 11)
 	s.mstatus |= (x & 3) << 11
+}
+
+func (s *State) mstatusRdMIE() uint {
+	return (s.mstatus >> 3) & 1
 }
 
 func (s *State) mstatusWrMIE(x uint) {
@@ -773,6 +781,19 @@ func (s *State) SRET() (uint, error) {
 	s.sstatusWrSPIE(1)
 	s.sstatusWrSPP(0)
 	return rdSEPC(s), nil
+}
+
+// Exception performs a cpu exception.
+func (s *State) Exception(pc uint64, cause, val uint) uint64 {
+	s.Wr(MEPC, pc)
+	pc, _ = s.Rd(MTVEC)
+	s.setException(cause)
+	s.Wr(MTVAL, uint64(val))
+	s.mstatusWrMPIE(s.mstatusRdMIE())
+	s.mstatusWrMIE(0)
+	s.mstatusWrMPP(s.Priv)
+	s.Priv = PrivM
+	return pc
 }
 
 //-----------------------------------------------------------------------------

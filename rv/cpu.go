@@ -12,8 +12,6 @@ import (
 	"fmt"
 	"math"
 	"strings"
-
-	"github.com/deadsy/riscv/csr"
 )
 
 //-----------------------------------------------------------------------------
@@ -273,24 +271,24 @@ type Ecall interface {
 
 //-----------------------------------------------------------------------------
 
-// Emulation error numbers.
+// Emulation error types.
 const (
-	ErrNone    = iota // normal (0)
-	ErrIllegal        // illegal instruction
-	ErrExit           // exit from emulation
-	ErrTodo           // unimplemented instruction
-	ErrMemory         // memory exception
-	ErrCSR            // CSR exception
-	ErrEcall          // unrecognised ecall
-	ErrBreak          // debug break point
-	ErrBadReg         // bad register number (rv32e)
-	ErrStuck          // stuck program counter
+	ErrIllegal = (1 << iota) // illegal instruction
+	ErrMemory                // memory exception
+	ErrEcall                 // unrecognised ecall
+	ErrBreak                 // debug break point
+	ErrCSR                   // CSR exception
+	ErrExit                  // exit from emulation
+	ErrTodo                  // unimplemented instruction
+	ErrBadReg                // bad register number (rv32e)
+	ErrStuck                 // stuck program counter
 )
 
 // Error is a general emulation error.
 type Error struct {
-	N    int    // error number
+	Type uint   // error type
 	alen uint   // address length
+	ins  uint   // illegal instruction value
 	pc   uint64 // program counter at which error occurrred
 	err  error  // sub error
 }
@@ -304,9 +302,7 @@ func (e *Error) Error() string {
 		pcStr = fmt.Sprintf("%016x", e.pc)
 	}
 
-	switch e.N {
-	case ErrNone:
-		return ""
+	switch e.Type {
 	case ErrIllegal:
 		return "illegal instruction at PC " + pcStr
 	case ErrExit:
@@ -326,10 +322,10 @@ func (e *Error) Error() string {
 	return "unknown exception at PC " + pcStr
 }
 
-func (m *RV) errIllegal() error {
-	m.CSR.SetException(csr.ExInsIllegal)
+func (m *RV) errIllegal(ins uint) error {
 	return &Error{
-		N:    ErrIllegal,
+		Type: ErrIllegal,
+		ins:  ins,
 		alen: m.xlen,
 		pc:   m.PC,
 	}
@@ -337,7 +333,7 @@ func (m *RV) errIllegal() error {
 
 func (m *RV) errEcall() error {
 	return &Error{
-		N:    ErrEcall,
+		Type: ErrEcall,
 		alen: m.xlen,
 		pc:   m.PC,
 	}
@@ -345,7 +341,7 @@ func (m *RV) errEcall() error {
 
 func (m *RV) errMemory(err error) error {
 	return &Error{
-		N:    ErrMemory,
+		Type: ErrMemory,
 		alen: m.xlen,
 		pc:   m.PC,
 		err:  err,
@@ -354,7 +350,7 @@ func (m *RV) errMemory(err error) error {
 
 func (m *RV) errCSR(err error) error {
 	return &Error{
-		N:    ErrCSR,
+		Type: ErrCSR,
 		alen: m.xlen,
 		pc:   m.PC,
 		err:  err,
@@ -363,7 +359,7 @@ func (m *RV) errCSR(err error) error {
 
 func (m *RV) errStuckPC() error {
 	return &Error{
-		N:    ErrStuck,
+		Type: ErrStuck,
 		alen: m.xlen,
 		pc:   m.PC,
 	}
@@ -371,7 +367,7 @@ func (m *RV) errStuckPC() error {
 
 func (m *RV) errTodo() error {
 	return &Error{
-		N:    ErrTodo,
+		Type: ErrTodo,
 		alen: m.xlen,
 		pc:   m.PC,
 	}
@@ -380,7 +376,7 @@ func (m *RV) errTodo() error {
 // Exit returns an error to indicate an emulation exit.
 func (m *RV) Exit(status uint64) error {
 	return &Error{
-		N:    ErrExit,
+		Type: ErrExit,
 		alen: m.xlen,
 		pc:   m.PC,
 	}
@@ -389,7 +385,7 @@ func (m *RV) Exit(status uint64) error {
 // Break returns an error to indicate an emulation break.
 func (m *RV) Break() error {
 	return &Error{
-		N:    ErrBreak,
+		Type: ErrBreak,
 		alen: m.xlen,
 		pc:   m.PC,
 	}

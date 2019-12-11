@@ -294,7 +294,7 @@ func emu_ANDI(m *RV, ins uint) error {
 func emu_SLLI(m *RV, ins uint) error {
 	shamt, rs1, rd := decodeIc(ins)
 	if m.xlen == 32 && shamt > 31 {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.wrX(rd, m.rdX(rs1)<<shamt)
 	m.PC += 4
@@ -305,7 +305,7 @@ func emu_SLLI(m *RV, ins uint) error {
 func emu_SRLI(m *RV, ins uint) error {
 	shamt, rs1, rd := decodeIc(ins)
 	if m.xlen == 32 && shamt > 31 {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.wrX(rd, m.rdX(rs1)>>shamt)
 	m.PC += 4
@@ -316,7 +316,7 @@ func emu_SRLI(m *RV, ins uint) error {
 func emu_SRAI(m *RV, ins uint) error {
 	shamt, rs1, rd := decodeIc(ins)
 	if m.xlen == 32 && shamt > 31 {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	if m.xlen == 32 {
 		m.wrX(rd, uint64(int32(m.rdX(rs1))>>shamt))
@@ -932,7 +932,7 @@ func emu_FMADD_S(m *RV, ins uint) error {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_s(uint32(m.F[rs1]), uint32(m.F[rs2]), uint32(m.F[rs3]), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -943,7 +943,7 @@ func emu_FMSUB_S(m *RV, ins uint) error {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_s(uint32(m.F[rs1]), uint32(m.F[rs2]), neg32(uint32(m.F[rs3])), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -954,7 +954,7 @@ func emu_FNMSUB_S(m *RV, ins uint) error {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_s(neg32(uint32(m.F[rs1])), uint32(m.F[rs2]), uint32(m.F[rs3]), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -965,7 +965,7 @@ func emu_FNMADD_S(m *RV, ins uint) error {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_s(neg32(uint32(m.F[rs1])), uint32(m.F[rs2]), neg32(uint32(m.F[rs3])), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -976,7 +976,7 @@ func emu_FADD_S(m *RV, ins uint) error {
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fadd_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -987,7 +987,7 @@ func emu_FSUB_S(m *RV, ins uint) error {
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fsub_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -998,7 +998,7 @@ func emu_FMUL_S(m *RV, ins uint) error {
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fmul_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -1009,7 +1009,7 @@ func emu_FDIV_S(m *RV, ins uint) error {
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fdiv_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -1020,7 +1020,7 @@ func emu_FSQRT_S(m *RV, ins uint) error {
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fsqrt_s(uint32(m.F[rs1]), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -1069,7 +1069,7 @@ func emu_FCVT_W_S(m *RV, ins uint) error {
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_w_s(uint32(m.F[rs1]), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.wrX(rd, uint64(x))
 	m.PC += 4
@@ -1080,7 +1080,7 @@ func emu_FCVT_WU_S(m *RV, ins uint) error {
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_wu_s(uint32(m.F[rs1]), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.wrX(rd, uint64(int32(x)))
 	m.PC += 4
@@ -1126,7 +1126,7 @@ func emu_FCVT_S_W(m *RV, ins uint) error {
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_s_w(int32(m.rdX(rs1)), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -1137,7 +1137,7 @@ func emu_FCVT_S_WU(m *RV, ins uint) error {
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_s_wu(uint32(m.rdX(rs1)), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -1181,7 +1181,7 @@ func emu_FMADD_D(m *RV, ins uint) error {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_d(m.F[rs1], m.F[rs2], m.F[rs3], rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = x
 	m.PC += 4
@@ -1192,7 +1192,7 @@ func emu_FMSUB_D(m *RV, ins uint) error {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_d(m.F[rs1], m.F[rs2], neg64(m.F[rs3]), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = x
 	m.PC += 4
@@ -1203,7 +1203,7 @@ func emu_FNMSUB_D(m *RV, ins uint) error {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_d(neg64(m.F[rs1]), m.F[rs2], m.F[rs3], rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = x
 	m.PC += 4
@@ -1214,7 +1214,7 @@ func emu_FNMADD_D(m *RV, ins uint) error {
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_d(neg64(m.F[rs1]), m.F[rs2], neg64(m.F[rs3]), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = x
 	m.PC += 4
@@ -1225,7 +1225,7 @@ func emu_FADD_D(m *RV, ins uint) error {
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fadd_d(m.F[rs1], m.F[rs2], rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = x
 	m.PC += 4
@@ -1236,7 +1236,7 @@ func emu_FSUB_D(m *RV, ins uint) error {
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fsub_d(m.F[rs1], m.F[rs2], rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = x
 	m.PC += 4
@@ -1247,7 +1247,7 @@ func emu_FMUL_D(m *RV, ins uint) error {
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fmul_d(m.F[rs1], m.F[rs2], rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = x
 	m.PC += 4
@@ -1258,7 +1258,7 @@ func emu_FDIV_D(m *RV, ins uint) error {
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fdiv_d(m.F[rs1], m.F[rs2], rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = x
 	m.PC += 4
@@ -1269,7 +1269,7 @@ func emu_FSQRT_D(m *RV, ins uint) error {
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fsqrt_d(m.F[rs1], rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = x
 	m.PC += 4
@@ -1318,7 +1318,7 @@ func emu_FCVT_S_D(m *RV, ins uint) error {
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_s_d(m.F[rs1], rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = uint64(x) | upper32
 	m.PC += 4
@@ -1364,7 +1364,7 @@ func emu_FCVT_W_D(m *RV, ins uint) error {
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_w_d(m.F[rs1], rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.wrX(rd, uint64(x))
 	m.PC += 4
@@ -1375,7 +1375,7 @@ func emu_FCVT_WU_D(m *RV, ins uint) error {
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_wu_d(m.F[rs1], rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.wrX(rd, uint64(int32(x)))
 	m.PC += 4
@@ -1386,7 +1386,7 @@ func emu_FCVT_D_W(m *RV, ins uint) error {
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_d_w(int32(m.rdX(rs1)), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = x
 	m.PC += 4
@@ -1397,7 +1397,7 @@ func emu_FCVT_D_WU(m *RV, ins uint) error {
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_d_wu(uint32(m.rdX(rs1)), rm, m.CSR)
 	if err != nil {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.F[rd] = x
 	m.PC += 4
@@ -1408,7 +1408,7 @@ func emu_FCVT_D_WU(m *RV, ins uint) error {
 // rv32c
 
 func emu_C_ILLEGAL(m *RV, ins uint) error {
-	return m.errTodo()
+	return m.errIllegal(ins)
 }
 
 func emu_C_ADDI4SPN(m *RV, ins uint) error {
@@ -1472,7 +1472,7 @@ func emu_C_ADDI16SP(m *RV, ins uint) error {
 func emu_C_LUI(m *RV, ins uint) error {
 	imm, rd := decodeCIf(ins)
 	if imm == 0 {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	if rd != 0 && rd != 2 {
 		m.wrX(rd, uint64(imm<<12))
@@ -1484,7 +1484,7 @@ func emu_C_LUI(m *RV, ins uint) error {
 func emu_C_SRLI(m *RV, ins uint) error {
 	shamt, rd := decodeCIc(ins)
 	if m.xlen == 32 && shamt > 31 {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.wrX(rd, m.rdX(rd)>>shamt)
 	m.PC += 2
@@ -1496,7 +1496,7 @@ func emu_C_SRAI(m *RV, ins uint) error {
 	var x uint64
 	if m.xlen == 32 {
 		if shamt > 31 {
-			return m.errIllegal()
+			return m.errIllegal(ins)
 		}
 		x = uint64(int32(m.X[rd]) >> shamt)
 	} else {
@@ -1584,7 +1584,7 @@ func emu_C_SLLI64(m *RV, ins uint) error {
 func emu_C_LWSP(m *RV, ins uint) error {
 	uimm, rd := decodeCSSa(ins)
 	if rd == 0 {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	adr := uint(m.rdX(RegSp)) + uimm
 	val, err := m.Mem.Rd32(adr)
@@ -1599,7 +1599,7 @@ func emu_C_LWSP(m *RV, ins uint) error {
 func emu_C_JR(m *RV, ins uint) error {
 	rs1, _ := decodeCR(ins)
 	if rs1 == 0 {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.PC = m.rdX(rs1)
 	return nil
@@ -1621,7 +1621,7 @@ func emu_C_EBREAK(m *RV, ins uint) error {
 func emu_C_JALR(m *RV, ins uint) error {
 	rs1, _ := decodeCR(ins)
 	if rs1 == 0 {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	t := m.PC + 2
 	m.PC = m.rdX(rs1)
@@ -1735,7 +1735,7 @@ func emu_ADDIW(m *RV, ins uint) error {
 func emu_SLLIW(m *RV, ins uint) error {
 	shamt, rs1, rd := decodeIc(ins)
 	if shamt&32 != 0 {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.wrX(rd, uint64(int32(m.rdX(rs1))<<shamt))
 	m.PC += 4
@@ -1745,7 +1745,7 @@ func emu_SLLIW(m *RV, ins uint) error {
 func emu_SRLIW(m *RV, ins uint) error {
 	shamt, rs1, rd := decodeIc(ins)
 	if shamt&32 != 0 {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.wrX(rd, uint64(int32(uint32(m.rdX(rs1))>>shamt)))
 	m.PC += 4
@@ -1755,7 +1755,7 @@ func emu_SRLIW(m *RV, ins uint) error {
 func emu_SRAIW(m *RV, ins uint) error {
 	shamt, rs1, rd := decodeIc(ins)
 	if shamt&32 != 0 {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.wrX(rd, uint64(int32(m.rdX(rs1))>>shamt))
 	m.PC += 4
@@ -1971,7 +1971,7 @@ func emu_C_ADDIW(m *RV, ins uint) error {
 	if rd != 0 {
 		m.wrX(rd, uint64(int32(int(m.rdX(rd))+imm)))
 	} else {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.PC += 2
 	return nil
@@ -1987,7 +1987,7 @@ func emu_C_LDSP(m *RV, ins uint) error {
 	if rd != 0 {
 		m.wrX(rd, val)
 	} else {
-		return m.errIllegal()
+		return m.errIllegal(ins)
 	}
 	m.PC += 2
 	return nil
@@ -2045,7 +2045,7 @@ func (m *RV) wrX(i uint, val uint64) {
 		return
 	}
 	if m.nreg == 16 && i >= 16 {
-		//panic("bad register")
+		// TODO illegal instruction?
 		return
 	}
 	if m.xlen == 32 {
@@ -2057,8 +2057,8 @@ func (m *RV) wrX(i uint, val uint64) {
 // rdX reads an integer register
 func (m *RV) rdX(i uint) uint64 {
 	if m.nreg == 16 && i >= 16 {
-		//panic("bad register")
-		return 0
+		// TODO illegal instruction?
+		return math.MaxUint64
 	}
 	if m.xlen == 32 {
 		return uint64(uint32(m.X[i]))
@@ -2105,13 +2105,14 @@ type RV struct {
 	PC       uint64      // program counter
 	Mem      *mem.Memory // memory of the target system
 	CSR      *csr.State  // CSR state
+	isa      *ISA        // ISA implemented for the CPU
+	ecall    Ecall       // ecall interface
 	amo      sync.Mutex  // lock for atomic operations
 	insCount uint        // number of instructions run
 	lastPC   uint64      // stuck PC detection
 	xlen     uint        // bit length of integer registers
 	nreg     uint        // number of integer registers
-	isa      *ISA        // ISA implemented for the CPU
-	ecall    Ecall       // ecall interface
+	errMask  uint        // mask of error types we will handle
 }
 
 // NewRV64 returns a 64-bit RISC-V CPU.
@@ -2153,6 +2154,33 @@ func NewRV32E(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
 	return &m
 }
 
+//-----------------------------------------------------------------------------
+
+func (m *RV) errHandler(err error) error {
+	e := err.(*Error)
+
+	if e.Type&m.errMask == 0 {
+		// not handling this error
+		return err
+	}
+
+	// handle the error
+	switch e.Type {
+	case ErrIllegal:
+		m.CSR.Exception(m.PC, csr.ExInsIllegal, e.ins)
+		return nil
+	}
+
+	return err
+}
+
+// SetHandler sets the mask for which errors will be handled with cpu exceptions.
+func (m *RV) SetHandler(mask uint) {
+	m.errMask = mask
+}
+
+//-----------------------------------------------------------------------------
+
 // Run the CPU for a single instruction.
 func (m *RV) Run() error {
 
@@ -2164,15 +2192,15 @@ func (m *RV) Run() error {
 
 	// lookup and emulate the instruction
 	im := m.isa.lookup(ins)
-	if im != nil {
-		err = im.defn.emu(m, ins)
-		if err != nil {
-			return err
-		}
-		m.insCount++
-	} else {
-		return m.errIllegal()
+	if im == nil {
+		return m.errHandler(m.errIllegal(ins))
 	}
+
+	err = im.defn.emu(m, ins)
+	if err != nil {
+		return m.errHandler(err)
+	}
+	m.insCount++
 
 	// stuck PC detection
 	if m.PC == m.lastPC {

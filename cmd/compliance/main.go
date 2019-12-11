@@ -64,6 +64,9 @@ func testFixups(m *rv.RV, name string) {
 		"rv32i/I-SH-01",
 		"rv32i/I-SW-01":
 		m.Mem.Add(mem.NewSection(".fixup", 0x80001ffc, 4, mem.AttrRW))
+	case "rv32mi/illegal",
+		"rv32mi/shamt":
+		m.SetHandler(rv.ErrIllegal)
 	}
 }
 
@@ -161,7 +164,7 @@ func TestRV32(base, name string) error {
 
 	// check for a normal exit
 	e := err.(*rv.Error)
-	if e.N != rv.ErrExit {
+	if e.Type != rv.ErrExit {
 		return err
 	}
 
@@ -228,7 +231,7 @@ func TestRV64(base, name string) error {
 
 	// check for a normal exit
 	e := err.(*rv.Error)
-	if e.N != rv.ErrExit {
+	if e.Type != rv.ErrExit {
 		return err
 	}
 
