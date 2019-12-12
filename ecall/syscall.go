@@ -23,11 +23,11 @@ import "github.com/deadsy/riscv/rv"
 // system calls
 
 func sc_close(m *rv.RV) error {
-	return m.Break()
+	return nil
 }
 
 func sc_fstat(m *rv.RV) error {
-	return m.Break()
+	return nil
 }
 
 func sc_exit(m *rv.RV) error {

@@ -448,7 +448,7 @@ func emu_ECALL(m *RV, ins uint) error {
 }
 
 func emu_EBREAK(m *RV, ins uint) error {
-	return m.errTodo()
+	return m.errBreak()
 }
 
 func emu_CSRRW(m *RV, ins uint) error {
@@ -2168,6 +2168,9 @@ func (m *RV) errHandler(err error) error {
 	switch e.Type {
 	case ErrIllegal:
 		m.PC = m.CSR.Exception(m.PC, csr.ExInsIllegal, e.ins)
+		return nil
+	case ErrBreak:
+		m.PC = m.CSR.Exception(m.PC, csr.ExBreakpoint, 0)
 		return nil
 	}
 

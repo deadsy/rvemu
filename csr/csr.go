@@ -69,7 +69,11 @@ const (
 	FRM     = 0x002
 	FCSR    = 0x003
 	SSTATUS = 0x100
+	SEDELEG = 0x102
+	SIDELEG = 0x103
 	MSTATUS = 0x300
+	MEDELEG = 0x302
+	MIDELEG = 0x303
 	MTVEC   = 0x305
 	MEPC    = 0x341
 	MCAUSE  = 0x342
@@ -177,6 +181,9 @@ func rdMTVAL(s *State) uint {
 
 //-----------------------------------------------------------------------------
 // machine trap vector
+
+const mtvecModeMask = uint64(3)
+const mtvecBaseMask = ^mtvecModeMask
 
 func wrMTVEC(s *State, val uint) {
 	s.mtvec = val
@@ -665,21 +672,6 @@ var lookup = map[uint]csrDefn{
 	0x244: {"hip", nil, nil},
 }
 
-// Name returns the name of a given CSR.
-func Name(reg uint) string {
-	if x, ok := lookup[reg]; ok {
-		return x.name
-	}
-	return fmt.Sprintf("0x%03x", reg)
-}
-
-// access returns the access string of a given CSR.
-func access(reg uint) string {
-	mode := [4]string{"u", "s", "h", "m"}[(reg>>8)&3]
-	rw := [4]string{"rw", "rw", "rw", "r_"}[(reg>>10)&3]
-	return mode + rw
-}
-
 //-----------------------------------------------------------------------------
 
 // canAccess returns true if the register can be accessed at the current privilege level.
@@ -749,6 +741,17 @@ func (s *State) Rd(reg uint) (uint64, error) {
 	return 0, &Error{reg, ErrTodo}
 }
 
+// rdForce reads from a CSR irrespective of privilege level.
+func (s *State) rdForce(reg uint) (uint64, error) {
+	if x, ok := lookup[reg]; ok {
+		if x.rd == nil {
+			return 0, &Error{reg, ErrNoRead}
+		}
+		return uint64(x.rd(s)), nil
+	}
+	return 0, &Error{reg, ErrTodo}
+}
+
 // Wr writes to a CSR.
 func (s *State) Wr(reg uint, val uint64) error {
 	if !canWr(reg) {
@@ -785,32 +788,89 @@ func (s *State) Clr(reg uint, bits uint64) error {
 	return s.Wr(reg, val & ^bits)
 }
 
+//-----------------------------------------------------------------------------
+
+// Name returns the name of a given CSR.
+func Name(reg uint) string {
+	if x, ok := lookup[reg]; ok {
+		return x.name
+	}
+	return fmt.Sprintf("0x%03x", reg)
+}
+
+// access returns the access string of a given CSR.
+func (s *State) access(reg uint) string {
+	mode := [4]string{"u", "s", "h", "m"}[(reg>>8)&3]
+	var rw string
+	if s.canAccess(reg) {
+		if canWr(reg) {
+			rw = "rw"
+		} else {
+			rw = "r_"
+		}
+	} else {
+		rw = ".."
+	}
+	return mode + rw
+}
+
 // Display displays the CSR state.
 func (s *State) Display() string {
-	// allow all reads
-	savedPriv := s.Priv
-	s.Priv = PrivM
-	// read all registers
 	x := [][]string{}
+	privStr := []string{"User", "Supervisor", "?", "Machine"}[s.Priv]
+	x = append(x, []string{"privilege", privStr})
+	// read all registers
 	for reg := uint(0); reg < 4096; reg++ {
-		val, err := s.Rd(reg)
+		val, err := s.rdForce(reg)
 		if err != nil {
 			e := err.(*Error)
 			if e.n == ErrTodo || e.n == ErrNoRead {
 				continue
 			}
 		}
-		regStr := fmt.Sprintf("%03x %s %s", reg, access(reg), Name(reg))
+		regStr := fmt.Sprintf("%03x %s %s", reg, s.access(reg), Name(reg))
 		valStr := "0"
 		if val != 0 {
 			valStr = fmt.Sprintf("%08x", val)
 		}
 		x = append(x, []string{regStr, valStr})
 	}
-	// restore privilege
-	s.Priv = savedPriv
 	// return the table string
 	return cli.TableString(x, []int{0, 0}, 1)
+}
+
+//-----------------------------------------------------------------------------
+
+// getModeX returns the mode to which to take the given exception/interrupt.
+func (s *State) getModeX(mMask, sMask uint64, ecode uint) uint {
+	var mode uint
+	// get target mode implied by delegation registers
+	if mMask&(1<<ecode) != 0 {
+		mode = PrivM
+	} else if sMask&(1<<ecode) != 0 {
+		mode = PrivS
+	} else {
+		mode = PrivU
+	}
+	// exception cannot be taken to lower-privilege mode
+	if mode < s.Priv {
+		return s.Priv
+	}
+	return mode
+}
+
+// getInterruptModeX returns the target mode to which to take the given interrupt.
+func (s *State) getInterruptModeX(ecode uint) uint {
+	mMask, _ := s.rdForce(MIDELEG)
+	sMask, _ := s.rdForce(SIDELEG)
+	return s.getModeX(mMask, sMask, ecode)
+}
+
+// getExceptionModeX returns the target mode to which to take the given exception.
+func (s *State) getExceptionModeX(ecode uint) uint {
+	mMask, _ := s.rdForce(MEDELEG)
+	sMask, _ := s.rdForce(SEDELEG)
+	return s.getModeX(mMask, sMask, ecode)
 }
 
 //-----------------------------------------------------------------------------
@@ -843,6 +903,7 @@ func (s *State) SRET() (uint, error) {
 func (s *State) Exception(pc uint64, cause, val uint) uint64 {
 	s.Wr(MEPC, pc)
 	pc, _ = s.Rd(MTVEC)
+	pc &= mtvecBaseMask
 	s.setException(cause)
 	s.Wr(MTVAL, uint64(val))
 	s.mstatusWrMPIE(s.mstatusRdMIE())

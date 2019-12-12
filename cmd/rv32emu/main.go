@@ -52,7 +52,7 @@ func newUserApp() (*userApp, error) {
 
 	// create the cpu
 	cpu := rv.NewRV32(isa, m, ecall)
-	cpu.SetHandler(rv.ErrIllegal)
+	cpu.SetHandler(rv.ErrIllegal | rv.ErrBreak)
 
 	return &userApp{
 		mem: m,

@@ -67,6 +67,9 @@ func testFixups(m *rv.RV, name string) {
 	case "rv32mi/illegal",
 		"rv32mi/shamt":
 		m.SetHandler(rv.ErrIllegal)
+	case "rv32i/I-EBREAK-01",
+		"rv32mi/sbreak":
+		m.SetHandler(rv.ErrBreak)
 	}
 }
 

@@ -381,7 +381,7 @@ func (m *RV) Exit(status uint64) error {
 }
 
 // Break returns an error to indicate an emulation break.
-func (m *RV) Break() error {
+func (m *RV) errBreak() error {
 	return &Error{
 		Type: ErrBreak,
 		alen: m.xlen,
