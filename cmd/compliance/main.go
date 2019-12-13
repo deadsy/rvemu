@@ -70,6 +70,9 @@ func testFixups(m *rv.RV, name string) {
 	case "rv32i/I-EBREAK-01",
 		"rv32mi/sbreak":
 		m.SetHandler(rv.ErrBreak)
+	case "rv32mi/ma_addr",
+		"rv32i/I-MISALIGN_LDST-01":
+		m.Mem.SetAttr(".data", mem.AttrRWM)
 	}
 }
 

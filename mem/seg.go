@@ -61,10 +61,14 @@ const (
 	AttrR Attribute = 1 << iota // read
 	AttrW                       // write
 	AttrX                       // execute
+	AttrM                       // misaligned access
 )
 
 // AttrRW = read/write
 const AttrRW = AttrR | AttrW
+
+// AttrRW = read/write/misaligned
+const AttrRWM = AttrR | AttrW | AttrM
 
 // AttrRX = read/execute
 const AttrRX = AttrR | AttrX
@@ -73,7 +77,7 @@ const AttrRX = AttrR | AttrX
 const AttrRWX = AttrR | AttrW | AttrX
 
 func (a Attribute) String() string {
-	s := make([]string, 3)
+	s := make([]string, 4)
 	for i := range s {
 		s[i] = "-"
 	}
@@ -86,6 +90,9 @@ func (a Attribute) String() string {
 	if a&AttrX != 0 {
 		s[2] = "x"
 	}
+	if a&AttrM != 0 {
+		s[3] = "m"
+	}
 	return strings.Join(s, "")
 }
 
@@ -97,7 +104,7 @@ func wrError(addr uint, attr Attribute, name string, align uint) error {
 	if attr&AttrW == 0 {
 		n |= ErrWrite
 	}
-	if addr&(align-1) != 0 {
+	if (attr&AttrM == 0) && (addr&(align-1) != 0) {
 		n |= ErrAlign
 	}
 	if n != 0 {
@@ -111,7 +118,7 @@ func rdError(addr uint, attr Attribute, name string, align uint) error {
 	if attr&AttrR == 0 {
 		n |= ErrRead
 	}
-	if addr&(align-1) != 0 {
+	if (attr&AttrM == 0) && (addr&(align-1) != 0) {
 		n |= ErrAlign
 	}
 	if n != 0 {
