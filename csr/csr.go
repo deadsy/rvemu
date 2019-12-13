@@ -899,6 +899,20 @@ func (s *State) SRET() (uint, error) {
 	return rdSEPC(s), nil
 }
 
+// ECALL performs an environment call exception.
+func (s *State) ECALL(pc uint64, val uint) uint64 {
+	switch s.Priv {
+	case PrivU:
+		return s.Exception(pc, ExEnvCallFromUserMode, val)
+	case PrivS:
+		return s.Exception(pc, ExEnvCallFromSupervisorMode, val)
+	case PrivM:
+		return s.Exception(pc, ExEnvCallFromMachineMode, val)
+	default:
+		panic("")
+	}
+}
+
 // Exception performs a cpu exception.
 func (s *State) Exception(pc uint64, cause, val uint) uint64 {
 	s.Wr(MEPC, pc)

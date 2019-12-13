@@ -276,11 +276,11 @@ const (
 	ErrIllegal = (1 << iota) // illegal instruction
 	ErrMemory                // memory exception
 	ErrEcall                 // unrecognised ecall
-	ErrBreak                 // debug break point
+	ErrEbreak                // debug break point
 	ErrCSR                   // CSR exception
-	ErrExit                  // exit from emulation
 	ErrTodo                  // unimplemented instruction
 	ErrStuck                 // stuck program counter
+	//ErrExit                  // exit from emulation
 )
 
 // Error is a general emulation error.
@@ -305,13 +305,13 @@ func (e *Error) Error() string {
 	case ErrMemory:
 		return fmt.Sprintf("memory exception at PC %s, %s", pcStr, e.err)
 	case ErrEcall:
-		return "unrecognized ecall at PC " + pcStr
-	case ErrBreak:
-		return "breakpoint at PC " + pcStr
+		return "ecall exception at PC " + pcStr
+	case ErrEbreak:
+		return "ebreak exception at PC " + pcStr
 	case ErrCSR:
 		return fmt.Sprintf("csr exception at PC %s, %s", pcStr, e.err)
-	case ErrExit:
-		return "exit at PC " + pcStr
+	//case ErrExit:
+	//	return "exit at PC " + pcStr
 	case ErrTodo:
 		return "unimplemented instruction at PC " + pcStr
 	case ErrStuck:
@@ -320,6 +320,7 @@ func (e *Error) Error() string {
 	return "unknown exception at PC " + pcStr
 }
 
+// errIllegal returns the error for an illegal instruction exception.
 func (m *RV) errIllegal(ins uint) error {
 	return &Error{
 		Type: ErrIllegal,
@@ -329,6 +330,7 @@ func (m *RV) errIllegal(ins uint) error {
 	}
 }
 
+// errEcall returns the error for an environment call exception.
 func (m *RV) errEcall() error {
 	return &Error{
 		Type: ErrEcall,
@@ -337,6 +339,16 @@ func (m *RV) errEcall() error {
 	}
 }
 
+// errEbreak returns the error for an environment break exception.
+func (m *RV) errEbreak() error {
+	return &Error{
+		Type: ErrEbreak,
+		alen: m.xlen,
+		pc:   m.PC,
+	}
+}
+
+// errMemory returns the error for a memory exception.
 func (m *RV) errMemory(err error) error {
 	return &Error{
 		Type: ErrMemory,
@@ -346,6 +358,7 @@ func (m *RV) errMemory(err error) error {
 	}
 }
 
+// errCSR returns the error for CSR access exception.
 func (m *RV) errCSR(err error) error {
 	return &Error{
 		Type: ErrCSR,
@@ -371,6 +384,8 @@ func (m *RV) errTodo() error {
 	}
 }
 
+/*
+
 // Exit returns an error to indicate an emulation exit.
 func (m *RV) Exit(status uint64) error {
 	return &Error{
@@ -388,6 +403,8 @@ func (m *RV) errBreak() error {
 		pc:   m.PC,
 	}
 }
+
+*/
 
 //-----------------------------------------------------------------------------
 

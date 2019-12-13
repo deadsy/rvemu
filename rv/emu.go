@@ -439,16 +439,20 @@ func emu_FENCE_I(m *RV, ins uint) error {
 }
 
 func emu_ECALL(m *RV, ins uint) error {
-	if m.ecall == nil {
-		return m.errEcall()
-	}
-	err := m.ecall.Call(m)
-	m.PC += 4
-	return err
+	return m.errEcall()
+
+	/*
+		if m.ecall == nil {
+			return m.errEcall()
+		}
+		err := m.ecall.Call(m)
+		m.PC += 4
+		return err
+	*/
 }
 
 func emu_EBREAK(m *RV, ins uint) error {
-	return m.errBreak()
+	return m.errEbreak()
 }
 
 func emu_CSRRW(m *RV, ins uint) error {
@@ -2169,8 +2173,11 @@ func (m *RV) errHandler(err error) error {
 	case ErrIllegal:
 		m.PC = m.CSR.Exception(m.PC, csr.ExInsIllegal, e.ins)
 		return nil
-	case ErrBreak:
+	case ErrEbreak:
 		m.PC = m.CSR.Exception(m.PC, csr.ExBreakpoint, 0)
+		return nil
+	case ErrEcall:
+		m.PC = m.CSR.ECALL(m.PC, 0)
 		return nil
 	}
 

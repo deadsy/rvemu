@@ -31,7 +31,8 @@ func sc_fstat(m *rv.RV) error {
 }
 
 func sc_exit(m *rv.RV) error {
-	return m.Exit(0)
+	//return m.Exit(0)
+	return nil
 }
 
 //-----------------------------------------------------------------------------

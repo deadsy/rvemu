@@ -30,7 +30,8 @@ func NewCompliance() *Compliance {
 
 // Call is an ecall.
 func (c *Compliance) Call(m *rv.RV) error {
-	return m.Exit(m.X[rv.RegGp])
+	//return m.Exit(m.X[rv.RegGp])
+	return nil
 }
 
 //-----------------------------------------------------------------------------
