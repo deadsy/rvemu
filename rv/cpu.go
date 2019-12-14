@@ -275,8 +275,8 @@ type Ecall interface {
 const (
 	ErrIllegal = (1 << iota) // illegal instruction
 	ErrMemory                // memory exception
-	ErrEcall                 // unrecognised ecall
-	ErrEbreak                // debug break point
+	ErrEcall                 // ecall exception
+	ErrEbreak                // ebreak exception
 	ErrCSR                   // CSR exception
 	ErrTodo                  // unimplemented instruction
 	ErrStuck                 // stuck program counter

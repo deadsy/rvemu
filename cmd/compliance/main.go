@@ -69,7 +69,7 @@ func testFixups(m *rv.RV, name string) {
 		m.SetHandler(rv.ErrIllegal)
 	case "rv32i/I-EBREAK-01",
 		"rv32mi/sbreak":
-		m.SetHandler(rv.ErrBreak)
+		m.SetHandler(rv.ErrEbreak)
 	case "rv32mi/ma_addr",
 		"rv32i/I-MISALIGN_LDST-01":
 		m.Mem.SetAttr(".data", mem.AttrRWM)
@@ -169,10 +169,10 @@ func TestRV32(base, name string) error {
 	}
 
 	// check for a normal exit
-	e := err.(*rv.Error)
-	if e.Type != rv.ErrExit {
-		return err
-	}
+	//e := err.(*rv.Error)
+	//if e.Type != rv.ErrExit {
+	//	return err
+	//}
 
 	// get the test results from memory
 	result, err := getResults(m)
@@ -236,10 +236,10 @@ func TestRV64(base, name string) error {
 	}
 
 	// check for a normal exit
-	e := err.(*rv.Error)
-	if e.Type != rv.ErrExit {
-		return err
-	}
+	//e := err.(*rv.Error)
+	//if e.Type != rv.ErrExit {
+	//	return err
+	//}
 
 	// get the test results from memory
 	result, err := getResults(m)

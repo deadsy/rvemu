@@ -47,6 +47,9 @@ func (e *Error) Error() string {
 	if e.n&ErrExec != 0 {
 		s = append(s, "exec")
 	}
+	if e.n&ErrBreak != 0 {
+		s = append(s, "break")
+	}
 	errStr := strings.Join(s, ",")
 	return fmt.Sprintf("%s @ %08x (%s)", errStr, e.addr, e.name)
 }

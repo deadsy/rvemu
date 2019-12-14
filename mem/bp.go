@@ -40,6 +40,7 @@ func (s bpState) String() string {
 //-----------------------------------------------------------------------------
 
 type breakPoint struct {
+	name   string
 	addr   uint
 	access Attribute
 	state  bpState
@@ -52,24 +53,24 @@ func newBreakPoints() breakPoints {
 }
 
 // Add a breakpoint
-func (b breakPoints) Add(bp *breakPoint) {
+func (b breakPoints) add(bp *breakPoint) {
 	b[bp.addr] = bp
 }
 
 // Remove a breakpoint
-func (b breakPoints) Remove(addr uint) {
+func (b breakPoints) remove(addr uint) {
 	delete(b, addr)
 }
 
 // Set a breakpoint
-func (b breakPoints) Set(addr uint) {
+func (b breakPoints) set(addr uint) {
 	if bp, ok := b[addr]; ok {
 		bp.state = bpBreak
 	}
 }
 
 // Clr a breakpoint
-func (b breakPoints) Clr(addr uint) {
+func (b breakPoints) clr(addr uint) {
 	if bp, ok := b[addr]; ok {
 		bp.state = bpOff
 	}
@@ -83,7 +84,7 @@ func (b breakPoints) check(addr uint, access Attribute) *Error {
 			if bp.state == bpBreak {
 				// skip so we don't immediately re-break.
 				bp.state = bpSkip
-				return &Error{ErrBreak, addr, ""}
+				return &Error{ErrBreak, addr, bp.name}
 			}
 			if bp.state == bpSkip {
 				// break on the next access.

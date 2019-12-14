@@ -243,3 +243,15 @@ func (m *Memory) AddSymbol(s string, adr, size uint) error {
 }
 
 //-----------------------------------------------------------------------------
+
+// Add a breakpoint by symbol name.
+func (m *Memory) AddBreakPointByName(s string, attr Attribute) error {
+	symbol := m.symByName[s]
+	if symbol == nil {
+		return fmt.Errorf("%s not found", s)
+	}
+	m.BP.add(&breakPoint{symbol.Name, symbol.Addr, attr, bpBreak})
+	return nil
+}
+
+//-----------------------------------------------------------------------------

@@ -91,6 +91,9 @@ func main() {
 	}
 	fmt.Fprintf(os.Stderr, "%s\n", status)
 
+	// Break on the "tohost" write.
+	app.mem.AddBreakPointByName("tohost", mem.AttrW)
+
 	// create the cli
 	c := cli.NewCLI(app)
 	c.HistoryLoad(historyPath)
