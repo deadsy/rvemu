@@ -12,6 +12,9 @@ import (
 	"fmt"
 	"math"
 	"strings"
+
+	"github.com/deadsy/riscv/csr"
+	"github.com/deadsy/riscv/mem"
 )
 
 //-----------------------------------------------------------------------------
@@ -318,6 +321,20 @@ func (e *Error) Error() string {
 		return "stuck at PC " + pcStr
 	}
 	return "unknown exception at PC " + pcStr
+}
+
+func (e *Error) GetMemError() *mem.Error {
+	if e.Type != ErrMemory {
+		return nil
+	}
+	return e.err.(*mem.Error)
+}
+
+func (e *Error) GetCSRError() *csr.Error {
+	if e.Type != ErrCSR {
+		return nil
+	}
+	return e.err.(*csr.Error)
 }
 
 // errIllegal returns the error for an illegal instruction exception.

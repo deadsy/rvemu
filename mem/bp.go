@@ -98,7 +98,7 @@ func (b breakPoints) check(addr uint, access Attribute) *Error {
 func (b breakPoints) checkR(addr uint) error {
 	err := b.check(addr, AttrR)
 	if err != nil {
-		err.n |= ErrRead
+		err.Type |= ErrRead
 		return err
 	}
 	return nil
@@ -107,7 +107,7 @@ func (b breakPoints) checkR(addr uint) error {
 func (b breakPoints) checkW(addr uint) error {
 	err := b.check(addr, AttrW)
 	if err != nil {
-		err.n |= ErrWrite
+		err.Type |= ErrWrite
 		return err
 	}
 	return nil
@@ -116,7 +116,7 @@ func (b breakPoints) checkW(addr uint) error {
 func (b breakPoints) checkX(addr uint) error {
 	err := b.check(addr, AttrX)
 	if err != nil {
-		err.n |= ErrExec
+		err.Type |= ErrExec
 		return err
 	}
 	return nil

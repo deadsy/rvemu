@@ -126,6 +126,34 @@ func getResults(m *mem.Memory) ([]uint32, error) {
 	return m.Rd32Range(start, (end-start)>>2), nil
 }
 
+func checkExit(m *mem.Memory, errIn error) error {
+	// we are expecting a breakpoint on write to "tohost".
+	e := errIn.(*rv.Error)
+	em := e.GetMemError()
+	if em == nil {
+		return errIn
+	}
+	if em.Type != mem.ErrWrite|mem.ErrBreak {
+		return errIn
+	}
+	// get the symbol
+	addr, err := m.SymbolGetAddress("tohost")
+	if err != nil {
+		return fmt.Errorf("\"tohost\" symbol not found, %s", errIn)
+	}
+	// check the address
+	if em.Addr != addr {
+		return fmt.Errorf("breakpoint not on \"tohost\", %s", errIn)
+	}
+	// check the exit status
+	status, _ := m.Rd32(addr)
+	if status != 1 {
+		return fmt.Errorf("FAIL (%d), %s", status, errIn)
+	}
+	// looks good
+	return nil
+}
+
 //-----------------------------------------------------------------------------
 
 func TestRV32(base, name string) error {
@@ -150,6 +178,9 @@ func TestRV32(base, name string) error {
 		return err
 	}
 
+	// Break on the "tohost" write (compliance tests).
+	m.AddBreakPointByName("tohost", mem.AttrW)
+
 	// create the cpu
 	cpu := rv.NewRV32(isa, m, ecall.NewCompliance())
 
@@ -169,11 +200,10 @@ func TestRV32(base, name string) error {
 	}
 
 	// check for a normal exit
-	//e := err.(*rv.Error)
-	//if e.Type != rv.ErrExit {
-	//	return err
-	//}
-
+	err = checkExit(m, err)
+	if err != nil {
+		return err
+	}
 	// get the test results from memory
 	result, err := getResults(m)
 	if err != nil {
@@ -217,6 +247,9 @@ func TestRV64(base, name string) error {
 		return err
 	}
 
+	// Break on the "tohost" write (compliance tests).
+	m.AddBreakPointByName("tohost", mem.AttrW)
+
 	// create the cpu
 	cpu := rv.NewRV64(isa, m, ecall.NewCompliance())
 
@@ -236,11 +269,10 @@ func TestRV64(base, name string) error {
 	}
 
 	// check for a normal exit
-	//e := err.(*rv.Error)
-	//if e.Type != rv.ErrExit {
-	//	return err
-	//}
-
+	err = checkExit(m, err)
+	if err != nil {
+		return err
+	}
 	// get the test results from memory
 	result, err := getResults(m)
 	if err != nil {

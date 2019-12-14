@@ -2249,6 +2249,7 @@ func (m *RV) Reset() {
 	m.PC = m.Mem.Entry
 	m.wrX(RegSp, uint64(uint(1<<32)-16))
 	m.CSR = csr.NewState(m.xlen)
+	m.SetHandler(ErrEcall)
 	m.insCount = 0
 	m.lastPC = 0
 }

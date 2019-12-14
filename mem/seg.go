@@ -19,9 +19,9 @@ import (
 
 // Error is a memory acccess error.
 type Error struct {
-	n    uint   // bitmap of memory errors
-	addr uint   // memory address causing the error
-	name string // section name for the address
+	Type uint   // bitmap of memory errors
+	Addr uint   // memory address causing the error
+	Name string // section name for the address
 }
 
 // Memory error bits.
@@ -35,23 +35,23 @@ const (
 
 func (e *Error) Error() string {
 	s := make([]string, 0)
-	if e.n&ErrAlign != 0 {
+	if e.Type&ErrAlign != 0 {
 		s = append(s, "align")
 	}
-	if e.n&ErrRead != 0 {
+	if e.Type&ErrRead != 0 {
 		s = append(s, "read")
 	}
-	if e.n&ErrWrite != 0 {
+	if e.Type&ErrWrite != 0 {
 		s = append(s, "write")
 	}
-	if e.n&ErrExec != 0 {
+	if e.Type&ErrExec != 0 {
 		s = append(s, "exec")
 	}
-	if e.n&ErrBreak != 0 {
+	if e.Type&ErrBreak != 0 {
 		s = append(s, "break")
 	}
 	errStr := strings.Join(s, ",")
-	return fmt.Sprintf("%s @ %08x (%s)", errStr, e.addr, e.name)
+	return fmt.Sprintf("%s @ %08x (%s)", errStr, e.Addr, e.Name)
 }
 
 //-----------------------------------------------------------------------------
@@ -135,7 +135,7 @@ func rdInsError(addr uint, attr Attribute, name string) error {
 	// we allow 32-bit reads on 2 byte address boundaries.
 	err := rdError(addr, attr, name, 2)
 	if err != nil && attr&AttrX == 0 {
-		err.(*Error).n |= ErrExec
+		err.(*Error).Type |= ErrExec
 	}
 	return err
 }

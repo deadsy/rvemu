@@ -52,9 +52,6 @@ func newUserApp() (*userApp, error) {
 
 	// create the cpu
 	cpu := rv.NewRV32(isa, m, ecall)
-	//cpu.SetHandler(rv.ErrIllegal)
-	//cpu.SetHandler(rv.ErrBreak)
-	cpu.SetHandler(rv.ErrEcall)
 
 	return &userApp{
 		mem: m,
@@ -91,7 +88,7 @@ func main() {
 	}
 	fmt.Fprintf(os.Stderr, "%s\n", status)
 
-	// Break on the "tohost" write.
+	// Break on the "tohost" write (compliance tests).
 	app.mem.AddBreakPointByName("tohost", mem.AttrW)
 
 	// create the cli

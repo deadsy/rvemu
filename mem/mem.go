@@ -118,47 +118,47 @@ func (m *Memory) GetSectionName(adr uint) string {
 
 // RdIns reads a 32-bit instruction from memory.
 func (m *Memory) RdIns(adr uint) (uint, error) {
-	err := m.BP.checkX(adr)
-	if err != nil {
-		return 0, err
+	val, err := m.findByAddr(adr, 4).RdIns(adr)
+	if err == nil {
+		err = m.BP.checkX(adr)
 	}
-	return m.findByAddr(adr, 4).RdIns(adr)
+	return val, err
 }
 
 // Rd64 reads a 64-bit data value from memory.
 func (m *Memory) Rd64(adr uint) (uint64, error) {
-	err := m.BP.checkR(adr)
-	if err != nil {
-		return 0, err
+	val, err := m.findByAddr(adr, 8).Rd64(adr)
+	if err == nil {
+		err = m.BP.checkR(adr)
 	}
-	return m.findByAddr(adr, 8).Rd64(adr)
+	return val, err
 }
 
 // Rd32 reads a 32-bit data value from memory.
 func (m *Memory) Rd32(adr uint) (uint32, error) {
-	err := m.BP.checkR(adr)
-	if err != nil {
-		return 0, err
+	val, err := m.findByAddr(adr, 4).Rd32(adr)
+	if err == nil {
+		err = m.BP.checkR(adr)
 	}
-	return m.findByAddr(adr, 4).Rd32(adr)
+	return val, err
 }
 
 // Rd16 reads a 16-bit data value from memory.
 func (m *Memory) Rd16(adr uint) (uint16, error) {
-	err := m.BP.checkR(adr)
-	if err != nil {
-		return 0, err
+	val, err := m.findByAddr(adr, 2).Rd16(adr)
+	if err == nil {
+		err = m.BP.checkR(adr)
 	}
-	return m.findByAddr(adr, 2).Rd16(adr)
+	return val, err
 }
 
 // Rd8 reads an 8-bit data value from memory.
 func (m *Memory) Rd8(adr uint) (uint8, error) {
-	err := m.BP.checkR(adr)
-	if err != nil {
-		return 0, err
+	val, err := m.findByAddr(adr, 1).Rd8(adr)
+	if err == nil {
+		err = m.BP.checkR(adr)
 	}
-	return m.findByAddr(adr, 1).Rd8(adr)
+	return val, err
 }
 
 // Rd32Range reads a range of 32-bit data values from memory.
@@ -175,38 +175,38 @@ func (m *Memory) Rd32Range(adr, n uint) []uint32 {
 
 // Wr64 writes a 64-bit data value to memory.
 func (m *Memory) Wr64(adr uint, val uint64) error {
-	err := m.BP.checkW(adr)
-	if err != nil {
-		return err
+	err := m.findByAddr(adr, 8).Wr64(adr, val)
+	if err == nil {
+		err = m.BP.checkW(adr)
 	}
-	return m.findByAddr(adr, 8).Wr64(adr, val)
+	return err
 }
 
 // Wr32 writes a 32-bit data value to memory.
 func (m *Memory) Wr32(adr uint, val uint32) error {
-	err := m.BP.checkW(adr)
-	if err != nil {
-		return err
+	err := m.findByAddr(adr, 4).Wr32(adr, val)
+	if err == nil {
+		err = m.BP.checkW(adr)
 	}
-	return m.findByAddr(adr, 4).Wr32(adr, val)
+	return err
 }
 
 // Wr16 writes a 16-bit data value to memory.
 func (m *Memory) Wr16(adr uint, val uint16) error {
-	err := m.BP.checkW(adr)
-	if err != nil {
-		return err
+	err := m.findByAddr(adr, 2).Wr16(adr, val)
+	if err == nil {
+		err = m.BP.checkW(adr)
 	}
-	return m.findByAddr(adr, 2).Wr16(adr, val)
+	return err
 }
 
 // Wr8 writes an 8-bit data value to memory.
 func (m *Memory) Wr8(adr uint, val uint8) error {
-	err := m.BP.checkW(adr)
-	if err != nil {
-		return err
+	err := m.findByAddr(adr, 1).Wr8(adr, val)
+	if err == nil {
+		err = m.BP.checkW(adr)
 	}
-	return m.findByAddr(adr, 1).Wr8(adr, val)
+	return err
 }
 
 //-----------------------------------------------------------------------------
@@ -246,11 +246,11 @@ func (m *Memory) AddSymbol(s string, adr, size uint) error {
 
 // Add a breakpoint by symbol name.
 func (m *Memory) AddBreakPointByName(s string, attr Attribute) error {
-	symbol := m.symByName[s]
-	if symbol == nil {
+	sym := m.symByName[s]
+	if sym == nil {
 		return fmt.Errorf("%s not found", s)
 	}
-	m.BP.add(&breakPoint{symbol.Name, symbol.Addr, attr, bpBreak})
+	m.BP.add(&breakPoint{sym.Name, sym.Addr, attr, bpBreak})
 	return nil
 }
 
