@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	cli "github.com/deadsy/go-cli"
+	"github.com/deadsy/riscv/util"
 )
 
 //-----------------------------------------------------------------------------
@@ -54,12 +55,26 @@ func (e *Error) Error() string {
 
 //-----------------------------------------------------------------------------
 
-// Privilege Levels.
+type Mode uint
+
+// Modes
 const (
-	PrivU = 0 // user
-	PrivS = 1 // supervisor
-	PrivM = 3 // machine
+	ModeU Mode = 0 // user
+	ModeS      = 1 // supervisor
+	ModeM      = 3 // machine
 )
+
+func (m Mode) String() string {
+	switch m {
+	case ModeU:
+		return "user"
+	case ModeS:
+		return "supervisor"
+	case ModeM:
+		return "machine"
+	}
+	return fmt.Sprintf("? (%d)", m)
+}
 
 //-----------------------------------------------------------------------------
 
@@ -92,9 +107,9 @@ func rdZero(s *State) uint {
 }
 
 //-----------------------------------------------------------------------------
-// mcause register
+// u/s/m cause register
 
-// mcause interrupts
+// interrupts
 const (
 	IntUserSoftware       = 0  // User software interrupt
 	IntSupervisorSoftware = 1  // Supervisor software interrupt
@@ -107,12 +122,7 @@ const (
 	IntMachineExternal    = 11 // Machine external interrupt
 )
 
-// SetInterrupt sets an interrupt code in mcause.
-func (s *State) setInterrupt(x uint) {
-	s.mcause = (1 << (s.mxlen - 1)) | x
-}
-
-// mcause exceptions
+// exceptions
 const (
 	ExInsAddrMisaligned         = 0  // Instruction address misaligned
 	ExInsAccessFault            = 1  // Instruction access fault
@@ -130,13 +140,31 @@ const (
 	ExStorePageFault            = 15 // Store/AMO page fault
 )
 
-// SetException sets an exception code in mcause.
-func (s *State) setException(x uint) {
-	s.mcause = (0 << (s.mxlen - 1)) | x
+func (s *State) setCause(ecode uint, isInterrupt bool, mode Mode) {
+	cause := ecode
+	if isInterrupt {
+		cause |= 1 << (s.mxlen - 1)
+	}
+	switch mode {
+	case ModeU:
+		s.ucause = cause
+	case ModeS:
+		s.scause = cause
+	case ModeM:
+		s.mcause = cause
+	}
 }
 
 func rdMCAUSE(s *State) uint {
 	return s.mcause
+}
+
+func rdSCAUSE(s *State) uint {
+	return s.scause
+}
+
+func rdUCAUSE(s *State) uint {
+	return s.ucause
 }
 
 //-----------------------------------------------------------------------------
@@ -155,10 +183,32 @@ func rdMISA(s *State) uint {
 }
 
 //-----------------------------------------------------------------------------
-// machine exception program counter
+// u/s/m exception program counter
+
+func wrUEPC(s *State, val uint) {
+	s.uepc = val & ^uint(1)
+}
+
+func wrSEPC(s *State, val uint) {
+	s.sepc = val & ^uint(1)
+}
 
 func wrMEPC(s *State, val uint) {
 	s.mepc = val & ^uint(1)
+}
+
+func rdUEPC(s *State) uint {
+	if s.ialign == 32 {
+		return s.uepc & ^uint(3)
+	}
+	return s.uepc
+}
+
+func rdSEPC(s *State) uint {
+	if s.ialign == 32 {
+		return s.sepc & ^uint(3)
+	}
+	return s.sepc
 }
 
 func rdMEPC(s *State) uint {
@@ -168,65 +218,101 @@ func rdMEPC(s *State) uint {
 	return s.mepc
 }
 
+func (s *State) setEPC(pc uint64, mode Mode) {
+	epc := uint(pc & ^uint64(1))
+	switch mode {
+	case ModeU:
+		s.uepc = epc
+	case ModeS:
+		s.sepc = epc
+	case ModeM:
+		s.mepc = epc
+	}
+}
+
 //-----------------------------------------------------------------------------
-// machine trap value register
+// u/s/m trap value register
 
 func wrMTVAL(s *State, val uint) {
 	s.mtval = val
+}
+
+func rdUTVAL(s *State) uint {
+	return s.utval
+}
+
+func rdSTVAL(s *State) uint {
+	return s.stval
 }
 
 func rdMTVAL(s *State) uint {
 	return s.mtval
 }
 
-//-----------------------------------------------------------------------------
-// machine trap vector
+func (s *State) setTrapValue(val uint, mode Mode) {
+	switch mode {
+	case ModeU:
+		s.utval = val
+	case ModeS:
+		s.stval = val
+	case ModeM:
+		s.mtval = val
+	}
+}
 
-const mtvecModeMask = uint64(3)
-const mtvecBaseMask = ^mtvecModeMask
+//-----------------------------------------------------------------------------
+// u/s/m trap vector
 
 func wrMTVEC(s *State, val uint) {
 	s.mtvec = val
+}
+
+func rdUTVEC(s *State) uint {
+	return s.utvec
+}
+
+func rdSTVEC(s *State) uint {
+	return s.stvec
 }
 
 func rdMTVEC(s *State) uint {
 	return s.mtvec
 }
 
-//-----------------------------------------------------------------------------
-// mscratch
-
-func wrMSCRATCH(s *State, val uint) {
-	s.mscratch = val
+// getTrapVector returns the base/mode of a u/s/m trap vector.
+func (s *State) getTrapVector(mode Mode) (uint, uint) {
+	var tvec, msb uint
+	switch mode {
+	case ModeU:
+		tvec = s.utvec
+		msb = s.uxlen - 1
+	case ModeS:
+		tvec = s.stvec
+		msb = s.sxlen - 1
+	case ModeM:
+		tvec = s.mtvec
+		msb = s.mxlen - 1
+	}
+	return util.MaskBits(tvec, msb, 2), util.MaskBits(tvec, 1, 0)
 }
 
-func rdMSCRATCH(s *State) uint {
-	return s.mscratch
-}
-
 //-----------------------------------------------------------------------------
-// sscratch
+// u/s/m scratch
 
 func wrSSCRATCH(s *State, val uint) {
 	s.sscratch = val
+}
+
+func wrMSCRATCH(s *State, val uint) {
+	s.mscratch = val
 }
 
 func rdSSCRATCH(s *State) uint {
 	return s.sscratch
 }
 
-//-----------------------------------------------------------------------------
-// supervisor exception program counter
-
-func wrSEPC(s *State, val uint) {
-	s.sepc = val & ^uint(1)
-}
-
-func rdSEPC(s *State) uint {
-	if s.ialign == 32 {
-		return s.sepc & ^uint(3)
-	}
-	return s.sepc
+func rdMSCRATCH(s *State) uint {
+	return s.mscratch
 }
 
 //-----------------------------------------------------------------------------
@@ -263,7 +349,23 @@ func rdFFLAGS(s *State) uint {
 }
 
 //-----------------------------------------------------------------------------
-// mstatus
+// u/s/m status
+
+func wrUSTATUS(s *State, x uint) {
+	s.mstatus = x // TODO mask
+}
+
+func rdUSTATUS(s *State) uint {
+	return s.mstatus // TODO mask
+}
+
+func wrSSTATUS(s *State, x uint) {
+	s.mstatus = x // TODO mask
+}
+
+func rdSSTATUS(s *State) uint {
+	return s.mstatus // TODO mask
+}
 
 func wrMSTATUS(s *State, x uint) {
 	s.mstatus = x
@@ -274,34 +376,81 @@ func rdMSTATUS(s *State) uint {
 }
 
 func (s *State) mstatusRdMPP() uint {
-	return (s.mstatus >> 11) & 3
+	return util.RdBits(s.mstatus, 12, 11)
 }
 
 func (s *State) mstatusWrMPP(x uint) {
-	s.mstatus &= ^uint(3 << 11)
-	s.mstatus |= (x & 3) << 11
+	util.WrBits(s.mstatus, x, 12, 11)
 }
 
-func (s *State) mstatusRdMIE() uint {
-	return (s.mstatus >> 3) & 1
+func (s *State) mstatusRdSPP() uint {
+	return util.RdBits(s.mstatus, 8, 8)
 }
 
-func (s *State) mstatusWrMIE(x uint) {
-	s.mstatus &= ^uint(1 << 3)
-	s.mstatus |= (x & 1) << 3
+func (s *State) mstatusWrSPP(x uint) {
+	util.WrBits(s.mstatus, x, 8, 8)
 }
 
 func (s *State) mstatusRdMPIE() uint {
-	return (s.mstatus >> 7) & 1
+	return util.RdBits(s.mstatus, 7, 7)
 }
 
 func (s *State) mstatusWrMPIE(x uint) {
-	s.mstatus &= ^uint(1 << 7)
-	s.mstatus |= (x & 1) << 7
+	util.WrBits(s.mstatus, x, 7, 7)
+}
+
+func (s *State) mstatusRdSPIE() uint {
+	return util.RdBits(s.mstatus, 5, 5)
+}
+
+func (s *State) mstatusWrSPIE(x uint) {
+	util.WrBits(s.mstatus, x, 5, 5)
+}
+
+func (s *State) mstatusWrUPIE(x uint) {
+	util.WrBits(s.mstatus, x, 4, 4)
+}
+
+func (s *State) mstatusRdMIE() uint {
+	return util.RdBits(s.mstatus, 3, 3)
+}
+
+func (s *State) mstatusWrMIE(x uint) {
+	util.WrBits(s.mstatus, x, 3, 3)
+}
+
+func (s *State) mstatusRdSIE() uint {
+	return util.RdBits(s.mstatus, 1, 1)
+}
+
+func (s *State) mstatusWrSIE(x uint) {
+	util.WrBits(s.mstatus, x, 1, 1)
+}
+
+func (s *State) mstatusRdUIE() uint {
+	return util.RdBits(s.mstatus, 0, 0)
+}
+
+func (s *State) mstatusWrUIE(x uint) {
+	util.WrBits(s.mstatus, x, 0, 0)
+}
+
+func (s *State) updateMSTATUS(mode Mode) {
+	switch mode {
+	case ModeU:
+		s.mstatusWrUPIE(s.mstatusRdUIE())
+		s.mstatusWrUIE(0)
+	case ModeS:
+		s.mstatusWrSPIE(s.mstatusRdSIE())
+		s.mstatusWrSIE(0)
+	case ModeM:
+		s.mstatusWrMPIE(s.mstatusRdMIE())
+		s.mstatusWrMIE(0)
+	}
 }
 
 //-----------------------------------------------------------------------------
-// machine exception/interrupt delegation registers
+// s/m exception/interrupt delegation registers
 
 func wrMEDELEG(s *State, x uint) {
 	s.medeleg = x
@@ -319,38 +468,20 @@ func rdMIDELEG(s *State) uint {
 	return s.mideleg
 }
 
-//-----------------------------------------------------------------------------
-// sstatus
-
-func wrSSTATUS(s *State, x uint) {
-	s.sstatus = x
+func wrSEDELEG(s *State, x uint) {
+	s.sedeleg = x
 }
 
-func rdSSTATUS(s *State) uint {
-	return s.sstatus
+func rdSEDELEG(s *State) uint {
+	return s.sedeleg
 }
 
-func (s *State) sstatusRdSPP() uint {
-	return (s.sstatus >> 8) & 1
+func wrSIDELEG(s *State, x uint) {
+	s.sideleg = x
 }
 
-func (s *State) sstatusWrSPP(x uint) {
-	s.sstatus &= ^uint(1 << 8)
-	s.sstatus |= (x & 1) << 8
-}
-
-func (s *State) sstatusWrSIE(x uint) {
-	s.sstatus &= ^uint(1 << 1)
-	s.sstatus |= (x & 1) << 1
-}
-
-func (s *State) sstatusRdSPIE() uint {
-	return (s.sstatus >> 5) & 1
-}
-
-func (s *State) sstatusWrSPIE(x uint) {
-	s.sstatus &= ^uint(1 << 5)
-	s.sstatus |= (x & 1) << 5
+func rdSIDELEG(s *State) uint {
+	return s.sideleg
 }
 
 //-----------------------------------------------------------------------------
@@ -425,11 +556,11 @@ var lookup = map[uint]csrDefn{
 	0x002: {"frm", wrFRM, rdFRM},
 	0x003: {"fcsr", wrFCSR, rdFCSR},
 	0x004: {"uie", wrUIE, rdUIE},
-	0x005: {"utvec", nil, nil},
+	0x005: {"utvec", nil, rdUTVEC},
 	0x040: {"uscratch", nil, nil},
-	0x041: {"uepc", nil, nil},
-	0x042: {"ucause", nil, nil},
-	0x043: {"utval", nil, nil},
+	0x041: {"uepc", nil, rdUEPC},
+	0x042: {"ucause", nil, rdUCAUSE},
+	0x043: {"utval", nil, rdUTVAL},
 	0x044: {"uip", wrUIP, rdUIP},
 	// User CSRs 0xc00 - 0xc7f (read only)
 	0xc00: {"cycle", nil, nil},
@@ -499,8 +630,8 @@ var lookup = map[uint]csrDefn{
 	0xc9f: {"hpmcounter31h", nil, nil},
 	// Supervisor CSRs 0x100 - 0x1ff (read/write)
 	0x100: {"sstatus", wrSSTATUS, rdSSTATUS},
-	0x102: {"sedeleg", wrIgnore, rdZero},
-	0x103: {"sideleg", wrIgnore, rdZero},
+	0x102: {"sedeleg", wrSEDELEG, rdSEDELEG},
+	0x103: {"sideleg", wrSIDELEG, rdSIDELEG},
 	0x104: {"sie", wrSIE, rdSIE},
 	0x105: {"stvec", wrIgnore, rdZero},
 	0x106: {"scounteren", nil, nil},
@@ -674,10 +805,10 @@ var lookup = map[uint]csrDefn{
 
 //-----------------------------------------------------------------------------
 
-// canAccess returns true if the register can be accessed at the current privilege level.
+// canAccess returns true if the register can be accessed in the current mode.
 func (s *State) canAccess(reg uint) bool {
-	priv := (reg >> 8) & 3
-	return s.Priv >= priv
+	mode := Mode((reg >> 8) & 3)
+	return s.mode >= mode
 }
 
 // canWr returns true if the register can be written.
@@ -690,33 +821,45 @@ func canWr(reg uint) bool {
 
 // State stores the CSR state for the CPU.
 type State struct {
-	Priv     uint // current privilege level
-	xlen     uint // cpu register length 32/64/128
-	mxlen    uint // machine register length
-	uxlen    uint // user register length
-	sxlen    uint // supervisor register length
-	ialign   uint // instruction alignment 16/32
-	fcsr     uint // floating point control and status register
+	mode   Mode // current privilege mode
+	xlen   uint // cpu register length 32/64/128
+	mxlen  uint // machine register length
+	uxlen  uint // user register length
+	sxlen  uint // supervisor register length
+	ialign uint // instruction alignment 16/32
+	// combined u/s/m CSRs
+	mstatus uint // u/s/m status
+	mie     uint // u/s/m interrupt enable register
+	mip     uint // u/s/m interrupt pending register
+	// machine CSRs
+	mcause   uint // machine cause register
 	mepc     uint // machine exception program counter
+	mscratch uint // machine scratch
 	mtvec    uint // machine trap vector base address register
 	mtval    uint // machine trap value register
-	mstatus  uint // machine status
-	mscratch uint // machine scratch
 	misa     uint // machine isa register
-	mcause   uint // machine cause register
 	medeleg  uint // machine exception delegation register
 	mideleg  uint // machine interrupt delegation register
-	mie      uint // m/s/u interrupt enable register
-	mip      uint // m/s/u interrupt pending register
-	sscratch uint // supervisor scratch
+	// Supervisor CSRs
+	scause   uint // supervisor cause register
 	sepc     uint // supervisor exception program counter
-	sstatus  uint // supervisor status
+	sscratch uint // supervisor scratch
+	stval    uint // supervisor trap value register
+	stvec    uint // supervisor trap vector base address register
+	sedeleg  uint // supervisor exception delegation register
+	sideleg  uint // supervisor interrupt delegation register
+	// User CSRs
+	ucause uint // user cause register
+	uepc   uint // user exception program counter
+	utval  uint // user trap value register
+	utvec  uint // user trap vector base address register
+	fcsr   uint // floating point control and status register
 }
 
 // NewState returns a CSR state object.
 func NewState(xlen uint) *State {
 	s := &State{
-		Priv:   PrivM, // start at machine level
+		mode:   ModeM, // start in machine mode
 		xlen:   xlen,
 		mxlen:  xlen,
 		uxlen:  xlen,
@@ -817,8 +960,7 @@ func (s *State) access(reg uint) string {
 // Display displays the CSR state.
 func (s *State) Display() string {
 	x := [][]string{}
-	privStr := []string{"User", "Supervisor", "?", "Machine"}[s.Priv]
-	x = append(x, []string{"privilege", privStr})
+	x = append(x, []string{"mode", fmt.Sprintf("%s", s.mode)})
 	// read all registers
 	for reg := uint(0); reg < 4096; reg++ {
 		val, err := s.rdForce(reg)
@@ -841,36 +983,30 @@ func (s *State) Display() string {
 
 //-----------------------------------------------------------------------------
 
-// getModeX returns the mode to which to take the given exception/interrupt.
-func (s *State) getModeX(mMask, sMask uint64, ecode uint) uint {
-	var mode uint
-	// get target mode implied by delegation registers
-	if mMask&(1<<ecode) != 0 {
-		mode = PrivM
-	} else if sMask&(1<<ecode) != 0 {
-		mode = PrivS
+// getModeX returns the target mode for an exception/interrupt.
+func (s *State) getModeX(ecode uint, isInterrupt bool) Mode {
+	var sMask, mMask uint
+	if isInterrupt {
+		mMask = s.mideleg
+		sMask = s.sideleg
 	} else {
-		mode = PrivU
+		mMask = s.medeleg
+		sMask = s.sedeleg
+	}
+	var mode Mode
+	// get target mode implied by delegation registers
+	if mMask&(1<<ecode) == 0 {
+		mode = ModeM
+	} else if sMask&(1<<ecode) == 0 {
+		mode = ModeS
+	} else {
+		mode = ModeU
 	}
 	// exception cannot be taken to lower-privilege mode
-	if mode < s.Priv {
-		return s.Priv
+	if mode < s.mode {
+		return s.mode
 	}
 	return mode
-}
-
-// getInterruptModeX returns the target mode to which to take the given interrupt.
-func (s *State) getInterruptModeX(ecode uint) uint {
-	mMask, _ := s.rdForce(MIDELEG)
-	sMask, _ := s.rdForce(SIDELEG)
-	return s.getModeX(mMask, sMask, ecode)
-}
-
-// getExceptionModeX returns the target mode to which to take the given exception.
-func (s *State) getExceptionModeX(ecode uint) uint {
-	mMask, _ := s.rdForce(MEDELEG)
-	sMask, _ := s.rdForce(SEDELEG)
-	return s.getModeX(mMask, sMask, ecode)
 }
 
 //-----------------------------------------------------------------------------
@@ -880,10 +1016,10 @@ func (s *State) MRET() (uint, error) {
 	if !s.canAccess(MSTATUS) {
 		return 0, &Error{MSTATUS, ErrPrivilege}
 	}
-	s.Priv = s.mstatusRdMPP()
+	s.mode = Mode(s.mstatusRdMPP())
 	s.mstatusWrMIE(s.mstatusRdMPIE())
 	s.mstatusWrMPIE(1)
-	s.mstatusWrMPP(PrivU)
+	s.mstatusWrMPP(uint(ModeU))
 	return rdMEPC(s), nil
 }
 
@@ -892,38 +1028,62 @@ func (s *State) SRET() (uint, error) {
 	if !s.canAccess(SSTATUS) {
 		return 0, &Error{SSTATUS, ErrPrivilege}
 	}
-	s.Priv = s.sstatusRdSPP()
-	s.sstatusWrSIE(s.sstatusRdSPIE())
-	s.sstatusWrSPIE(1)
-	s.sstatusWrSPP(0)
+	s.mode = Mode(s.mstatusRdSPP())
+	s.mstatusWrSIE(s.mstatusRdSPIE())
+	s.mstatusWrSPIE(1)
+	s.mstatusWrSPP(0)
 	return rdSEPC(s), nil
 }
 
 // ECALL performs an environment call exception.
-func (s *State) ECALL(pc uint64, val uint) uint64 {
-	switch s.Priv {
-	case PrivU:
-		return s.Exception(pc, ExEnvCallFromUserMode, val)
-	case PrivS:
-		return s.Exception(pc, ExEnvCallFromSupervisorMode, val)
-	case PrivM:
-		return s.Exception(pc, ExEnvCallFromMachineMode, val)
-	default:
-		panic("")
+func (s *State) ECALL(epc uint64, val uint) uint64 {
+	switch s.mode {
+	case ModeU:
+		return s.Exception(epc, ExEnvCallFromUserMode, val, false)
+	case ModeS:
+		return s.Exception(epc, ExEnvCallFromSupervisorMode, val, false)
+	case ModeM:
+		return s.Exception(epc, ExEnvCallFromMachineMode, val, false)
 	}
+	return 0
 }
 
 // Exception performs a cpu exception.
-func (s *State) Exception(pc uint64, cause, val uint) uint64 {
-	s.Wr(MEPC, pc)
-	pc, _ = s.Rd(MTVEC)
-	pc &= mtvecBaseMask
-	s.setException(cause)
-	s.Wr(MTVAL, uint64(val))
-	s.mstatusWrMPIE(s.mstatusRdMIE())
-	s.mstatusWrMIE(0)
-	s.mstatusWrMPP(s.Priv)
-	s.Priv = PrivM
+func (s *State) Exception(epc uint64, ecode, val uint, isInterrupt bool) uint64 {
+	// work out the target mode
+	modeX := s.getModeX(ecode, isInterrupt)
+
+	// update interrupt enable and interrupt enable stack
+	s.updateMSTATUS(modeX)
+
+	// set the cause register
+	s.setCause(ecode, isInterrupt, modeX)
+
+	// set the exception program counter
+	s.setEPC(epc, modeX)
+
+	// set the trap value
+	s.setTrapValue(val, modeX)
+
+	// get exception base address and mode
+	base, mode := s.getTrapVector(modeX)
+
+	// handle direct or vectored exception
+	var pc uint64
+	if (mode == 0) || !isInterrupt {
+		pc = uint64(base)
+	} else {
+		pc = uint64(base + (4 * ecode))
+	}
+
+	// update the mode
+	if modeX == ModeS {
+		s.mstatusWrSPP(uint(s.mode))
+	} else if modeX == ModeM {
+		s.mstatusWrMPP(uint(s.mode))
+	}
+	s.mode = modeX
+
 	return pc
 }
 

@@ -2171,10 +2171,10 @@ func (m *RV) errHandler(err error) error {
 	// handle the error
 	switch e.Type {
 	case ErrIllegal:
-		m.PC = m.CSR.Exception(m.PC, csr.ExInsIllegal, e.ins)
+		m.PC = m.CSR.Exception(m.PC, csr.ExInsIllegal, e.ins, false)
 		return nil
 	case ErrEbreak:
-		m.PC = m.CSR.Exception(m.PC, csr.ExBreakpoint, 0)
+		m.PC = m.CSR.Exception(m.PC, csr.ExBreakpoint, 0, false)
 		return nil
 	case ErrEcall:
 		m.PC = m.CSR.ECALL(m.PC, 0)
