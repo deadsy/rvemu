@@ -10,6 +10,5 @@ clean:
 	for dir in $(DIRS); do \
 		$(MAKE) -C ./$$dir $@; \
 	done
-	-rm .rv32emu_history
-	-rm .rv64emu_history
+	-rm .rvemu_history
 	-rm log.txt

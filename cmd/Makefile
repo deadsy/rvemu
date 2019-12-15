@@ -1,7 +1,6 @@
 
 DIRS = compliance \
-       rv32emu \
-       rv64emu \
+       rvemu \
 
 all:
 	for dir in $(DIRS); do \

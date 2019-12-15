@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 /*
 
-RISC-V 64-bit Emulator
+RISC-V 32-bit Emulator
 
 */
 //-----------------------------------------------------------------------------
@@ -15,54 +15,68 @@ import (
 	"os"
 
 	cli "github.com/deadsy/go-cli"
-	"github.com/deadsy/riscv/ecall"
 	"github.com/deadsy/riscv/mem"
 	"github.com/deadsy/riscv/rv"
 )
 
 //-----------------------------------------------------------------------------
 
-const historyPath = ".rv64emu_history"
+const historyPath = ".rvemu_history"
 const stackSize = 8 << 10
 
 //-----------------------------------------------------------------------------
 
-// userApp is state associated with the user application.
-type userApp struct {
-	mem *mem.Memory
-	cpu *rv.RV
+// emuApp is state associated with the emulator application.
+type emuApp struct {
+	mem      *mem.Memory
+	cpu      *rv.RV
+	elfClass elf.Class
 }
 
-// newUserApp returns a user application.
-func newUserApp() (*userApp, error) {
+// newEmu32 returns a 32-bit emulator.
+func newEmu32() (*emuApp, error) {
+	// 32-bit ISA
+	isa := rv.NewISA()
+	err := isa.Add(rv.ISArv32gc)
+	if err != nil {
+		return nil, err
+	}
+	// 32-bit memory systems
+	m := mem.NewMem32(0)
+	// add a stack to the memory
+	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
-	// create the ISA
+	return &emuApp{
+		mem:      m,
+		cpu:      rv.NewRV32(isa, m, nil),
+		elfClass: elf.ELFCLASS32,
+	}, nil
+}
+
+// newEmu64 returns a 64-bit emulator.
+func newEmu64() (*emuApp, error) {
+	// 64-bit ISA
 	isa := rv.NewISA()
 	err := isa.Add(rv.ISArv64gc)
 	if err != nil {
 		return nil, err
 	}
-
-	// create the memory
+	// 64-bit memory system
 	m := mem.NewMem64(0)
+	// add a stack to the memory
 	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
-	// ecall functions for compliance testing
-	ecall := ecall.NewCompliance()
-
-	// create the cpu
-	cpu := rv.NewRV64(isa, m, ecall)
-
-	return &userApp{
-		mem: m,
-		cpu: cpu,
+	return &emuApp{
+		mem:      m,
+		cpu:      rv.NewRV64(isa, m, nil),
+		elfClass: elf.ELFCLASS64,
 	}, nil
 }
 
 //-----------------------------------------------------------------------------
 
 // Put outputs a string to the user application.
-func (u *userApp) Put(s string) {
+func (u *emuApp) Put(s string) {
 	fmt.Printf("%s", s)
 }
 
@@ -71,28 +85,42 @@ func (u *userApp) Put(s string) {
 func main() {
 	// command line flags
 	fname := flag.String("f", "out.bin", "file to load (ELF)")
+	xlen := flag.Int("xlen", 32, "processor xlen (32/64)")
 	flag.Parse()
 
 	// create the application
-	app, err := newUserApp()
+	var app *emuApp
+	var err error
+	switch *xlen {
+	case 32:
+		app, err = newEmu32()
+	case 64:
+		app, err = newEmu64()
+	default:
+		fmt.Fprintf(os.Stderr, "xlen %d is not supported (must be 32/64)\n", *xlen)
+		os.Exit(1)
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
 
 	// load the file
-	status, err := app.mem.LoadELF(*fname, elf.ELFCLASS64)
+	status, err := app.mem.LoadELF(*fname, app.elfClass)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
 	fmt.Fprintf(os.Stderr, "%s\n", status)
 
+	// Break on the "tohost" write (compliance tests).
+	app.mem.AddBreakPointByName("tohost", mem.AttrW)
+
 	// create the cli
 	c := cli.NewCLI(app)
 	c.HistoryLoad(historyPath)
 	c.SetRoot(menuRoot)
-	c.SetPrompt("rv64> ")
+	c.SetPrompt(fmt.Sprintf("rv%d> ", *xlen))
 
 	// reset the cpu
 	app.cpu.Reset()
