@@ -38,60 +38,60 @@ var ISArv32i = ISAModule{
 	name: "rv32i",
 	ilen: 32,
 	defn: []insDefn{
-		{"imm[31:12] rd 0110111 LUI", daTypeUa, emu_LUI},                           // U
-		{"imm[31:12] rd 0010111 AUIPC", daTypeUa, emu_AUIPC},                       // U
-		{"imm[20|10:1|11|19:12] rd 1101111 JAL", daTypeJa, emu_JAL},                // J
-		{"imm[11:0] rs1 000 rd 1100111 JALR", daTypeIe, emu_JALR},                  // I
-		{"imm[12|10:5] rs2 rs1 000 imm[4:1|11] 1100011 BEQ", daTypeBa, emu_BEQ},    // B
-		{"imm[12|10:5] rs2 rs1 001 imm[4:1|11] 1100011 BNE", daTypeBa, emu_BNE},    // B
-		{"imm[12|10:5] rs2 rs1 100 imm[4:1|11] 1100011 BLT", daTypeBa, emu_BLT},    // B
-		{"imm[12|10:5] rs2 rs1 101 imm[4:1|11] 1100011 BGE", daTypeBa, emu_BGE},    // B
-		{"imm[12|10:5] rs2 rs1 110 imm[4:1|11] 1100011 BLTU", daTypeBa, emu_BLTU},  // B
-		{"imm[12|10:5] rs2 rs1 111 imm[4:1|11] 1100011 BGEU", daTypeBa, emu_BGEU},  // B
-		{"imm[11:0] rs1 000 rd 0000011 LB", daTypeIc, emu_LB},                      // I
-		{"imm[11:0] rs1 001 rd 0000011 LH", daTypeIc, emu_LH},                      // I
-		{"imm[11:0] rs1 010 rd 0000011 LW", daTypeIc, emu_LW},                      // I
-		{"imm[11:0] rs1 100 rd 0000011 LBU", daTypeIc, emu_LBU},                    // I
-		{"imm[11:0] rs1 101 rd 0000011 LHU", daTypeIc, emu_LHU},                    // I
-		{"imm[11:5] rs2 rs1 000 imm[4:0] 0100011 SB", daTypeSa, emu_SB},            // S
-		{"imm[11:5] rs2 rs1 001 imm[4:0] 0100011 SH", daTypeSa, emu_SH},            // S
-		{"imm[11:5] rs2 rs1 010 imm[4:0] 0100011 SW", daTypeSa, emu_SW},            // S
-		{"imm[11:0] rs1 000 rd 0010011 ADDI", daTypeIb, emu_ADDI},                  // I
-		{"imm[11:0] rs1 010 rd 0010011 SLTI", daTypeIa, emu_SLTI},                  // I
-		{"imm[11:0] rs1 011 rd 0010011 SLTIU", daTypeIa, emu_SLTIU},                // I
-		{"imm[11:0] rs1 100 rd 0010011 XORI", daTypeIf, emu_XORI},                  // I
-		{"imm[11:0] rs1 110 rd 0010011 ORI", daTypeIa, emu_ORI},                    // I
-		{"imm[11:0] rs1 111 rd 0010011 ANDI", daTypeIa, emu_ANDI},                  // I
-		{"000000 shamt6 rs1 001 rd 0010011 SLLI", daTypeId, emu_SLLI},              // I
-		{"000000 shamt6 rs1 101 rd 0010011 SRLI", daTypeId, emu_SRLI},              // I
-		{"010000 shamt6 rs1 101 rd 0010011 SRAI", daTypeId, emu_SRAI},              // I
-		{"0000000 rs2 rs1 000 rd 0110011 ADD", daTypeRa, emu_ADD},                  // R
-		{"0100000 rs2 rs1 000 rd 0110011 SUB", daTypeRa, emu_SUB},                  // R
-		{"0000000 rs2 rs1 001 rd 0110011 SLL", daTypeRa, emu_SLL},                  // R
-		{"0000000 rs2 rs1 010 rd 0110011 SLT", daTypeRa, emu_SLT},                  // R
-		{"0000000 rs2 rs1 011 rd 0110011 SLTU", daTypeRa, emu_SLTU},                // R
-		{"0000000 rs2 rs1 100 rd 0110011 XOR", daTypeRa, emu_XOR},                  // R
-		{"0000000 rs2 rs1 101 rd 0110011 SRL", daTypeRa, emu_SRL},                  // R
-		{"0100000 rs2 rs1 101 rd 0110011 SRA", daTypeRa, emu_SRA},                  // R
-		{"0000000 rs2 rs1 110 rd 0110011 OR", daTypeRa, emu_OR},                    // R
-		{"0000000 rs2 rs1 111 rd 0110011 AND", daTypeRa, emu_AND},                  // R
-		{"0000 pred succ 00000 000 00000 0001111 FENCE", daTypeIi, emu_FENCE},      // I
-		{"0000 0000 0000 00000 001 00000 0001111 FENCE.I", daTypeIi, emu_FENCE_I},  // I
-		{"0000000 00000 00000 000 00000 1110011 ECALL", daTypeIi, emu_ECALL},       // I
-		{"0000000 00001 00000 000 00000 1110011 EBREAK", daTypeIi, emu_EBREAK},     // I
-		{"0000000 00010 00000 000 00000 1110011 URET", daTypeIi, emu_URET},         // I
-		{"0001000 00010 00000 000 00000 1110011 SRET", daTypeIi, emu_SRET},         // I
-		{"0011000 00010 00000 000 00000 1110011 MRET", daTypeIi, emu_MRET},         // I
-		{"0001000 00101 00000 000 00000 1110011 WFI", daTypeIi, emu_WFI},           // I
-		{"0001001 rs2 rs1 000 00000 1110011 SFENCE.VMA", daNone, emu_SFENCE_VMA},   // I
-		{"0010001 rs2 rs1 000 00000 1110011 HFENCE.BVMA", daNone, emu_HFENCE_BVMA}, // I
-		{"1010001 rs2 rs1 000 00000 1110011 HFENCE.GVMA", daNone, emu_HFENCE_GVMA}, // I
-		{"csr rs1 001 rd 1110011 CSRRW", daTypeIh, emu_CSRRW},                      // I
-		{"csr rs1 010 rd 1110011 CSRRS", daTypeIh, emu_CSRRS},                      // I
-		{"csr rs1 011 rd 1110011 CSRRC", daTypeIh, emu_CSRRC},                      // I
-		{"csr zimm 101 rd 1110011 CSRRWI", daTypeIj, emu_CSRRWI},                   // I
-		{"csr zimm 110 rd 1110011 CSRRSI", daTypeIj, emu_CSRRSI},                   // I
-		{"csr zimm 111 rd 1110011 CSRRCI", daTypeIj, emu_CSRRCI},                   // I
+		{"imm[31:12] rd 0110111 LUI", daTypeUa, emu_LUI},                             // U
+		{"imm[31:12] rd 0010111 AUIPC", daTypeUa, emu_AUIPC},                         // U
+		{"imm[20|10:1|11|19:12] rd 1101111 JAL", daTypeJa, emu_JAL},                  // J
+		{"imm[11:0] rs1 000 rd 1100111 JALR", daTypeIe, emu_JALR},                    // I
+		{"imm[12|10:5] rs2 rs1 000 imm[4:1|11] 1100011 BEQ", daTypeBa, emu_BEQ},      // B
+		{"imm[12|10:5] rs2 rs1 001 imm[4:1|11] 1100011 BNE", daTypeBa, emu_BNE},      // B
+		{"imm[12|10:5] rs2 rs1 100 imm[4:1|11] 1100011 BLT", daTypeBa, emu_BLT},      // B
+		{"imm[12|10:5] rs2 rs1 101 imm[4:1|11] 1100011 BGE", daTypeBa, emu_BGE},      // B
+		{"imm[12|10:5] rs2 rs1 110 imm[4:1|11] 1100011 BLTU", daTypeBa, emu_BLTU},    // B
+		{"imm[12|10:5] rs2 rs1 111 imm[4:1|11] 1100011 BGEU", daTypeBa, emu_BGEU},    // B
+		{"imm[11:0] rs1 000 rd 0000011 LB", daTypeIc, emu_LB},                        // I
+		{"imm[11:0] rs1 001 rd 0000011 LH", daTypeIc, emu_LH},                        // I
+		{"imm[11:0] rs1 010 rd 0000011 LW", daTypeIc, emu_LW},                        // I
+		{"imm[11:0] rs1 100 rd 0000011 LBU", daTypeIc, emu_LBU},                      // I
+		{"imm[11:0] rs1 101 rd 0000011 LHU", daTypeIc, emu_LHU},                      // I
+		{"imm[11:5] rs2 rs1 000 imm[4:0] 0100011 SB", daTypeSa, emu_SB},              // S
+		{"imm[11:5] rs2 rs1 001 imm[4:0] 0100011 SH", daTypeSa, emu_SH},              // S
+		{"imm[11:5] rs2 rs1 010 imm[4:0] 0100011 SW", daTypeSa, emu_SW},              // S
+		{"imm[11:0] rs1 000 rd 0010011 ADDI", daTypeIb, emu_ADDI},                    // I
+		{"imm[11:0] rs1 010 rd 0010011 SLTI", daTypeIa, emu_SLTI},                    // I
+		{"imm[11:0] rs1 011 rd 0010011 SLTIU", daTypeIa, emu_SLTIU},                  // I
+		{"imm[11:0] rs1 100 rd 0010011 XORI", daTypeIf, emu_XORI},                    // I
+		{"imm[11:0] rs1 110 rd 0010011 ORI", daTypeIa, emu_ORI},                      // I
+		{"imm[11:0] rs1 111 rd 0010011 ANDI", daTypeIa, emu_ANDI},                    // I
+		{"000000 shamt6 rs1 001 rd 0010011 SLLI", daTypeId, emu_SLLI},                // I
+		{"000000 shamt6 rs1 101 rd 0010011 SRLI", daTypeId, emu_SRLI},                // I
+		{"010000 shamt6 rs1 101 rd 0010011 SRAI", daTypeId, emu_SRAI},                // I
+		{"0000000 rs2 rs1 000 rd 0110011 ADD", daTypeRa, emu_ADD},                    // R
+		{"0100000 rs2 rs1 000 rd 0110011 SUB", daTypeRa, emu_SUB},                    // R
+		{"0000000 rs2 rs1 001 rd 0110011 SLL", daTypeRa, emu_SLL},                    // R
+		{"0000000 rs2 rs1 010 rd 0110011 SLT", daTypeRa, emu_SLT},                    // R
+		{"0000000 rs2 rs1 011 rd 0110011 SLTU", daTypeRa, emu_SLTU},                  // R
+		{"0000000 rs2 rs1 100 rd 0110011 XOR", daTypeRa, emu_XOR},                    // R
+		{"0000000 rs2 rs1 101 rd 0110011 SRL", daTypeRa, emu_SRL},                    // R
+		{"0100000 rs2 rs1 101 rd 0110011 SRA", daTypeRa, emu_SRA},                    // R
+		{"0000000 rs2 rs1 110 rd 0110011 OR", daTypeRa, emu_OR},                      // R
+		{"0000000 rs2 rs1 111 rd 0110011 AND", daTypeRa, emu_AND},                    // R
+		{"0000 pred succ 00000 000 00000 0001111 FENCE", daTypeIi, emu_FENCE},        // I
+		{"0000 0000 0000 00000 001 00000 0001111 FENCE.I", daTypeIi, emu_FENCE_I},    // I
+		{"0000000 00000 00000 000 00000 1110011 ECALL", daTypeIi, emu_ECALL},         // I
+		{"0000000 00001 00000 000 00000 1110011 EBREAK", daTypeIi, emu_EBREAK},       // I
+		{"0000000 00010 00000 000 00000 1110011 URET", daTypeIi, emu_URET},           // I
+		{"0001000 00010 00000 000 00000 1110011 SRET", daTypeIi, emu_SRET},           // I
+		{"0011000 00010 00000 000 00000 1110011 MRET", daTypeIi, emu_MRET},           // I
+		{"0001000 00101 00000 000 00000 1110011 WFI", daTypeIi, emu_WFI},             // I
+		{"0001001 rs2 rs1 000 00000 1110011 SFENCE.VMA", daTypeIk, emu_SFENCE_VMA},   // I
+		{"0010001 rs2 rs1 000 00000 1110011 HFENCE.BVMA", daTypeIk, emu_HFENCE_BVMA}, // I
+		{"1010001 rs2 rs1 000 00000 1110011 HFENCE.GVMA", daTypeIk, emu_HFENCE_GVMA}, // I
+		{"csr rs1 001 rd 1110011 CSRRW", daTypeIh, emu_CSRRW},                        // I
+		{"csr rs1 010 rd 1110011 CSRRS", daTypeIh, emu_CSRRS},                        // I
+		{"csr rs1 011 rd 1110011 CSRRC", daTypeIh, emu_CSRRC},                        // I
+		{"csr zimm 101 rd 1110011 CSRRWI", daTypeIj, emu_CSRRWI},                     // I
+		{"csr zimm 110 rd 1110011 CSRRSI", daTypeIj, emu_CSRRSI},                     // I
+		{"csr zimm 111 rd 1110011 CSRRCI", daTypeIj, emu_CSRRCI},                     // I
 	},
 }
 

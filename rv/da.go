@@ -183,6 +183,14 @@ func daTypeIj(name string, pc uint, ins uint) string {
 	return fmt.Sprintf("%s %s,%s,%d", name, abiXName[rd], csr.Name(csrReg), uimm)
 }
 
+func daTypeIk(name string, pc uint, ins uint) string {
+	rs2, rs1 := decodeId(ins)
+	if rs2 == 0 && rs1 == 0 {
+		return fmt.Sprintf("%s", name)
+	}
+	return fmt.Sprintf("%s %s,%s", name, abiXName[rs2], abiXName[rs1])
+}
+
 //-----------------------------------------------------------------------------
 // Type U Decodes
 

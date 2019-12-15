@@ -578,15 +578,18 @@ func emu_WFI(m *RV, ins uint) error {
 }
 
 func emu_SFENCE_VMA(m *RV, ins uint) error {
-	return m.errTodo()
+	m.PC += 4
+	return nil
 }
 
 func emu_HFENCE_BVMA(m *RV, ins uint) error {
-	return m.errTodo()
+	m.PC += 4
+	return nil
 }
 
 func emu_HFENCE_GVMA(m *RV, ins uint) error {
-	return m.errTodo()
+	m.PC += 4
+	return nil
 }
 
 //-----------------------------------------------------------------------------

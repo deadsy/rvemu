@@ -88,6 +88,12 @@ func decodeIc(ins uint) (uint, uint, uint) {
 	return shamt, rs1, rd
 }
 
+func decodeId(ins uint) (uint, uint) {
+	rs2 := bitUnsigned(ins, 24, 20, 0)
+	rs1 := bitUnsigned(ins, 19, 15, 0)
+	return rs2, rs1
+}
+
 func decodeS(ins uint) (int, uint, uint) {
 	uimm := bitUnsigned(ins, 31, 25, 5) // imm[11:5]
 	uimm += bitUnsigned(ins, 11, 7, 0)  // imm[4:0]

@@ -126,6 +126,7 @@ var rv32iTest = []daTest{
 	{0, 0x00a29a23, "sh a0,20(t0)"},
 	{0, 0x00000013, "nop"},
 	{0, 0x0000100f, "fence.i"},
+	{0, 0x12000073, "sfence.vma"},
 }
 
 var rv32mTest = []daTest{
