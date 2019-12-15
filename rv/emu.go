@@ -439,20 +439,13 @@ func emu_FENCE_I(m *RV, ins uint) error {
 }
 
 func emu_ECALL(m *RV, ins uint) error {
-	return m.errEcall()
-
-	/*
-		if m.ecall == nil {
-			return m.errEcall()
-		}
-		err := m.ecall.Call(m)
-		m.PC += 4
-		return err
-	*/
+	m.PC = m.CSR.ECALL(m.PC, 0)
+	return nil
 }
 
 func emu_EBREAK(m *RV, ins uint) error {
-	return m.errEbreak()
+	m.PC = m.CSR.Exception(m.PC, csr.ExBreakpoint, uint(m.PC), false)
+	return nil
 }
 
 func emu_CSRRW(m *RV, ins uint) error {
@@ -1619,7 +1612,8 @@ func emu_C_MV(m *RV, ins uint) error {
 }
 
 func emu_C_EBREAK(m *RV, ins uint) error {
-	return m.errTodo()
+	m.PC = m.CSR.Exception(m.PC, csr.ExBreakpoint, uint(m.PC), false)
+	return nil
 }
 
 func emu_C_JALR(m *RV, ins uint) error {
@@ -2116,7 +2110,6 @@ type RV struct {
 	lastPC   uint64      // stuck PC detection
 	xlen     uint        // bit length of integer registers
 	nreg     uint        // number of integer registers
-	errMask  uint        // mask of error types we will handle
 }
 
 // NewRV64 returns a 64-bit RISC-V CPU.
@@ -2163,30 +2156,14 @@ func NewRV32E(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
 func (m *RV) errHandler(err error) error {
 	e := err.(*Error)
 
-	if e.Type&m.errMask == 0 {
-		// not handling this error
-		return err
-	}
-
 	// handle the error
 	switch e.Type {
 	case ErrIllegal:
 		m.PC = m.CSR.Exception(m.PC, csr.ExInsIllegal, e.ins, false)
 		return nil
-	case ErrEbreak:
-		m.PC = m.CSR.Exception(m.PC, csr.ExBreakpoint, 0, false)
-		return nil
-	case ErrEcall:
-		m.PC = m.CSR.ECALL(m.PC, 0)
-		return nil
 	}
 
 	return err
-}
-
-// SetHandler sets the mask for errors to be handled with cpu exceptions.
-func (m *RV) SetHandler(mask uint) {
-	m.errMask = mask
 }
 
 //-----------------------------------------------------------------------------
@@ -2197,7 +2174,7 @@ func (m *RV) Run() error {
 	// read the next instruction
 	ins, err := m.Mem.RdIns(uint(m.PC))
 	if err != nil {
-		return m.errMemory(err)
+		return m.errHandler(m.errMemory(err))
 	}
 
 	// lookup and emulate the instruction
@@ -2249,7 +2226,6 @@ func (m *RV) Reset() {
 	m.PC = m.Mem.Entry
 	m.wrX(RegSp, uint64(uint(1<<32)-16))
 	m.CSR = csr.NewState(m.xlen)
-	m.SetHandler(ErrEcall)
 	m.insCount = 0
 	m.lastPC = 0
 }

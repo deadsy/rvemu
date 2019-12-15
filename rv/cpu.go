@@ -401,28 +401,6 @@ func (m *RV) errTodo() error {
 	}
 }
 
-/*
-
-// Exit returns an error to indicate an emulation exit.
-func (m *RV) Exit(status uint64) error {
-	return &Error{
-		Type: ErrExit,
-		alen: m.xlen,
-		pc:   m.PC,
-	}
-}
-
-// Break returns an error to indicate an emulation break.
-func (m *RV) errBreak() error {
-	return &Error{
-		Type: ErrBreak,
-		alen: m.xlen,
-		pc:   m.PC,
-	}
-}
-
-*/
-
 //-----------------------------------------------------------------------------
 
 func intRegString(reg []uint, pc, xlen uint) string {

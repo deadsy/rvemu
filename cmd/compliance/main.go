@@ -64,12 +64,6 @@ func testFixups(m *rv.RV, name string) {
 		"rv32i/I-SH-01",
 		"rv32i/I-SW-01":
 		m.Mem.Add(mem.NewSection(".fixup", 0x80001ffc, 4, mem.AttrRW))
-	case "rv32mi/illegal",
-		"rv32mi/shamt":
-		m.SetHandler(rv.ErrIllegal)
-	case "rv32i/I-EBREAK-01",
-		"rv32mi/sbreak":
-		m.SetHandler(rv.ErrEbreak)
 	case "rv32mi/ma_addr",
 		"rv32i/I-MISALIGN_LDST-01":
 		m.Mem.SetAttr(".data", mem.AttrRWM)

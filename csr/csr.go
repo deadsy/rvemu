@@ -263,16 +263,24 @@ func (s *State) setTrapValue(val uint, mode Mode) {
 //-----------------------------------------------------------------------------
 // u/s/m trap vector
 
-func wrMTVEC(s *State, val uint) {
-	s.mtvec = val
+func wrUTVEC(s *State, val uint) {
+	s.utvec = val
 }
 
 func rdUTVEC(s *State) uint {
 	return s.utvec
 }
 
+func wrSTVEC(s *State, val uint) {
+	s.stvec = val
+}
+
 func rdSTVEC(s *State) uint {
 	return s.stvec
+}
+
+func wrMTVEC(s *State, val uint) {
+	s.mtvec = val
 }
 
 func rdMTVEC(s *State) uint {
@@ -556,7 +564,7 @@ var lookup = map[uint]csrDefn{
 	0x002: {"frm", wrFRM, rdFRM},
 	0x003: {"fcsr", wrFCSR, rdFCSR},
 	0x004: {"uie", wrUIE, rdUIE},
-	0x005: {"utvec", nil, rdUTVEC},
+	0x005: {"utvec", wrUTVEC, rdUTVEC},
 	0x040: {"uscratch", nil, nil},
 	0x041: {"uepc", nil, rdUEPC},
 	0x042: {"ucause", nil, rdUCAUSE},
@@ -633,11 +641,11 @@ var lookup = map[uint]csrDefn{
 	0x102: {"sedeleg", wrSEDELEG, rdSEDELEG},
 	0x103: {"sideleg", wrSIDELEG, rdSIDELEG},
 	0x104: {"sie", wrSIE, rdSIE},
-	0x105: {"stvec", wrIgnore, rdZero},
+	0x105: {"stvec", wrSTVEC, rdSTVEC},
 	0x106: {"scounteren", nil, nil},
 	0x140: {"sscratch", wrSSCRATCH, rdSSCRATCH},
 	0x141: {"sepc", wrSEPC, rdSEPC},
-	0x142: {"scause", nil, nil},
+	0x142: {"scause", nil, rdSCAUSE},
 	0x143: {"stval", nil, nil},
 	0x144: {"sip", wrSIP, rdSIP},
 	0x180: {"satp", wrIgnore, nil},
@@ -1052,6 +1060,8 @@ func (s *State) ECALL(epc uint64, val uint) uint64 {
 func (s *State) Exception(epc uint64, ecode, val uint, isInterrupt bool) uint64 {
 	// work out the target mode
 	modeX := s.getModeX(ecode, isInterrupt)
+
+	//fmt.Printf("%s to %s\n", s.mode, modeX)
 
 	// update interrupt enable and interrupt enable stack
 	s.updateMSTATUS(modeX)
