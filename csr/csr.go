@@ -307,12 +307,20 @@ func (s *State) getTrapVector(mode Mode) (uint, uint) {
 //-----------------------------------------------------------------------------
 // u/s/m scratch
 
+func wrUSCRATCH(s *State, val uint) {
+	s.uscratch = val
+}
+
 func wrSSCRATCH(s *State, val uint) {
 	s.sscratch = val
 }
 
 func wrMSCRATCH(s *State, val uint) {
 	s.mscratch = val
+}
+
+func rdUSCRATCH(s *State) uint {
+	return s.uscratch
 }
 
 func rdSSCRATCH(s *State) uint {
@@ -565,7 +573,7 @@ var lookup = map[uint]csrDefn{
 	0x003: {"fcsr", wrFCSR, rdFCSR},
 	0x004: {"uie", wrUIE, rdUIE},
 	0x005: {"utvec", wrUTVEC, rdUTVEC},
-	0x040: {"uscratch", nil, nil},
+	0x040: {"uscratch", wrUSCRATCH, rdUSCRATCH},
 	0x041: {"uepc", nil, rdUEPC},
 	0x042: {"ucause", nil, rdUCAUSE},
 	0x043: {"utval", nil, rdUTVAL},
@@ -842,7 +850,7 @@ type State struct {
 	// machine CSRs
 	mcause   uint // machine cause register
 	mepc     uint // machine exception program counter
-	mscratch uint // machine scratch
+	mscratch uint // machine scratch register
 	mtvec    uint // machine trap vector base address register
 	mtval    uint // machine trap value register
 	misa     uint // machine isa register
@@ -851,17 +859,18 @@ type State struct {
 	// Supervisor CSRs
 	scause   uint // supervisor cause register
 	sepc     uint // supervisor exception program counter
-	sscratch uint // supervisor scratch
+	sscratch uint // supervisor scratch register
 	stval    uint // supervisor trap value register
 	stvec    uint // supervisor trap vector base address register
 	sedeleg  uint // supervisor exception delegation register
 	sideleg  uint // supervisor interrupt delegation register
 	// User CSRs
-	ucause uint // user cause register
-	uepc   uint // user exception program counter
-	utval  uint // user trap value register
-	utvec  uint // user trap vector base address register
-	fcsr   uint // floating point control and status register
+	ucause   uint // user cause register
+	uepc     uint // user exception program counter
+	uscratch uint // user scratch register
+	utval    uint // user trap value register
+	utvec    uint // user trap vector base address register
+	fcsr     uint // floating point control and status register
 }
 
 // NewState returns a CSR state object.
