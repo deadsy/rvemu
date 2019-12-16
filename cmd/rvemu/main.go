@@ -17,6 +17,7 @@ import (
 	cli "github.com/deadsy/go-cli"
 	"github.com/deadsy/riscv/mem"
 	"github.com/deadsy/riscv/rv"
+	"github.com/deadsy/riscv/util"
 )
 
 //-----------------------------------------------------------------------------
@@ -31,6 +32,7 @@ type emuApp struct {
 	mem      *mem.Memory
 	cpu      *rv.RV
 	elfClass elf.Class
+	prompt   string
 }
 
 // newEmu32 returns a 32-bit emulator.
@@ -50,6 +52,7 @@ func newEmu32() (*emuApp, error) {
 		mem:      m,
 		cpu:      rv.NewRV32(isa, m, nil),
 		elfClass: elf.ELFCLASS32,
+		prompt:   "rv32> ",
 	}, nil
 }
 
@@ -70,6 +73,7 @@ func newEmu64() (*emuApp, error) {
 		mem:      m,
 		cpu:      rv.NewRV64(isa, m, nil),
 		elfClass: elf.ELFCLASS64,
+		prompt:   "rv64> ",
 	}, nil
 }
 
@@ -85,19 +89,23 @@ func (u *emuApp) Put(s string) {
 func main() {
 	// command line flags
 	fname := flag.String("f", "out.bin", "file to load (ELF)")
-	xlen := flag.Int("xlen", 32, "processor xlen (32/64)")
 	flag.Parse()
+
+	elfClass, err := util.GetELFClass(*fname)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(1)
+	}
 
 	// create the application
 	var app *emuApp
-	var err error
-	switch *xlen {
-	case 32:
+	switch elfClass {
+	case elf.ELFCLASS32:
 		app, err = newEmu32()
-	case 64:
+	case elf.ELFCLASS64:
 		app, err = newEmu64()
 	default:
-		fmt.Fprintf(os.Stderr, "xlen %d is not supported (must be 32/64)\n", *xlen)
+		fmt.Fprintf(os.Stderr, "ELF class %d is not supported\n", elfClass)
 		os.Exit(1)
 	}
 	if err != nil {
@@ -120,7 +128,7 @@ func main() {
 	c := cli.NewCLI(app)
 	c.HistoryLoad(historyPath)
 	c.SetRoot(menuRoot)
-	c.SetPrompt(fmt.Sprintf("rv%d> ", *xlen))
+	c.SetPrompt(app.prompt)
 
 	// reset the cpu
 	app.cpu.Reset()

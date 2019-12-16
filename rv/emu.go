@@ -2115,6 +2115,15 @@ type RV struct {
 	nreg     uint        // number of integer registers
 }
 
+// Reset the CPU.
+func (m *RV) Reset() {
+	m.PC = m.Mem.Entry
+	m.wrX(RegSp, uint64(uint(1<<32)-16))
+	m.CSR = csr.NewState(m.xlen)
+	m.insCount = 0
+	m.lastPC = 0
+}
+
 // NewRV64 returns a 64-bit RISC-V CPU.
 func NewRV64(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
 	m := RV{
@@ -2220,17 +2229,6 @@ func (m *RV) FloatRegs() string {
 // Disassemble the instruction at the address.
 func (m *RV) Disassemble(adr uint) *Disassembly {
 	return m.isa.Disassemble(m.Mem, adr)
-}
-
-//-----------------------------------------------------------------------------
-
-// Reset the CPU.
-func (m *RV) Reset() {
-	m.PC = m.Mem.Entry
-	m.wrX(RegSp, uint64(uint(1<<32)-16))
-	m.CSR = csr.NewState(m.xlen)
-	m.insCount = 0
-	m.lastPC = 0
 }
 
 //-----------------------------------------------------------------------------
