@@ -27,6 +27,7 @@ import (
 //-----------------------------------------------------------------------------
 
 const stackSize = 8 << 10
+const heapSize = 256 << 10
 const insLimit = 20000
 
 //-----------------------------------------------------------------------------
@@ -173,35 +174,50 @@ func checkExit(m *mem.Memory, errIn error) error {
 
 //-----------------------------------------------------------------------------
 
-func (tc *testCase) TestRV32() error {
+func (tc *testCase) Test() error {
 
-	// create the ISA
-	isa := rv.NewISA()
-	err := isa.Add(rv.ISArv32gc)
-	if err != nil {
-		return err
+	var cpu *rv.RV
+
+	if tc.elfClass == elf.ELFCLASS32 {
+		// Setup an RV32 CPU
+		// create the ISA
+		isa := rv.NewISA()
+		err := isa.Add(rv.ISArv32gc)
+		if err != nil {
+			return err
+		}
+		// create the cpu
+		cpu = rv.NewRV32(isa, mem.NewMem32(0), nil)
+	} else {
+		// Setup an RV64 CPU
+		// create the ISA
+		isa := rv.NewISA()
+		err := isa.Add(rv.ISArv64gc)
+		if err != nil {
+			return err
+		}
+		// create the cpu
+		cpu = rv.NewRV64(isa, mem.NewMem64(0), nil)
 	}
-
-	// create the memory
-	m := mem.NewMem32(0)
-	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
 	// load the elf file
-	_, err = m.LoadELF(tc.elfFile, elf.ELFCLASS32)
+	_, err := cpu.Mem.LoadELF(tc.elfFile, tc.elfClass)
 	if err != nil {
 		return err
 	}
 
-	// Break on the "tohost" write (compliance tests).
-	m.AddBreakPointByName("tohost", mem.AttrW)
+	// add a stack and heap
+	cpu.Mem.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
+	cpu.Mem.Add(mem.NewSection("heap", 0x80000000, heapSize, mem.AttrRW))
 
-	// create the cpu
-	cpu := rv.NewRV32(isa, m, nil)
+	// Break on the "tohost" write (compliance tests).
+	cpu.Mem.AddBreakPointByName("tohost", mem.AttrW)
 
 	// apply per test fixups
 	//testFixups(cpu, name)
 
 	// run the emulation
+	cpu.Reset()
 	var ins int
 	for ins = 0; ins < insLimit; ins++ {
 		err = cpu.Run()
@@ -214,78 +230,7 @@ func (tc *testCase) TestRV32() error {
 	}
 
 	// check for a normal exit
-	err = checkExit(m, err)
-	if err != nil {
-		return err
-	}
-
-	/*
-
-		// get the test results from memory
-		result, err := getResults(m)
-		if err != nil {
-			return err
-		}
-		// get the signature results from the file
-		sig, err := getSignature(sigFilename)
-		if err != nil {
-			return err
-		}
-		// compare the result and signature
-		err = compareSlice32(sig, result)
-		if err != nil {
-			return err
-		}
-
-	*/
-
-	return nil
-}
-
-//-----------------------------------------------------------------------------
-
-func (tc *testCase) TestRV64() error {
-
-	// create the ISA
-	isa := rv.NewISA()
-	err := isa.Add(rv.ISArv64gc)
-	if err != nil {
-		return err
-	}
-
-	// create the memory
-	m := mem.NewMem64(0)
-	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
-
-	// load the elf file
-	_, err = m.LoadELF(tc.elfFile, elf.ELFCLASS64)
-	if err != nil {
-		return err
-	}
-
-	// Break on the "tohost" write (compliance tests).
-	m.AddBreakPointByName("tohost", mem.AttrW)
-
-	// create the cpu
-	cpu := rv.NewRV64(isa, m, nil)
-
-	// apply per test fixups
-	//testFixups(cpu, name)
-
-	// run the emulation
-	var ins int
-	for ins = 0; ins < insLimit; ins++ {
-		err = cpu.Run()
-		if err != nil {
-			break
-		}
-	}
-	if ins == insLimit {
-		return fmt.Errorf("reached instruction limit")
-	}
-
-	// check for a normal exit
-	err = checkExit(m, err)
+	err = checkExit(cpu.Mem, err)
 	if err != nil {
 		return err
 	}
@@ -315,29 +260,22 @@ func (tc *testCase) TestRV64() error {
 
 //-----------------------------------------------------------------------------
 
-func (tc *testCase) Test() error {
-	if tc.elfClass == elf.ELFCLASS32 {
-		return tc.TestRV32()
-	}
-	return tc.TestRV64()
-}
-
-//-----------------------------------------------------------------------------
-
 func main() {
 	// command line flags
 	path := flag.String("p", "test", "path to compliance tests")
 	flag.Parse()
 	testPath := filepath.Clean(*path)
+
+	// get the test cases
 	testCases, err := getTestCases(testPath)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	}
 
+	// run the tests
 	pass := 0
 	fail := 0
-
 	for _, tc := range testCases {
 		err := tc.Test()
 		fmt.Printf("%-30s ", tc.testName)
@@ -350,8 +288,13 @@ func main() {
 		}
 	}
 
+	// report aggregate results
 	total := pass + fail
-	fmt.Printf("result: %d/%d passed (%d failed) score %.2f\n", pass, total, fail, float32(pass)/float32(total))
+	if total != 0 {
+		fmt.Printf("result: %d/%d passed (%d failed) score %.2f\n", pass, total, fail, float32(pass)/float32(total))
+	} else {
+		fmt.Printf("no tests run\n")
+	}
 
 	os.Exit(0)
 }
