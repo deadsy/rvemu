@@ -11,6 +11,7 @@ package util
 import (
 	"debug/elf"
 	"fmt"
+	"os"
 )
 
 //-----------------------------------------------------------------------------
@@ -33,6 +34,14 @@ func GetELFClass(filename string) (elf.Class, error) {
 	}
 
 	return f.Class, nil
+}
+
+//-----------------------------------------------------------------------------
+
+// FileExists returns true if the file exists.
+func FileExists(name string) bool {
+	_, err := os.Stat(name)
+	return !os.IsNotExist(err)
 }
 
 //-----------------------------------------------------------------------------
