@@ -76,20 +76,16 @@ func getTestCases(testPath string) ([]*testCase, error) {
 
 //-----------------------------------------------------------------------------
 
-// testFixups applies per-test environment tweaks
-func testFixups(m *rv.RV, name string) {
-	switch name {
-	case "rv32uc/rvc",
-		"rv32i/I-AUIPC-01",
-		"rv32Zifencei/I-FENCE.I-01",
-		"rv32ui/fence_i":
+// Fixups applies per-test environment tweaks
+func (tc *testCase) Fixups(m *rv.RV) {
+	switch tc.testName {
+	case "rv32uc/rvc.elf",
+		"rv32i/I-AUIPC-01.elf",
+		"rv32Zifencei/I-FENCE.I-01.elf",
+		"rv32ui/fence_i.elf":
 		m.Mem.SetAttr(".text.init", mem.AttrRWX)
-	case "rv32i/I-SB-01",
-		"rv32i/I-SH-01",
-		"rv32i/I-SW-01":
-		m.Mem.Add(mem.NewSection(".fixup", 0x80001ffc, 4, mem.AttrRW))
-	case "rv32mi/ma_addr",
-		"rv32i/I-MISALIGN_LDST-01":
+	case "rv32mi/ma_addr.elf",
+		"rv32i/I-MISALIGN_LDST-01.elf":
 		m.Mem.SetAttr(".data", mem.AttrRWM)
 	}
 }
@@ -214,7 +210,7 @@ func (tc *testCase) Test() error {
 	cpu.Mem.AddBreakPointByName("tohost", mem.AttrW)
 
 	// apply per test fixups
-	//testFixups(cpu, name)
+	tc.Fixups(cpu)
 
 	// run the emulation
 	cpu.Reset()
@@ -235,25 +231,26 @@ func (tc *testCase) Test() error {
 		return err
 	}
 
-	/*
+	// do we have a signature file?
+	if tc.sigFile == "" {
+		return nil
+	}
 
-		// get the test results from memory
-		result, err := getResults(m)
-		if err != nil {
-			return err
-		}
-		// get the signature results from the file
-		sig, err := getSignature(sigFilename)
-		if err != nil {
-			return err
-		}
-		// compare the result and signature
-		err = compareSlice32(result, sig)
-		if err != nil {
-			return err
-		}
-
-	*/
+	// get the test results from memory
+	result, err := getResults(cpu.Mem)
+	if err != nil {
+		return err
+	}
+	// get the signature results from the file
+	sig, err := getSignature(tc.sigFile)
+	if err != nil {
+		return err
+	}
+	// compare the result and signature
+	err = compareSlice32(result, sig)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -278,7 +275,7 @@ func main() {
 	fail := 0
 	for _, tc := range testCases {
 		err := tc.Test()
-		fmt.Printf("%-30s ", tc.testName)
+		fmt.Printf("%-80s ", tc.elfFile)
 		if err != nil {
 			fmt.Printf("FAIL %s\n", err)
 			fail++

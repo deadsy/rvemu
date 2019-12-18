@@ -738,6 +738,18 @@ func emu_LR_W(m *RV, ins uint) error {
 
 func emu_SC_W(m *RV, ins uint) error {
 	return m.errTodo()
+	/*
+	     rs2, rs1, _, rd := decodeR(ins)
+	   	m.amo.Lock()
+	   	adr := uint(m.rdX(rs1))
+	   	err = m.Mem.Wr32(adr, uint32(m.rdX(rs2)))
+	   	if err != nil {
+	   		return m.errMemory(err)
+	   	}
+	   	m.amo.Unlock()
+	   	m.PC += 4
+	   	return nil
+	*/
 }
 
 func emu_AMOSWAP_W(m *RV, ins uint) error {
@@ -1700,7 +1712,15 @@ func emu_C_FSDSP(m *RV, ins uint) error {
 // rv64i
 
 func emu_LWU(m *RV, ins uint) error {
-	return m.errTodo()
+	imm, rs1, rd := decodeIa(ins)
+	adr := uint(int(m.rdX(rs1)) + imm)
+	val, err := m.Mem.Rd32(adr)
+	if err != nil {
+		return m.errMemory(err)
+	}
+	m.wrX(rd, uint64(val))
+	m.PC += 4
+	return nil
 }
 
 func emu_LD(m *RV, ins uint) error {
@@ -1949,19 +1969,39 @@ func emu_FCVT_LU_D(m *RV, ins uint) error {
 }
 
 func emu_FMV_X_D(m *RV, ins uint) error {
-	return m.errTodo()
+	_, rs1, _, rd := decodeR(ins)
+	m.wrX(rd, m.F[rs1])
+	m.PC += 4
+	return nil
 }
 
 func emu_FCVT_D_L(m *RV, ins uint) error {
-	return m.errTodo()
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fcvt_d_l(int64(m.rdX(rs1)), rm, m.CSR)
+	if err != nil {
+		return m.errIllegal(ins)
+	}
+	m.F[rd] = x
+	m.PC += 4
+	return nil
 }
 
 func emu_FCVT_D_LU(m *RV, ins uint) error {
-	return m.errTodo()
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fcvt_d_lu(m.rdX(rs1), rm, m.CSR)
+	if err != nil {
+		return m.errIllegal(ins)
+	}
+	m.F[rd] = x
+	m.PC += 4
+	return nil
 }
 
 func emu_FMV_D_X(m *RV, ins uint) error {
-	return m.errTodo()
+	_, rs1, _, rd := decodeR(ins)
+	m.F[rd] = m.rdX(rs1)
+	m.PC += 4
+	return nil
 }
 
 //-----------------------------------------------------------------------------

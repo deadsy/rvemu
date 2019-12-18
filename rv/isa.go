@@ -275,7 +275,7 @@ var ISArv64i = ISAModule{
 	name: "rv64i",
 	ilen: 32,
 	defn: []insDefn{
-		{"imm[11:0] rs1 110 rd 0000011 LWU", daTypeIa, emu_LWU},          // I
+		{"imm[11:0] rs1 110 rd 0000011 LWU", daTypeIc, emu_LWU},          // I
 		{"imm[11:0] rs1 011 rd 0000011 LD", daTypeIa, emu_LD},            // I
 		{"imm[11:5] rs2 rs1 011 imm[4:0] 0100011 SD", daTypeSa, emu_SD},  // S
 		{"000000 shamt6 rs1 001 rd 0010011 SLLI", daTypeId, emu_SLLI},    // I
@@ -342,12 +342,12 @@ var ISArv64d = ISAModule{
 	name: "rv64d",
 	ilen: 32,
 	defn: []insDefn{
-		{"1100001 00010 rs1 rm rd 1010011 FCVT.L.D", daNone, emu_FCVT_L_D},   // R
-		{"1100001 00011 rs1 rm rd 1010011 FCVT.LU.D", daNone, emu_FCVT_LU_D}, // R
-		{"1110001 00000 rs1 000 rd 1010011 FMV.X.D", daNone, emu_FMV_X_D},    // R
-		{"1101001 00010 rs1 rm rd 1010011 FCVT.D.L", daNone, emu_FCVT_D_L},   // R
-		{"1101001 00011 rs1 rm rd 1010011 FCVT.D.LU", daNone, emu_FCVT_D_LU}, // R
-		{"1111001 00000 rs1 000 rd 1010011 FMV.D.X", daNone, emu_FMV_D_X},    // R
+		{"1100001 00010 rs1 rm rd 1010011 FCVT.L.D", daTypeRg, emu_FCVT_L_D},   // R
+		{"1100001 00011 rs1 rm rd 1010011 FCVT.LU.D", daNone, emu_FCVT_LU_D},   // R
+		{"1110001 00000 rs1 000 rd 1010011 FMV.X.D", daTypeRd, emu_FMV_X_D},    // R
+		{"1101001 00010 rs1 rm rd 1010011 FCVT.D.L", daTypeRe, emu_FCVT_D_L},   // R
+		{"1101001 00011 rs1 rm rd 1010011 FCVT.D.LU", daTypeRe, emu_FCVT_D_LU}, // R
+		{"1111001 00000 rs1 000 rd 1010011 FMV.D.X", daTypeRe, emu_FMV_D_X},    // R
 	},
 }
 

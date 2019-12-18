@@ -140,6 +140,7 @@ var rv32mTest = []daTest{
 var rv32aTest = []daTest{
 	{0, 0x100526af, "lr.w a3,(a0)"},
 	{0, 0x18c526af, "sc.w a3,a2,(a0)"},
+	{0, 0x18e5272f, "sc.w a4,a4,(a0)"},
 	{0, 0x0c55232f, "amoswap.w t1,t0,(a0)"},
 	{0, 0x60b6a72f, "amoand.w a4,a1,(a3)"},
 	{0, 0x00b6a72f, "amoadd.w a4,a1,(a3)"},
@@ -285,6 +286,8 @@ var rv64iTest = []daTest{
 	{0, 0x40395913, "srai s2,s2,0x3"},
 	{0, 0x413a59bb, "sraw s3,s4,s3"},
 	{0, 0x41be5dbb, "sraw s11,t3,s11"},
+	{0, 0xff80e703, "lwu a4,-8(ra)"},
+	{0, 0x0002e103, "lwu sp,0(t0)"},
 }
 
 var rv64mTest = []daTest{
@@ -295,8 +298,16 @@ var rv64mTest = []daTest{
 }
 
 var rv64aTest = []daTest{}
+
 var rv64fTest = []daTest{}
-var rv64dTest = []daTest{}
+
+var rv64dTest = []daTest{
+	{0, 0xe2018553, "fmv.x.d a0,ft3"},
+	{0, 0xf2050553, "fmv.d.x fa0,a0"},
+	{0, 0xd2257053, "fcvt.d.l ft0,a0"},
+	{0, 0xd2357053, "fcvt.d.lu ft0,a0"},
+	{0, 0xc2201553, "fcvt.l.d a0,ft0,rtz"},
+}
 
 var rv64cTest = []daTest{
 	{0, 0xe30c, "sd a1,0(a4)"},
