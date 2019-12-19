@@ -251,17 +251,33 @@ func daTypeRf(name string, pc uint, ins uint) string {
 	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiFName[rs1], abiFName[rs2])
 }
 
-func daTypeRg(name string, pc uint, ins uint) string {
-	_, rs1, rm, rd := decodeR(ins)
-	if rm == frmDYN {
-		return fmt.Sprintf("%s %s,%s", name, abiXName[rd], abiFName[rs1])
-	}
-	return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiFName[rs1], rmName[rm])
-}
-
 func daTypeRh(name string, pc uint, ins uint) string {
 	_, rs1, _, rd := decodeR(ins)
 	return fmt.Sprintf("%s %s,%s", name, abiFName[rd], abiFName[rs1])
+}
+
+// fcvt rd = float, rs1 = float
+// fcvt to {s,d} from {d,s}
+func daTypeRi(name string, pc uint, ins uint) string {
+	_, rs1, _, rd := decodeR(ins)
+	return fmt.Sprintf("%s %s,%s", name, abiFName[rd], abiFName[rs1])
+}
+
+// fcvt rd = float, rs1 = int
+// fcvt to {s,d} from {l,lu,w,wu}
+func daTypeRj(name string, pc uint, ins uint) string {
+	_, rs1, _, rd := decodeR(ins)
+	return fmt.Sprintf("%s %s,%s", name, abiFName[rd], abiXName[rs1])
+}
+
+// fcvt rd = int, rs1 = float
+// fcvt to {l,lu,w,wu} from {d,s}
+func daTypeRk(name string, pc uint, ins uint) string {
+	_, rs1, rm, rd := decodeR(ins)
+	if rm != frmDYN {
+		return fmt.Sprintf("%s %s,%s,%s", name, abiXName[rd], abiFName[rs1], rmName[rm])
+	}
+	return fmt.Sprintf("%s %s,%s", name, abiXName[rd], abiFName[rs1])
 }
 
 //-----------------------------------------------------------------------------

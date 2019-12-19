@@ -194,6 +194,9 @@ var rv32dTest = []daTest{
 	{0, 0x42010153, "fcvt.d.s ft2,ft2"},
 	{0, 0x2a1001d3, "fmin.d ft3,ft0,ft1"},
 	{0, 0x2a1011d3, "fmax.d ft3,ft0,ft1"},
+	{0, 0xc2001553, "fcvt.w.d a0,ft0,rtz"},
+	{0, 0xc2101553, "fcvt.wu.d a0,ft0,rtz"},
+	{0, 0xc210f0d3, "fcvt.wu.d ra,ft1"},
 }
 
 var rv32cTest = []daTest{
@@ -307,6 +310,8 @@ var rv64dTest = []daTest{
 	{0, 0xd2257053, "fcvt.d.l ft0,a0"},
 	{0, 0xd2357053, "fcvt.d.lu ft0,a0"},
 	{0, 0xc2201553, "fcvt.l.d a0,ft0,rtz"},
+	{0, 0xc2301553, "fcvt.lu.d a0,ft0,rtz"},
+	{0, 0xc230f0d3, "fcvt.lu.d ra,ft1"},
 }
 
 var rv64cTest = []daTest{

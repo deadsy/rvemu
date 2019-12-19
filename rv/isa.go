@@ -151,15 +151,15 @@ var ISArv32f = ISAModule{
 		{"0010000 rs2 rs1 010 rd 1010011 FSGNJX.S", daTypeRc, emu_FSGNJX_S},    // R
 		{"0010100 rs2 rs1 000 rd 1010011 FMIN.S", daTypeRc, emu_FMIN_S},        // R
 		{"0010100 rs2 rs1 001 rd 1010011 FMAX.S", daTypeRc, emu_FMAX_S},        // R
-		{"1100000 00000 rs1 rm rd 1010011 FCVT.W.S", daTypeRg, emu_FCVT_W_S},   // R
-		{"1100000 00001 rs1 rm rd 1010011 FCVT.WU.S", daTypeRg, emu_FCVT_WU_S}, // R
+		{"1100000 00000 rs1 rm rd 1010011 FCVT.W.S", daTypeRk, emu_FCVT_W_S},   // R
+		{"1100000 00001 rs1 rm rd 1010011 FCVT.WU.S", daTypeRk, emu_FCVT_WU_S}, // R
 		{"1110000 00000 rs1 000 rd 1010011 FMV.X.W", daTypeRd, emu_FMV_X_W},    // R
 		{"1010000 rs2 rs1 010 rd 1010011 FEQ.S", daTypeRf, emu_FEQ_S},          // R
 		{"1010000 rs2 rs1 001 rd 1010011 FLT.S", daTypeRf, emu_FLT_S},          // R
 		{"1010000 rs2 rs1 000 rd 1010011 FLE.S", daTypeRf, emu_FLE_S},          // R
 		{"1110000 00000 rs1 001 rd 1010011 FCLASS.S", daTypeRd, emu_FCLASS_S},  // R
-		{"1101000 00000 rs1 rm rd 1010011 FCVT.S.W", daTypeRe, emu_FCVT_S_W},   // R
-		{"1101000 00001 rs1 rm rd 1010011 FCVT.S.WU", daTypeRe, emu_FCVT_S_WU}, // R
+		{"1101000 00000 rs1 rm rd 1010011 FCVT.S.W", daTypeRj, emu_FCVT_S_W},   // R
+		{"1101000 00001 rs1 rm rd 1010011 FCVT.S.WU", daTypeRj, emu_FCVT_S_WU}, // R
 		{"1111000 00000 rs1 000 rd 1010011 FMV.W.X", daTypeRe, emu_FMV_W_X},    // R
 	},
 }
@@ -185,16 +185,16 @@ var ISArv32d = ISAModule{
 		{"0010001 rs2 rs1 010 rd 1010011 FSGNJX.D", daTypeRc, emu_FSGNJX_D},    // R
 		{"0010101 rs2 rs1 000 rd 1010011 FMIN.D", daTypeRc, emu_FMIN_D},        // R
 		{"0010101 rs2 rs1 001 rd 1010011 FMAX.D", daTypeRc, emu_FMAX_D},        // R
-		{"0100000 00001 rs1 rm rd 1010011 FCVT.S.D", daTypeRh, emu_FCVT_S_D},   // R
-		{"0100001 00000 rs1 rm rd 1010011 FCVT.D.S", daTypeRh, emu_FCVT_D_S},   // R
+		{"0100000 00001 rs1 rm rd 1010011 FCVT.S.D", daTypeRi, emu_FCVT_S_D},   // R
+		{"0100001 00000 rs1 rm rd 1010011 FCVT.D.S", daTypeRi, emu_FCVT_D_S},   // R
 		{"1010001 rs2 rs1 010 rd 1010011 FEQ.D", daTypeRf, emu_FEQ_D},          // R
 		{"1010001 rs2 rs1 001 rd 1010011 FLT.D", daTypeRf, emu_FLT_D},          // R
 		{"1010001 rs2 rs1 000 rd 1010011 FLE.D", daTypeRf, emu_FLE_D},          // R
 		{"1110001 00000 rs1 001 rd 1010011 FCLASS.D", daTypeRd, emu_FCLASS_D},  // R
-		{"1100001 00000 rs1 rm rd 1010011 FCVT.W.D", daTypeRe, emu_FCVT_W_D},   // R
-		{"1100001 00001 rs1 rm rd 1010011 FCVT.WU.D", daTypeRe, emu_FCVT_WU_D}, // R
-		{"1101001 00000 rs1 rm rd 1010011 FCVT.D.W", daTypeRe, emu_FCVT_D_W},   // R
-		{"1101001 00001 rs1 rm rd 1010011 FCVT.D.WU", daTypeRe, emu_FCVT_D_WU}, // R
+		{"1100001 00000 rs1 rm rd 1010011 FCVT.W.D", daTypeRk, emu_FCVT_W_D},   // R
+		{"1100001 00001 rs1 rm rd 1010011 FCVT.WU.D", daTypeRk, emu_FCVT_WU_D}, // R
+		{"1101001 00000 rs1 rm rd 1010011 FCVT.D.W", daTypeRj, emu_FCVT_D_W},   // R
+		{"1101001 00001 rs1 rm rd 1010011 FCVT.D.WU", daTypeRj, emu_FCVT_D_WU}, // R
 	},
 }
 
@@ -330,10 +330,10 @@ var ISArv64f = ISAModule{
 	name: "rv64f",
 	ilen: 32,
 	defn: []insDefn{
-		{"1100000 00010 rs1 rm rd 1010011 FCVT.L.S", daNone, emu_FCVT_L_S},   // R
-		{"1100000 00011 rs1 rm rd 1010011 FCVT.LU.S", daNone, emu_FCVT_LU_S}, // R
-		{"1101000 00010 rs1 rm rd 1010011 FCVT.S.L", daNone, emu_FCVT_S_L},   // R
-		{"1101000 00011 rs1 rm rd 1010011 FCVT.S.LU", daNone, emu_FCVT_S_LU}, // R
+		{"1100000 00010 rs1 rm rd 1010011 FCVT.L.S", daTypeRk, emu_FCVT_L_S},   // R
+		{"1100000 00011 rs1 rm rd 1010011 FCVT.LU.S", daTypeRk, emu_FCVT_LU_S}, // R
+		{"1101000 00010 rs1 rm rd 1010011 FCVT.S.L", daTypeRj, emu_FCVT_S_L},   // R
+		{"1101000 00011 rs1 rm rd 1010011 FCVT.S.LU", daTypeRj, emu_FCVT_S_LU}, // R
 	},
 }
 
@@ -342,11 +342,11 @@ var ISArv64d = ISAModule{
 	name: "rv64d",
 	ilen: 32,
 	defn: []insDefn{
-		{"1100001 00010 rs1 rm rd 1010011 FCVT.L.D", daTypeRg, emu_FCVT_L_D},   // R
-		{"1100001 00011 rs1 rm rd 1010011 FCVT.LU.D", daNone, emu_FCVT_LU_D},   // R
+		{"1100001 00010 rs1 rm rd 1010011 FCVT.L.D", daTypeRk, emu_FCVT_L_D},   // R
+		{"1100001 00011 rs1 rm rd 1010011 FCVT.LU.D", daTypeRk, emu_FCVT_LU_D}, // R
 		{"1110001 00000 rs1 000 rd 1010011 FMV.X.D", daTypeRd, emu_FMV_X_D},    // R
-		{"1101001 00010 rs1 rm rd 1010011 FCVT.D.L", daTypeRe, emu_FCVT_D_L},   // R
-		{"1101001 00011 rs1 rm rd 1010011 FCVT.D.LU", daTypeRe, emu_FCVT_D_LU}, // R
+		{"1101001 00010 rs1 rm rd 1010011 FCVT.D.L", daTypeRj, emu_FCVT_D_L},   // R
+		{"1101001 00011 rs1 rm rd 1010011 FCVT.D.LU", daTypeRj, emu_FCVT_D_LU}, // R
 		{"1111001 00000 rs1 000 rd 1010011 FMV.D.X", daTypeRe, emu_FMV_D_X},    // R
 	},
 }
