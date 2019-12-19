@@ -1083,7 +1083,7 @@ func emu_FCVT_W_S(m *RV, ins uint) error {
 	if err != nil {
 		return m.errIllegal(ins)
 	}
-	m.wrX(rd, uint64(x))
+	m.wrX(rd, uint64(int64(x)))
 	m.PC += 4
 	return nil
 }
@@ -1094,7 +1094,7 @@ func emu_FCVT_WU_S(m *RV, ins uint) error {
 	if err != nil {
 		return m.errIllegal(ins)
 	}
-	m.wrX(rd, uint64(int32(x)))
+	m.wrX(rd, uint64(int64(int32(x))))
 	m.PC += 4
 	return nil
 }
@@ -1378,7 +1378,7 @@ func emu_FCVT_W_D(m *RV, ins uint) error {
 	if err != nil {
 		return m.errIllegal(ins)
 	}
-	m.wrX(rd, uint64(x))
+	m.wrX(rd, uint64(int64(x)))
 	m.PC += 4
 	return nil
 }
@@ -1389,7 +1389,7 @@ func emu_FCVT_WU_D(m *RV, ins uint) error {
 	if err != nil {
 		return m.errIllegal(ins)
 	}
-	m.wrX(rd, uint64(int32(x)))
+	m.wrX(rd, uint64(int64(int32(x))))
 	m.PC += 4
 	return nil
 }
@@ -1942,30 +1942,72 @@ func emu_AMOMAXU_D(m *RV, ins uint) error {
 // rv64f
 
 func emu_FCVT_L_S(m *RV, ins uint) error {
-	return m.errTodo()
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fcvt_l_s(uint32(m.F[rs1]), rm, m.CSR)
+	if err != nil {
+		return m.errIllegal(ins)
+	}
+	m.wrX(rd, uint64(x))
+	m.PC += 4
+	return nil
 }
 
 func emu_FCVT_LU_S(m *RV, ins uint) error {
-	return m.errTodo()
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fcvt_lu_s(uint32(m.F[rs1]), rm, m.CSR)
+	if err != nil {
+		return m.errIllegal(ins)
+	}
+	m.wrX(rd, x)
+	m.PC += 4
+	return nil
 }
 
 func emu_FCVT_S_L(m *RV, ins uint) error {
-	return m.errTodo()
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fcvt_s_l(int64(m.rdX(rs1)), rm, m.CSR)
+	if err != nil {
+		return m.errIllegal(ins)
+	}
+	m.F[rd] = uint64(x)
+	m.PC += 4
+	return nil
 }
 
 func emu_FCVT_S_LU(m *RV, ins uint) error {
-	return m.errTodo()
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fcvt_s_lu(m.rdX(rs1), rm, m.CSR)
+	if err != nil {
+		return m.errIllegal(ins)
+	}
+	m.F[rd] = uint64(x)
+	m.PC += 4
+	return nil
 }
 
 //-----------------------------------------------------------------------------
 // rv64d
 
 func emu_FCVT_L_D(m *RV, ins uint) error {
-	return m.errTodo()
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fcvt_l_d(m.F[rs1], rm, m.CSR)
+	if err != nil {
+		return m.errIllegal(ins)
+	}
+	m.wrX(rd, uint64(x))
+	m.PC += 4
+	return nil
 }
 
 func emu_FCVT_LU_D(m *RV, ins uint) error {
-	return m.errTodo()
+	_, rs1, rm, rd := decodeR(ins)
+	x, err := fcvt_lu_d(m.F[rs1], rm, m.CSR)
+	if err != nil {
+		return m.errIllegal(ins)
+	}
+	m.wrX(rd, x)
+	m.PC += 4
+	return nil
 }
 
 func emu_FMV_X_D(m *RV, ins uint) error {

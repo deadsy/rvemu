@@ -137,7 +137,7 @@ func fle_d(a, b uint64, s *csr.State) uint {
 //-----------------------------------------------------------------------------
 // fcvt to {s,d} from {d,s}
 
-// fcvt_s_d converts a 64-bit float to a 32-bit float
+// fcvt_s_d converts to float32 from float64
 func fcvt_s_d(a uint64, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -149,7 +149,7 @@ func fcvt_s_d(a uint64, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
-// fcvt_d_s converts a 32-bit float to a 64-bit float
+// fcvt_d_s converts to float64 from float32
 func fcvt_d_s(a uint32, s *csr.State) uint64 {
 	var flags C.uint32_t
 	x := uint64(C.cvt_sf32_sf64(C.sfloat32(a), &flags))
@@ -158,9 +158,9 @@ func fcvt_d_s(a uint32, s *csr.State) uint64 {
 }
 
 //-----------------------------------------------------------------------------
-// fcvt to {s,d} from {l,lu,w,wu}
+// fcvt to {s,d} from {w,wu,l,lu}
 
-// fcvt_s_w converts an int32 to a 32-bit float
+// fcvt_s_w converts to float32 from int32
 func fcvt_s_w(a int32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -172,7 +172,7 @@ func fcvt_s_w(a int32, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
-// fcvt_s_wu converts a uint32 to a 32-bit float
+// fcvt_s_wu converts to float32 from uint32
 func fcvt_s_wu(a uint32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -184,31 +184,31 @@ func fcvt_s_wu(a uint32, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
-// fcvt_d_l converts an int64 to a 64-bit float
-func fcvt_d_l(a int64, rm uint, s *csr.State) (uint64, error) {
+// fcvt_s_l converts to float32 from int64
+func fcvt_s_l(a int64, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
 		return 0, err
 	}
 	var flags C.uint32_t
-	x := uint64(C.cvt_i64_sf64(C.int64_t(a), C.RoundingModeEnum(rm), &flags))
+	x := uint32(C.cvt_i64_sf32(C.int64_t(a), C.RoundingModeEnum(rm), &flags))
 	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
-// fcvt_d_lu converts a uint64 to a 64-bit float
-func fcvt_d_lu(a uint64, rm uint, s *csr.State) (uint64, error) {
+// fcvt_s_lu converts to float32 from uint64
+func fcvt_s_lu(a uint64, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
 		return 0, err
 	}
 	var flags C.uint32_t
-	x := uint64(C.cvt_u64_sf64(C.uint64_t(a), C.RoundingModeEnum(rm), &flags))
+	x := uint32(C.cvt_u64_sf32(C.uint64_t(a), C.RoundingModeEnum(rm), &flags))
 	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
 
-// fcvt_d_w converts an int32 to a 64-bit float
+// fcvt_d_w converts to float64 from int32
 func fcvt_d_w(a int32, rm uint, s *csr.State) (uint64, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -220,7 +220,7 @@ func fcvt_d_w(a int32, rm uint, s *csr.State) (uint64, error) {
 	return x, nil
 }
 
-// fcvt_d_wu converts a uint32 to a 64-bit float
+// fcvt_d_wu converts to float64 from uint32
 func fcvt_d_wu(a uint32, rm uint, s *csr.State) (uint64, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -232,10 +232,34 @@ func fcvt_d_wu(a uint32, rm uint, s *csr.State) (uint64, error) {
 	return x, nil
 }
 
-//-----------------------------------------------------------------------------
-// fcvt to {l,lu,w,wu} from {d,s}
+// fcvt_d_l converts to float64 from int64
+func fcvt_d_l(a int64, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.cvt_i64_sf64(C.int64_t(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
+	return x, nil
+}
 
-// fcvt_w_s converts a 32-bit float to a int32
+// fcvt_d_lu converts to float64 from uint64
+func fcvt_d_lu(a uint64, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.cvt_u64_sf64(C.uint64_t(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
+	return x, nil
+}
+
+//-----------------------------------------------------------------------------
+// fcvt to {w,wu,l,lu} from {s,d}
+
+// fcvt_w_s converts to int32 from float32.
 func fcvt_w_s(a uint32, rm uint, s *csr.State) (int32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -247,19 +271,7 @@ func fcvt_w_s(a uint32, rm uint, s *csr.State) (int32, error) {
 	return x, nil
 }
 
-// fcvt_w_d converts a 64-bit float to a int32
-func fcvt_w_d(a uint64, rm uint, s *csr.State) (int32, error) {
-	rm, err := getRoundingMode(rm, s)
-	if err != nil {
-		return 0, err
-	}
-	var flags C.uint32_t
-	x := int32(C.cvt_sf64_i32(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
-	s.Wr(csr.FFLAGS, uint64(flags))
-	return x, nil
-}
-
-// fcvt_wu_s converts a 32-bit float to a uint32
+// fcvt_wu_s converts to uint32 from float32
 func fcvt_wu_s(a uint32, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -271,7 +283,43 @@ func fcvt_wu_s(a uint32, rm uint, s *csr.State) (uint32, error) {
 	return x, nil
 }
 
-// fcvt_wu_d converts a 64-bit float to a uint32
+// fcvt_l_s converts to int64 from float32.
+func fcvt_l_s(a uint32, rm uint, s *csr.State) (int64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := int64(C.cvt_sf32_i64(C.sfloat32(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
+	return x, nil
+}
+
+// fcvt_lu_s converts to uint64 from float32
+func fcvt_lu_s(a uint32, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.cvt_sf32_u64(C.sfloat32(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
+	return x, nil
+}
+
+// fcvt_w_d converts to int32 from float64
+func fcvt_w_d(a uint64, rm uint, s *csr.State) (int32, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := int32(C.cvt_sf64_i32(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
+	return x, nil
+}
+
+// fcvt_wu_d converts to uint32 from float64
 func fcvt_wu_d(a uint64, rm uint, s *csr.State) (uint32, error) {
 	rm, err := getRoundingMode(rm, s)
 	if err != nil {
@@ -279,6 +327,30 @@ func fcvt_wu_d(a uint64, rm uint, s *csr.State) (uint32, error) {
 	}
 	var flags C.uint32_t
 	x := uint32(C.cvt_sf64_u32(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
+	return x, nil
+}
+
+// fcvt_l_d converts to int64 from float64
+func fcvt_l_d(a uint64, rm uint, s *csr.State) (int64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := int64(C.cvt_sf64_i64(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
+	s.Wr(csr.FFLAGS, uint64(flags))
+	return x, nil
+}
+
+// fcvt_lu_d converts to uint64 from float64
+func fcvt_lu_d(a uint64, rm uint, s *csr.State) (uint64, error) {
+	rm, err := getRoundingMode(rm, s)
+	if err != nil {
+		return 0, err
+	}
+	var flags C.uint32_t
+	x := uint64(C.cvt_sf64_u64(C.sfloat64(a), C.RoundingModeEnum(rm), &flags))
 	s.Wr(csr.FFLAGS, uint64(flags))
 	return x, nil
 }
