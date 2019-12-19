@@ -24,6 +24,7 @@ import (
 
 const historyPath = ".rvemu_history"
 const stackSize = 8 << 10
+const heapSize = 256 << 10
 
 //-----------------------------------------------------------------------------
 
@@ -120,6 +121,9 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Fprintf(os.Stderr, "%s\n", status)
+
+	// add a heap
+	app.mem.Add(mem.NewSection("heap", 0x80000000, heapSize, mem.AttrRW))
 
 	// Break on the "tohost" write (compliance tests).
 	app.mem.AddBreakPointByName("tohost", mem.AttrW)
