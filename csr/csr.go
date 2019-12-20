@@ -555,6 +555,17 @@ func wrMIP(s *State, x uint) {
 }
 
 //-----------------------------------------------------------------------------
+// supervisor address translation and protection
+
+func wrSATP(s *State, x uint) {
+	s.satp = x
+}
+
+func rdSATP(s *State) uint {
+	return s.satp
+}
+
+//-----------------------------------------------------------------------------
 
 type wrFunc func(s *State, val uint)
 type rdFunc func(s *State) uint
@@ -656,7 +667,7 @@ var lookup = map[uint]csrDefn{
 	0x142: {"scause", nil, rdSCAUSE},
 	0x143: {"stval", nil, nil},
 	0x144: {"sip", wrSIP, rdSIP},
-	0x180: {"satp", wrIgnore, nil},
+	0x180: {"satp", wrSATP, rdSATP},
 	// Machine CSRs 0xf00 - 0xf7f (read only)
 	0xf11: {"mvendorid", nil, rdZero},
 	0xf12: {"marchid", nil, rdZero},
@@ -864,6 +875,7 @@ type State struct {
 	stvec    uint // supervisor trap vector base address register
 	sedeleg  uint // supervisor exception delegation register
 	sideleg  uint // supervisor interrupt delegation register
+	satp     uint // supervisor address translation and protection
 	// User CSRs
 	ucause   uint // user cause register
 	uepc     uint // user exception program counter

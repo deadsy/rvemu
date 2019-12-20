@@ -311,17 +311,17 @@ var ISArv64a = ISAModule{
 	name: "rv64a",
 	ilen: 32,
 	defn: []insDefn{
-		{"00010 aq rl 00000 rs1 011 rd 0101111 LR.D", daNone, emu_LR_D},         // R
-		{"00011 aq rl rs2 rs1 011 rd 0101111 SC.D", daNone, emu_SC_D},           // R
-		{"00001 aq rl rs2 rs1 011 rd 0101111 AMOSWAP.D", daNone, emu_AMOSWAP_D}, // R
-		{"00000 aq rl rs2 rs1 011 rd 0101111 AMOADD.D", daNone, emu_AMOADD_D},   // R
-		{"00100 aq rl rs2 rs1 011 rd 0101111 AMOXOR.D", daNone, emu_AMOXOR_D},   // R
-		{"01100 aq rl rs2 rs1 011 rd 0101111 AMOAND.D", daNone, emu_AMOAND_D},   // R
-		{"01000 aq rl rs2 rs1 011 rd 0101111 AMOOR.D", daNone, emu_AMOOR_D},     // R
-		{"10000 aq rl rs2 rs1 011 rd 0101111 AMOMIN.D", daNone, emu_AMOMIN_D},   // R
-		{"10100 aq rl rs2 rs1 011 rd 0101111 AMOMAX.D", daNone, emu_AMOMAX_D},   // R
-		{"11000 aq rl rs2 rs1 011 rd 0101111 AMOMINU.D", daNone, emu_AMOMINU_D}, // R
-		{"11100 aq rl rs2 rs1 011 rd 0101111 AMOMAXU.D", daNone, emu_AMOMAXU_D}, // R
+		{"00010 aq rl 00000 rs1 011 rd 0101111 LR.D", daTypeRb, emu_LR_D},         // R
+		{"00011 aq rl rs2 rs1 011 rd 0101111 SC.D", daTypeRb, emu_SC_D},           // R
+		{"00001 aq rl rs2 rs1 011 rd 0101111 AMOSWAP.D", daTypeRb, emu_AMOSWAP_D}, // R
+		{"00000 aq rl rs2 rs1 011 rd 0101111 AMOADD.D", daTypeRb, emu_AMOADD_D},   // R
+		{"00100 aq rl rs2 rs1 011 rd 0101111 AMOXOR.D", daTypeRb, emu_AMOXOR_D},   // R
+		{"01100 aq rl rs2 rs1 011 rd 0101111 AMOAND.D", daTypeRb, emu_AMOAND_D},   // R
+		{"01000 aq rl rs2 rs1 011 rd 0101111 AMOOR.D", daTypeRb, emu_AMOOR_D},     // R
+		{"10000 aq rl rs2 rs1 011 rd 0101111 AMOMIN.D", daTypeRb, emu_AMOMIN_D},   // R
+		{"10100 aq rl rs2 rs1 011 rd 0101111 AMOMAX.D", daTypeRb, emu_AMOMAX_D},   // R
+		{"11000 aq rl rs2 rs1 011 rd 0101111 AMOMINU.D", daTypeRb, emu_AMOMINU_D}, // R
+		{"11100 aq rl rs2 rs1 011 rd 0101111 AMOMAXU.D", daTypeRb, emu_AMOMAXU_D}, // R
 	},
 }
 

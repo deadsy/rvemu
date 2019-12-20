@@ -300,7 +300,17 @@ var rv64mTest = []daTest{
 	{0, 0x03be0dbb, "mulw s11,t3,s11"},
 }
 
-var rv64aTest = []daTest{}
+var rv64aTest = []daTest{
+	{0, 0x08b6b72f, "amoswap.d a4,a1,(a3)"},
+	{0, 0x00b6b72f, "amoadd.d a4,a1,(a3)"},
+	{0, 0x20b6b72f, "amoxor.d a4,a1,(a3)"},
+	{0, 0x60b6b72f, "amoand.d a4,a1,(a3)"},
+	{0, 0x40b6b72f, "amoor.d a4,a1,(a3)"},
+	{0, 0x80b6b72f, "amomin.d a4,a1,(a3)"},
+	{0, 0xa0b6b72f, "amomax.d a4,a1,(a3)"},
+	{0, 0xc0b6b72f, "amominu.d a4,a1,(a3)"},
+	{0, 0xe0b6b72f, "amomaxu.d a4,a1,(a3)"},
+}
 
 var rv64fTest = []daTest{}
 

@@ -1903,39 +1903,165 @@ func emu_SC_D(m *RV, ins uint) error {
 }
 
 func emu_AMOSWAP_D(m *RV, ins uint) error {
-	return m.errTodo()
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, err := m.Mem.Rd64(adr)
+	if err != nil {
+		return m.errMemory(err)
+	}
+	err = m.Mem.Wr64(adr, m.rdX(rs2))
+	if err != nil {
+		return m.errMemory(err)
+	}
+	m.wrX(rd, t)
+	m.amo.Unlock()
+	m.PC += 4
+	return nil
 }
 
 func emu_AMOADD_D(m *RV, ins uint) error {
-	return m.errTodo()
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, err := m.Mem.Rd64(adr)
+	if err != nil {
+		return m.errMemory(err)
+	}
+	err = m.Mem.Wr64(adr, t+m.rdX(rs2))
+	if err != nil {
+		return m.errMemory(err)
+	}
+	m.wrX(rd, t)
+	m.amo.Unlock()
+	m.PC += 4
+	return nil
 }
 
 func emu_AMOXOR_D(m *RV, ins uint) error {
-	return m.errTodo()
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, err := m.Mem.Rd64(adr)
+	if err != nil {
+		return m.errMemory(err)
+	}
+	err = m.Mem.Wr64(adr, t^m.rdX(rs2))
+	if err != nil {
+		return m.errMemory(err)
+	}
+	m.wrX(rd, t)
+	m.amo.Unlock()
+	m.PC += 4
+	return nil
 }
 
 func emu_AMOAND_D(m *RV, ins uint) error {
-	return m.errTodo()
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, err := m.Mem.Rd64(adr)
+	if err != nil {
+		return m.errMemory(err)
+	}
+	err = m.Mem.Wr64(adr, t&m.rdX(rs2))
+	if err != nil {
+		return m.errMemory(err)
+	}
+	m.wrX(rd, t)
+	m.amo.Unlock()
+	m.PC += 4
+	return nil
 }
 
 func emu_AMOOR_D(m *RV, ins uint) error {
-	return m.errTodo()
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, err := m.Mem.Rd64(adr)
+	if err != nil {
+		return m.errMemory(err)
+	}
+	err = m.Mem.Wr64(adr, t|m.rdX(rs2))
+	if err != nil {
+		return m.errMemory(err)
+	}
+	m.wrX(rd, t)
+	m.amo.Unlock()
+	m.PC += 4
+	return nil
 }
 
 func emu_AMOMIN_D(m *RV, ins uint) error {
-	return m.errTodo()
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, err := m.Mem.Rd64(adr)
+	if err != nil {
+		return m.errMemory(err)
+	}
+	err = m.Mem.Wr64(adr, uint64(minInt64(int64(t), int64(m.rdX(rs2)))))
+	if err != nil {
+		return m.errMemory(err)
+	}
+	m.wrX(rd, t)
+	m.amo.Unlock()
+	m.PC += 4
+	return nil
 }
 
 func emu_AMOMAX_D(m *RV, ins uint) error {
-	return m.errTodo()
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, err := m.Mem.Rd64(adr)
+	if err != nil {
+		return m.errMemory(err)
+	}
+	err = m.Mem.Wr64(adr, uint64(maxInt64(int64(t), int64(m.rdX(rs2)))))
+	if err != nil {
+		return m.errMemory(err)
+	}
+	m.wrX(rd, t)
+	m.amo.Unlock()
+	m.PC += 4
+	return nil
 }
 
 func emu_AMOMINU_D(m *RV, ins uint) error {
-	return m.errTodo()
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, err := m.Mem.Rd64(adr)
+	if err != nil {
+		return m.errMemory(err)
+	}
+	err = m.Mem.Wr64(adr, minUint64(t, m.rdX(rs2)))
+	if err != nil {
+		return m.errMemory(err)
+	}
+	m.wrX(rd, t)
+	m.amo.Unlock()
+	m.PC += 4
+	return nil
 }
 
 func emu_AMOMAXU_D(m *RV, ins uint) error {
-	return m.errTodo()
+	rs2, rs1, _, rd := decodeR(ins)
+	m.amo.Lock()
+	adr := uint(m.rdX(rs1))
+	t, err := m.Mem.Rd64(adr)
+	if err != nil {
+		return m.errMemory(err)
+	}
+	err = m.Mem.Wr64(adr, maxUint64(t, m.rdX(rs2)))
+	if err != nil {
+		return m.errMemory(err)
+	}
+	m.wrX(rd, t)
+	m.amo.Unlock()
+	m.PC += 4
+	return nil
 }
 
 //-----------------------------------------------------------------------------
@@ -2173,6 +2299,34 @@ func maxUint32(a, b uint32) uint32 {
 }
 
 func minUint32(a, b uint32) uint32 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxInt64(a, b int64) int64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func minInt64(a, b int64) int64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxUint64(a, b uint64) uint64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func minUint64(a, b uint64) uint64 {
 	if a < b {
 		return a
 	}
