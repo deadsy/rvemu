@@ -74,9 +74,9 @@ func (fs FieldSet) Display(x uint) string {
 func DisplayEnum(x uint, m map[uint]string, unknown string) string {
 	s, ok := m[x]
 	if !ok {
-		return unknown
+		s = unknown
 	}
-	return s
+	return fmt.Sprintf("%s(%d)", s, x)
 }
 
 //-----------------------------------------------------------------------------

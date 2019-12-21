@@ -9,6 +9,7 @@ RISC-V Control and Status Register Definitions
 package csr
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -66,15 +67,12 @@ const (
 )
 
 func (m Mode) String() string {
-	switch m {
-	case ModeU:
-		return "user"
-	case ModeS:
-		return "supervisor"
-	case ModeM:
-		return "machine"
-	}
-	return fmt.Sprintf("? (%d)", m)
+	x := map[uint]string{uint(ModeU): "user", uint(ModeS): "supervisor", uint(ModeM): "machine"}
+	return util.DisplayEnum(uint(m), x, "?")
+}
+
+func getMode(reg uint) uint {
+	return (reg >> 8) & 3
 }
 
 //-----------------------------------------------------------------------------
@@ -183,6 +181,36 @@ func rdMISA(s *State) uint {
 	return s.misa
 }
 
+func wrMISA(s *State, val uint) {
+	s.misa = val
+}
+
+func fmtMXL(x uint) string {
+	return []string{"?", "32", "64", "128"}[x]
+}
+
+func fmtExtensions(x uint) string {
+	s := []rune{}
+	for i := 0; i < 26; i++ {
+		if x&1 != 0 {
+			s = append(s, 'a'+rune(i))
+		}
+		x >>= 1
+	}
+	if len(s) != 0 {
+		return fmt.Sprintf("\"%s\"", string(s))
+	}
+	return "none"
+}
+
+func displayMISA(s *State) string {
+	fs := util.FieldSet{
+		{"mxl", s.mxlen - 1, s.mxlen - 2, fmtMXL},
+		{"extensions", 25, 0, fmtExtensions},
+	}
+	return fs.Display(s.misa)
+}
+
 //-----------------------------------------------------------------------------
 // u/s/m exception program counter
 
@@ -288,6 +316,31 @@ func rdMTVEC(s *State) uint {
 	return s.mtvec
 }
 
+func fmtBase(x uint) string {
+	return fmt.Sprintf("%x", x<<2)
+}
+
+func fmtTrapVectorMode(x uint) string {
+	m := map[uint]string{0: "direct", 1: "vectored"}
+	return util.DisplayEnum(x, m, "reserved")
+}
+
+func displaySTVEC(s *State) string {
+	fs := util.FieldSet{
+		{"base", s.sxlen - 1, 2, fmtBase},
+		{"mode", 1, 0, fmtTrapVectorMode},
+	}
+	return fs.Display(s.stvec)
+}
+
+func displayMTVEC(s *State) string {
+	fs := util.FieldSet{
+		{"base", s.mxlen - 1, 2, fmtBase},
+		{"mode", 1, 0, fmtTrapVectorMode},
+	}
+	return fs.Display(s.mtvec)
+}
+
 // getTrapVector returns the base/mode of a u/s/m trap vector.
 func (s *State) getTrapVector(mode Mode) (uint, uint) {
 	var tvec, msb uint
@@ -390,6 +443,91 @@ func wrMSTATUS(s *State, x uint) {
 
 func rdMSTATUS(s *State) uint {
 	return s.mstatus
+}
+
+func displaySSTATUS(s *State) string {
+	var fs util.FieldSet
+	if s.sxlen == 32 {
+		// RV32
+		fs = util.FieldSet{
+			{"sd", 31, 31, util.FmtDec},
+			{"mxr", 19, 19, util.FmtDec},
+			{"sum", 18, 18, util.FmtDec},
+			{"xs", 16, 15, util.FmtDec},
+			{"fs", 14, 13, util.FmtDec},
+			{"spp", 8, 8, util.FmtDec},
+			{"spie", 5, 5, util.FmtDec},
+			{"upie", 4, 4, util.FmtDec},
+			{"sie", 1, 1, util.FmtDec},
+			{"uie", 0, 0, util.FmtDec},
+		}
+	} else {
+		// RV64
+		fs = util.FieldSet{
+			{"sd", s.mxlen - 1, s.mxlen - 1, util.FmtDec},
+			{"uxl", 33, 32, util.FmtDec},
+			{"mxr", 19, 19, util.FmtDec},
+			{"sum", 18, 18, util.FmtDec},
+			{"xs", 16, 15, util.FmtDec},
+			{"fs", 14, 13, util.FmtDec},
+			{"spp", 8, 8, util.FmtDec},
+			{"spie", 5, 5, util.FmtDec},
+			{"upie", 4, 4, util.FmtDec},
+			{"sie", 1, 1, util.FmtDec},
+			{"uie", 0, 0, util.FmtDec},
+		}
+	}
+	return fs.Display(s.mstatus)
+}
+
+func displayMSTATUS(s *State) string {
+	var fs util.FieldSet
+	if s.sxlen == 32 {
+		// RV32
+		fs = util.FieldSet{
+			{"sd", 31, 31, util.FmtDec},
+			{"tsr", 22, 22, util.FmtDec},
+			{"tw", 21, 21, util.FmtDec},
+			{"tvm", 20, 20, util.FmtDec},
+			{"mxr", 19, 19, util.FmtDec},
+			{"sum", 18, 18, util.FmtDec},
+			{"mprv", 17, 17, util.FmtDec},
+			{"xs", 16, 15, util.FmtDec},
+			{"fs", 14, 13, util.FmtDec},
+			{"mpp", 12, 11, util.FmtDec},
+			{"spp", 8, 8, util.FmtDec},
+			{"mpie", 7, 7, util.FmtDec},
+			{"spie", 5, 5, util.FmtDec},
+			{"upie", 4, 4, util.FmtDec},
+			{"mie", 3, 3, util.FmtDec},
+			{"sie", 1, 1, util.FmtDec},
+			{"uie", 0, 0, util.FmtDec},
+		}
+	} else {
+		// RV64
+		fs = util.FieldSet{
+			{"sd", s.mxlen - 1, s.mxlen - 1, util.FmtDec},
+			{"sxl", 35, 34, util.FmtDec},
+			{"uxl", 33, 32, util.FmtDec},
+			{"tsr", 22, 22, util.FmtDec},
+			{"tw", 21, 21, util.FmtDec},
+			{"tvm", 20, 20, util.FmtDec},
+			{"mxr", 19, 19, util.FmtDec},
+			{"sum", 18, 18, util.FmtDec},
+			{"mprv", 17, 17, util.FmtDec},
+			{"xs", 16, 15, util.FmtDec},
+			{"fs", 14, 13, util.FmtDec},
+			{"mpp", 12, 11, util.FmtDec},
+			{"spp", 8, 8, util.FmtDec},
+			{"mpie", 7, 7, util.FmtDec},
+			{"spie", 5, 5, util.FmtDec},
+			{"upie", 4, 4, util.FmtDec},
+			{"mie", 3, 3, util.FmtDec},
+			{"sie", 1, 1, util.FmtDec},
+			{"uie", 0, 0, util.FmtDec},
+		}
+	}
+	return fs.Display(s.mstatus)
 }
 
 func (s *State) mstatusRdMPP() uint {
@@ -573,8 +711,7 @@ func fmtMode32(x uint) string {
 
 func fmtMode64(x uint) string {
 	m := map[uint]string{0: "bare", 8: "sv39", 9: "sv48", 10: "sv57", 11: "sv64"}
-	s := util.DisplayEnum(x, m, "reserved")
-	return fmt.Sprintf("%s(%d)", s, x)
+	return util.DisplayEnum(x, m, "reserved")
 }
 
 func displaySATP(s *State) string {
@@ -690,11 +827,11 @@ var lookup = map[uint]csrDefn{
 	0xc9e: {"hpmcounter30h", nil, nil, nil},
 	0xc9f: {"hpmcounter31h", nil, nil, nil},
 	// Supervisor CSRs 0x100 - 0x1ff (read/write)
-	0x100: {"sstatus", wrSSTATUS, rdSSTATUS, nil},
+	0x100: {"sstatus", wrSSTATUS, rdSSTATUS, displaySSTATUS},
 	0x102: {"sedeleg", wrSEDELEG, rdSEDELEG, nil},
 	0x103: {"sideleg", wrSIDELEG, rdSIDELEG, nil},
 	0x104: {"sie", wrSIE, rdSIE, nil},
-	0x105: {"stvec", wrSTVEC, rdSTVEC, nil},
+	0x105: {"stvec", wrSTVEC, rdSTVEC, displaySTVEC},
 	0x106: {"scounteren", nil, nil, nil},
 	0x140: {"sscratch", wrSSCRATCH, rdSSCRATCH, nil},
 	0x141: {"sepc", wrSEPC, rdSEPC, nil},
@@ -708,12 +845,12 @@ var lookup = map[uint]csrDefn{
 	0xf13: {"mimpid", nil, rdZero, nil},
 	0xf14: {"mhartid", nil, rdZero, nil},
 	// Machine CSRs 0x300 - 0x3ff (read/write)
-	0x300: {"mstatus", wrMSTATUS, rdMSTATUS, nil},
-	0x301: {"misa", wrIgnore, rdMISA, nil},
+	0x300: {"mstatus", wrMSTATUS, rdMSTATUS, displayMSTATUS},
+	0x301: {"misa", wrMISA, rdMISA, displayMISA},
 	0x302: {"medeleg", wrMEDELEG, rdMEDELEG, nil},
 	0x303: {"mideleg", wrMIDELEG, rdMIDELEG, nil},
 	0x304: {"mie", wrMIE, rdMIE, nil},
-	0x305: {"mtvec", wrMTVEC, rdMTVEC, nil},
+	0x305: {"mtvec", wrMTVEC, rdMTVEC, displayMTVEC},
 	0x306: {"mcounteren", nil, nil, nil},
 	0x320: {"mucounteren", nil, nil, nil},
 	0x321: {"mscounteren", nil, nil, nil},
@@ -1004,9 +1141,21 @@ func Name(reg uint) string {
 	return fmt.Sprintf("0x%03x", reg)
 }
 
-// access returns the access string of a given CSR.
-func (s *State) access(reg uint) string {
-	mode := [4]string{"u", "s", "h", "m"}[(reg>>8)&3]
+type regStrings struct {
+	num    string // 3-nybble register number
+	name   string // register name
+	access string // current access mode
+	val    string // raw register value
+	field  string // bit field decodes within value
+}
+
+func (s *State) regDisplay(reg uint) (*regStrings, error) {
+	r, ok := lookup[reg]
+	if !ok || r.rd == nil {
+		return nil, errors.New("no read")
+	}
+	// access string
+	mode := [4]string{"u", "s", "h", "m"}[getMode(reg)]
 	var rw string
 	if s.canAccess(reg) {
 		if canWr(reg) {
@@ -1017,31 +1166,44 @@ func (s *State) access(reg uint) string {
 	} else {
 		rw = ".."
 	}
-	return mode + rw
+	accessStr := mode + rw
+	// value string
+	valStr := "0"
+	val := r.rd(s)
+	if val != 0 {
+		rlen := []uint{s.uxlen, s.sxlen, 64, s.mxlen}[getMode(reg)]
+		fmtStr := fmt.Sprintf("%%0%dx", rlen>>2)
+		valStr = fmt.Sprintf(fmtStr, r.rd(s))
+	}
+	// field string
+	fieldStr := ""
+	if r.display != nil {
+		fieldStr = r.display(s)
+	}
+	return &regStrings{
+		num:    fmt.Sprintf("%03x", reg),
+		name:   r.name,
+		access: accessStr,
+		val:    valStr,
+		field:  fieldStr,
+	}, nil
 }
 
 // Display displays the CSR state.
 func (s *State) Display() string {
 	x := [][]string{}
-	x = append(x, []string{"mode", fmt.Sprintf("%s", s.mode)})
+	x = append(x, []string{"mode", fmt.Sprintf("%s", s.mode), ""})
 	// read all registers
 	for reg := uint(0); reg < 4096; reg++ {
-		val, err := s.rdForce(reg)
+		d, err := s.regDisplay(reg)
 		if err != nil {
-			e := err.(*Error)
-			if e.n == ErrTodo || e.n == ErrNoRead {
-				continue
-			}
+			continue
 		}
-		regStr := fmt.Sprintf("%03x %s %s", reg, s.access(reg), Name(reg))
-		valStr := "0"
-		if val != 0 {
-			valStr = fmt.Sprintf("%08x", val)
-		}
-		x = append(x, []string{regStr, valStr})
+		regStr := fmt.Sprintf("%s %s %s", d.num, d.access, d.name)
+		x = append(x, []string{regStr, d.val, d.field})
 	}
 	// return the table string
-	return cli.TableString(x, []int{0, 0}, 1)
+	return cli.TableString(x, []int{0, 0, 0}, 1)
 }
 
 //-----------------------------------------------------------------------------
