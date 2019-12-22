@@ -35,6 +35,8 @@ type Memory struct {
 	Entry     uint64             // entry point from ELF
 	BP        breakPoints        // break points
 	alen      uint               // address bit length
+	vm        vmMode             // virtual memory mode
+	satp      uint               // supervisor address translation and protection CSR
 	region    []Region           // memory regions
 	symByAddr map[uint]*Symbol   // symbol table by address
 	symByName map[string]*Symbol // symbol table by name
@@ -45,6 +47,7 @@ type Memory struct {
 func newMemory(alen uint, empty Attribute) *Memory {
 	return &Memory{
 		alen:      alen,
+		vm:        vmBare,
 		BP:        newBreakPoints(),
 		region:    make([]Region, 0),
 		symByAddr: make(map[uint]*Symbol),

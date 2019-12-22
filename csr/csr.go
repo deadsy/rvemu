@@ -727,6 +727,8 @@ func wrMIP(s *State, x uint) {
 
 func wrSATP(s *State, x uint) {
 	s.satp = x
+	// set the SATP value in the memory sub-system
+	s.setSATP(s.satp, s.sxlen)
 }
 
 func rdSATP(s *State) uint {
@@ -1046,14 +1048,17 @@ func canWr(reg uint) bool {
 
 //-----------------------------------------------------------------------------
 
+type satpFunc func(satp, sxlen uint)
+
 // State stores the CSR state for the CPU.
 type State struct {
-	mode   Mode // current privilege mode
-	xlen   uint // cpu register length 32/64/128
-	mxlen  uint // machine register length
-	uxlen  uint // user register length
-	sxlen  uint // supervisor register length
-	ialign uint // instruction alignment 16/32
+	mode    Mode     // current privilege mode
+	setSATP satpFunc // callback to set the SATP value in the memory subsystem
+	xlen    uint     // cpu register length 32/64/128
+	mxlen   uint     // machine register length
+	uxlen   uint     // user register length
+	sxlen   uint     // supervisor register length
+	ialign  uint     // instruction alignment 16/32
 	// combined u/s/m CSRs
 	mstatus uint // u/s/m status
 	mie     uint // u/s/m interrupt enable register
@@ -1086,14 +1091,15 @@ type State struct {
 }
 
 // NewState returns a CSR state object.
-func NewState(xlen, ext uint) *State {
+func NewState(xlen, ext uint, cb satpFunc) *State {
 	s := &State{
-		mode:   ModeM, // start in machine mode
-		xlen:   xlen,
-		mxlen:  xlen,
-		uxlen:  xlen,
-		sxlen:  xlen,
-		ialign: 16, // TODO
+		mode:    ModeM, // start in machine mode
+		setSATP: cb,
+		xlen:    xlen,
+		mxlen:   xlen,
+		uxlen:   xlen,
+		sxlen:   xlen,
+		ialign:  16, // TODO
 	}
 	initMISA(s, ext)
 	return s
