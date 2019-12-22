@@ -2343,7 +2343,6 @@ type RV struct {
 	Mem      *mem.Memory // memory of the target system
 	CSR      *csr.State  // CSR state
 	isa      *ISA        // ISA implemented for the CPU
-	ecall    Ecall       // ecall interface
 	amo      sync.Mutex  // lock for atomic operations
 	insCount uint        // number of instructions run
 	lastPC   uint64      // stuck PC detection
@@ -2355,45 +2354,42 @@ type RV struct {
 func (m *RV) Reset() {
 	m.PC = m.Mem.Entry
 	m.wrX(RegSp, uint64(uint(1<<32)-16))
-	m.CSR = csr.NewState(m.xlen)
+	m.CSR = csr.NewState(m.xlen, m.isa.ext)
 	m.insCount = 0
 	m.lastPC = 0
 }
 
 // NewRV64 returns a 64-bit RISC-V CPU.
-func NewRV64(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
+func NewRV64(isa *ISA, mem *mem.Memory) *RV {
 	m := RV{
-		xlen:  64,
-		nreg:  32,
-		Mem:   mem,
-		isa:   isa,
-		ecall: ecall,
+		xlen: 64,
+		nreg: 32,
+		Mem:  mem,
+		isa:  isa,
 	}
 	m.Reset()
 	return &m
 }
 
 // NewRV32 returns a 32-bit RISC-V CPU.
-func NewRV32(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
+func NewRV32(isa *ISA, mem *mem.Memory) *RV {
 	m := RV{
-		xlen:  32,
-		nreg:  32,
-		Mem:   mem,
-		isa:   isa,
-		ecall: ecall,
+		xlen: 32,
+		nreg: 32,
+		Mem:  mem,
+		isa:  isa,
 	}
 	m.Reset()
 	return &m
 }
 
 // NewRV32E returns a 32-bit embedded RISC-V CPU (16 integer registers).
-func NewRV32E(isa *ISA, mem *mem.Memory, ecall Ecall) *RV {
+func NewRV32E(isa *ISA, mem *mem.Memory) *RV {
 	m := RV{
-		xlen:  32,
-		nreg:  16,
-		Mem:   mem,
-		isa:   isa,
-		ecall: ecall,
+		xlen: 32,
+		nreg: 16,
+		Mem:  mem,
+		isa:  isa,
 	}
 	m.Reset()
 	return &m

@@ -183,7 +183,7 @@ func (tc *testCase) Test() error {
 			return err
 		}
 		// create the cpu
-		cpu = rv.NewRV32(isa, mem.NewMem32(0), nil)
+		cpu = rv.NewRV32(isa, mem.NewMem32(0))
 	} else {
 		// Setup an RV64 CPU
 		// create the ISA
@@ -193,7 +193,7 @@ func (tc *testCase) Test() error {
 			return err
 		}
 		// create the cpu
-		cpu = rv.NewRV64(isa, mem.NewMem64(0), nil)
+		cpu = rv.NewRV64(isa, mem.NewMem64(0))
 	}
 
 	// load the elf file

@@ -8,6 +8,8 @@ RISC-V ISA Definition
 
 package rv
 
+import "github.com/deadsy/riscv/csr"
+
 //-----------------------------------------------------------------------------
 
 // daFunc is an instruction disassembly function
@@ -25,7 +27,7 @@ type insDefn struct {
 
 // ISAModule is a set/module of RISC-V instructions.
 type ISAModule struct {
-	name string    // name of module
+	ext  uint      // ISA extension bits per CSR misa
 	ilen int       // instruction length
 	defn []insDefn // instruction definitions
 }
@@ -35,7 +37,7 @@ type ISAModule struct {
 
 // ISArv32i integer instructions.
 var ISArv32i = ISAModule{
-	name: "rv32i",
+	ext:  csr.IsaExtI,
 	ilen: 32,
 	defn: []insDefn{
 		{"imm[31:12] rd 0110111 LUI", daTypeUa, emu_LUI},                             // U
@@ -97,7 +99,7 @@ var ISArv32i = ISAModule{
 
 // ISArv32m integer multiplication/division instructions.
 var ISArv32m = ISAModule{
-	name: "rv32m",
+	ext:  csr.IsaExtM,
 	ilen: 32,
 	defn: []insDefn{
 		{"0000001 rs2 rs1 000 rd 0110011 MUL", daTypeRa, emu_MUL},       // R
@@ -113,7 +115,7 @@ var ISArv32m = ISAModule{
 
 // ISArv32a atomic operation instructions.
 var ISArv32a = ISAModule{
-	name: "rv32a",
+	ext:  csr.IsaExtA,
 	ilen: 32,
 	defn: []insDefn{
 		{"00010 aq rl 00000 rs1 010 rd 0101111 LR.W", daTypeRb, emu_LR_W},         // R
@@ -132,7 +134,7 @@ var ISArv32a = ISAModule{
 
 // ISArv32f 32-bit floating point instructions.
 var ISArv32f = ISAModule{
-	name: "rv32f",
+	ext:  csr.IsaExtF,
 	ilen: 32,
 	defn: []insDefn{
 		{"imm[11:0] rs1 010 rd 0000111 FLW", daTypeIg, emu_FLW},                // I
@@ -166,7 +168,7 @@ var ISArv32f = ISAModule{
 
 // ISArv32d 64-bit floating point instructions.
 var ISArv32d = ISAModule{
-	name: "rv32d",
+	ext:  csr.IsaExtD,
 	ilen: 32,
 	defn: []insDefn{
 		{"imm[11:0] rs1 011 rd 0000111 FLD", daTypeIg, emu_FLD},                // I
@@ -200,7 +202,7 @@ var ISArv32d = ISAModule{
 
 // ISArv32c compressed instructions (subset of RV64C).
 var ISArv32c = ISAModule{
-	name: "rv32c",
+	ext:  csr.IsaExtC,
 	ilen: 16,
 	defn: []insDefn{
 		{"000 00000000 000 00 C.ILLEGAL", daTypeCIWa, emu_C_ILLEGAL},                     // CIW (Quadrant 0)
@@ -236,7 +238,7 @@ var ISArv32c = ISAModule{
 
 // ISArv32cOnly compressed instructions (not in RV64C).
 var ISArv32cOnly = ISAModule{
-	name: "rv32c-only",
+	ext:  csr.IsaExtC,
 	ilen: 16,
 	defn: []insDefn{
 		{"001 imm[11|4|9:8|10|6|7|3:1|5] 01 C.JAL", daTypeCJc, emu_C_JAL}, // CJ
@@ -245,7 +247,7 @@ var ISArv32cOnly = ISAModule{
 
 // ISArv32fc compressed 32-bit floating point instructions.
 var ISArv32fc = ISAModule{
-	name: "rv32fc",
+	ext:  csr.IsaExtC,
 	ilen: 16,
 	defn: []insDefn{
 		{"011 uimm[5:3] rs10 uimm[2|6] rd0 00 C.FLW", daTypeCSc, emu_C_FLW},  // CL
@@ -257,7 +259,7 @@ var ISArv32fc = ISAModule{
 
 // ISArv32dc compressed 64-bit floating point instructions.
 var ISArv32dc = ISAModule{
-	name: "rv32dc",
+	ext:  csr.IsaExtC,
 	ilen: 16,
 	defn: []insDefn{
 		{"001 uimm[5:3] rs10 uimm[7:6] rd0 00 C.FLD", daTypeCSc, emu_C_FLD},  // CL
@@ -272,7 +274,7 @@ var ISArv32dc = ISAModule{
 
 // ISArv64i Integer
 var ISArv64i = ISAModule{
-	name: "rv64i",
+	ext:  csr.IsaExtI,
 	ilen: 32,
 	defn: []insDefn{
 		{"imm[11:0] rs1 110 rd 0000011 LWU", daTypeIc, emu_LWU},          // I
@@ -295,7 +297,7 @@ var ISArv64i = ISAModule{
 
 // ISArv64m Integer Multiplication and Division
 var ISArv64m = ISAModule{
-	name: "rv64m",
+	ext:  csr.IsaExtM,
 	ilen: 32,
 	defn: []insDefn{
 		{"0000001 rs2 rs1 000 rd 0111011 MULW", daTypeRa, emu_MULW},   // R
@@ -308,7 +310,7 @@ var ISArv64m = ISAModule{
 
 // ISArv64a Atomics
 var ISArv64a = ISAModule{
-	name: "rv64a",
+	ext:  csr.IsaExtA,
 	ilen: 32,
 	defn: []insDefn{
 		{"00010 aq rl 00000 rs1 011 rd 0101111 LR.D", daTypeRb, emu_LR_D},         // R
@@ -327,7 +329,7 @@ var ISArv64a = ISAModule{
 
 // ISArv64f Single-Precision Floating-Point
 var ISArv64f = ISAModule{
-	name: "rv64f",
+	ext:  csr.IsaExtF,
 	ilen: 32,
 	defn: []insDefn{
 		{"1100000 00010 rs1 rm rd 1010011 FCVT.L.S", daTypeRk, emu_FCVT_L_S},   // R
@@ -339,7 +341,7 @@ var ISArv64f = ISAModule{
 
 // ISArv64d Double-Precision Floating-Point
 var ISArv64d = ISAModule{
-	name: "rv64d",
+	ext:  csr.IsaExtD,
 	ilen: 32,
 	defn: []insDefn{
 		{"1100001 00010 rs1 rm rd 1010011 FCVT.L.D", daTypeRk, emu_FCVT_L_D},   // R
@@ -353,7 +355,7 @@ var ISArv64d = ISAModule{
 
 // ISArv64c Compressed
 var ISArv64c = ISAModule{
-	name: "rv64c",
+	ext:  csr.IsaExtC,
 	ilen: 16,
 	defn: []insDefn{
 		{"001 imm[5] rd!=0 imm[4:0] 01 C.ADDIW", daTypeCIc, emu_C_ADDIW},   // CI
@@ -370,7 +372,7 @@ var ISArv64c = ISAModule{
 
 // ISArv128c Compressed
 var ISArv128c = ISAModule{
-	name: "rv128c",
+	ext:  csr.IsaExtC,
 	ilen: 16,
 	defn: []insDefn{
 		// C.SQ
@@ -420,7 +422,7 @@ type insMeta struct {
 
 // ISA is an instruction set
 type ISA struct {
-	xlen  uint       // 32 or 64 bits
+	ext   uint       // ISA extension bits per CSR misa
 	ins16 []*insMeta // the set of 16-bit instructions in the ISA
 	ins32 []*insMeta // the set of 32-bit instructions in the ISA
 }
@@ -436,6 +438,7 @@ func NewISA() *ISA {
 // Add a ISA sub-module to the ISA.
 func (isa *ISA) Add(module []ISAModule) error {
 	for i := range module {
+		isa.ext |= module[i].ext
 		for j := range module[i].defn {
 			im, err := parseDefn(&module[i].defn[j], module[i].ilen)
 			if err != nil {

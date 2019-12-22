@@ -169,12 +169,41 @@ func rdUCAUSE(s *State) uint {
 //-----------------------------------------------------------------------------
 // machine isa register
 
+const (
+	IsaExtA = (1 << iota) // Atomic extension
+	IsaExtB               // Tentatively reserved for Bit-Manipulation extension
+	IsaExtC               // Compressed extension
+	IsaExtD               // Double-precision floating-point extension
+	IsaExtE               // RV32E base ISA
+	IsaExtF               // Single-precision floating-point extension
+	IsaExtG               // Additional standard extensions present
+	IsaExtH               // Hypervisor extension
+	IsaExtI               // RV32I/64I/128I base ISA
+	IsaExtJ               // Tentatively reserved for Dynamically Translated Languages extension
+	IsaExtK               // Reserved
+	IsaExtL               // Tentatively reserved for Decimal Floating-Point extension
+	IsaExtM               // Integer Multiply/Divide extension
+	IsaExtN               // User-level interrupts supported
+	IsaExtO               // Reserved
+	IsaExtP               // Tentatively reserved for Packed-SIMD extension
+	IsaExtQ               // Quad-precision floating-point extension
+	IsaExtR               // Reserved
+	IsaExtS               // Supervisor mode implemented
+	IsaExtT               // Tentatively reserved for Transactional Memory extension
+	IsaExtU               // User mode implemented
+	IsaExtV               // Tentatively reserved for Vector extension
+	IsaExtW               // Reserved
+	IsaExtX               // Non-standard extensions present
+	IsaExtY               // Reserved
+	IsaExtZ               // Reserved
+)
+
 func mxl(xlen uint) uint {
 	return map[uint]uint{32: 1, 64: 2, 128: 3}[xlen]
 }
 
-func initMISA(s *State) {
-	s.misa = mxl(s.xlen) << (s.mxlen - 2)
+func initMISA(s *State, ext uint) {
+	s.misa = (mxl(s.xlen) << (s.mxlen - 2)) | ext
 }
 
 func rdMISA(s *State) uint {
@@ -1057,7 +1086,7 @@ type State struct {
 }
 
 // NewState returns a CSR state object.
-func NewState(xlen uint) *State {
+func NewState(xlen, ext uint) *State {
 	s := &State{
 		mode:   ModeM, // start in machine mode
 		xlen:   xlen,
@@ -1066,7 +1095,7 @@ func NewState(xlen uint) *State {
 		sxlen:  xlen,
 		ialign: 16, // TODO
 	}
-	initMISA(s)
+	initMISA(s, ext)
 	return s
 }
 

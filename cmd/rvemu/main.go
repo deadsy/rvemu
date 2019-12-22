@@ -51,7 +51,7 @@ func newEmu32() (*emuApp, error) {
 
 	return &emuApp{
 		mem:      m,
-		cpu:      rv.NewRV32(isa, m, nil),
+		cpu:      rv.NewRV32(isa, m),
 		elfClass: elf.ELFCLASS32,
 		prompt:   "rv32> ",
 	}, nil
@@ -72,7 +72,7 @@ func newEmu64() (*emuApp, error) {
 
 	return &emuApp{
 		mem:      m,
-		cpu:      rv.NewRV64(isa, m, nil),
+		cpu:      rv.NewRV64(isa, m),
 		elfClass: elf.ELFCLASS64,
 		prompt:   "rv64> ",
 	}, nil
