@@ -117,99 +117,186 @@ func (m *Memory) GetSectionName(adr uint) string {
 }
 
 //-----------------------------------------------------------------------------
-// read functions
+// Physical Address Read Functions
 
-// RdIns reads a 32-bit instruction from memory.
-func (m *Memory) RdIns(adr uint) (uint, error) {
-	val, err := m.findByAddr(adr, 4).RdIns(adr)
+// RdInsPhys reads a 32-bit instruction from memory.
+func (m *Memory) RdInsPhys(pa uint) (uint, error) {
+	val, err := m.findByAddr(pa, 4).RdIns(pa)
 	if err == nil {
-		err = m.BP.checkX(adr)
+		err = m.BP.checkX(pa)
 	}
 	return val, err
 }
 
-// Rd64 reads a 64-bit data value from memory.
-func (m *Memory) Rd64(adr uint) (uint64, error) {
-	val, err := m.findByAddr(adr, 8).Rd64(adr)
+// Rd64Phys reads a 64-bit data value from memory.
+func (m *Memory) Rd64Phys(pa uint) (uint64, error) {
+	val, err := m.findByAddr(pa, 8).Rd64(pa)
 	if err == nil {
-		err = m.BP.checkR(adr)
+		err = m.BP.checkR(pa)
 	}
 	return val, err
 }
 
-// Rd32 reads a 32-bit data value from memory.
-func (m *Memory) Rd32(adr uint) (uint32, error) {
-	val, err := m.findByAddr(adr, 4).Rd32(adr)
+// Rd32Phys reads a 32-bit data value from memory.
+func (m *Memory) Rd32Phys(pa uint) (uint32, error) {
+	val, err := m.findByAddr(pa, 4).Rd32(pa)
 	if err == nil {
-		err = m.BP.checkR(adr)
+		err = m.BP.checkR(pa)
 	}
 	return val, err
 }
 
-// Rd16 reads a 16-bit data value from memory.
-func (m *Memory) Rd16(adr uint) (uint16, error) {
-	val, err := m.findByAddr(adr, 2).Rd16(adr)
+// Rd16Phys reads a 16-bit data value from memory.
+func (m *Memory) Rd16Phys(pa uint) (uint16, error) {
+	val, err := m.findByAddr(pa, 2).Rd16(pa)
 	if err == nil {
-		err = m.BP.checkR(adr)
+		err = m.BP.checkR(pa)
 	}
 	return val, err
 }
 
-// Rd8 reads an 8-bit data value from memory.
-func (m *Memory) Rd8(adr uint) (uint8, error) {
-	val, err := m.findByAddr(adr, 1).Rd8(adr)
+// Rd8Phys reads an 8-bit data value from memory.
+func (m *Memory) Rd8Phys(pa uint) (uint8, error) {
+	val, err := m.findByAddr(pa, 1).Rd8(pa)
 	if err == nil {
-		err = m.BP.checkR(adr)
+		err = m.BP.checkR(pa)
 	}
 	return val, err
 }
 
-// Rd32Range reads a range of 32-bit data values from memory.
-func (m *Memory) Rd32Range(adr, n uint) []uint32 {
+// Rd32RangePhys reads a range of 32-bit data values from memory.
+func (m *Memory) Rd32RangePhys(pa, n uint) []uint32 {
 	x := make([]uint32, n)
 	for i := uint(0); i < n; i++ {
-		x[i], _ = m.Rd32(adr + (i * 4))
+		x[i], _ = m.Rd32(pa + (i * 4))
 	}
 	return x
 }
 
 //-----------------------------------------------------------------------------
-// write functions
+// Virtual Address Read Functions
 
-// Wr64 writes a 64-bit data value to memory.
-func (m *Memory) Wr64(adr uint, val uint64) error {
-	err := m.findByAddr(adr, 8).Wr64(adr, val)
+// RdIns reads a 32-bit instruction from memory.
+func (m *Memory) RdIns(va uint) (uint, error) {
+	pa, err := m.va2pa(va, AttrRX)
+	if err != nil {
+		return 0, err
+	}
+	return m.RdInsPhys(pa)
+}
+
+// Rd64 reads a 64-bit data value from memory.
+func (m *Memory) Rd64(va uint) (uint64, error) {
+	pa, err := m.va2pa(va, AttrR)
+	if err != nil {
+		return 0, err
+	}
+	return m.Rd64Phys(pa)
+}
+
+// Rd32 reads a 32-bit data value from memory.
+func (m *Memory) Rd32(va uint) (uint32, error) {
+	pa, err := m.va2pa(va, AttrR)
+	if err != nil {
+		return 0, err
+	}
+	return m.Rd32Phys(pa)
+}
+
+// Rd16 reads a 16-bit data value from memory.
+func (m *Memory) Rd16(va uint) (uint16, error) {
+	pa, err := m.va2pa(va, AttrR)
+	if err != nil {
+		return 0, err
+	}
+	return m.Rd16Phys(pa)
+}
+
+// Rd8 reads an 8-bit data value from memory.
+func (m *Memory) Rd8(va uint) (uint8, error) {
+	pa, err := m.va2pa(va, AttrR)
+	if err != nil {
+		return 0, err
+	}
+	return m.Rd8Phys(pa)
+}
+
+//-----------------------------------------------------------------------------
+// Physical Address Write Functions
+
+// Wr64Phys writes a 64-bit data value to memory.
+func (m *Memory) Wr64Phys(pa uint, val uint64) error {
+	err := m.findByAddr(pa, 8).Wr64(pa, val)
 	if err == nil {
-		err = m.BP.checkW(adr)
+		err = m.BP.checkW(pa)
 	}
 	return err
+}
+
+// Wr32Phys writes a 32-bit data value to memory.
+func (m *Memory) Wr32Phys(pa uint, val uint32) error {
+	err := m.findByAddr(pa, 4).Wr32(pa, val)
+	if err == nil {
+		err = m.BP.checkW(pa)
+	}
+	return err
+}
+
+// Wr16Phys writes a 16-bit data value to memory.
+func (m *Memory) Wr16Phys(pa uint, val uint16) error {
+	err := m.findByAddr(pa, 2).Wr16(pa, val)
+	if err == nil {
+		err = m.BP.checkW(pa)
+	}
+	return err
+}
+
+// Wr8Phys writes an 8-bit data value to memory.
+func (m *Memory) Wr8Phys(pa uint, val uint8) error {
+	err := m.findByAddr(pa, 1).Wr8(pa, val)
+	if err == nil {
+		err = m.BP.checkW(pa)
+	}
+	return err
+}
+
+//-----------------------------------------------------------------------------
+// Virtual Address Write functions
+
+// Wr64 writes a 64-bit data value to memory.
+func (m *Memory) Wr64(va uint, val uint64) error {
+	pa, err := m.va2pa(va, AttrW)
+	if err != nil {
+		return err
+	}
+	return m.Wr64Phys(pa, val)
 }
 
 // Wr32 writes a 32-bit data value to memory.
-func (m *Memory) Wr32(adr uint, val uint32) error {
-	err := m.findByAddr(adr, 4).Wr32(adr, val)
-	if err == nil {
-		err = m.BP.checkW(adr)
+func (m *Memory) Wr32(va uint, val uint32) error {
+	pa, err := m.va2pa(va, AttrW)
+	if err != nil {
+		return err
 	}
-	return err
+	return m.Wr32Phys(pa, val)
 }
 
 // Wr16 writes a 16-bit data value to memory.
-func (m *Memory) Wr16(adr uint, val uint16) error {
-	err := m.findByAddr(adr, 2).Wr16(adr, val)
-	if err == nil {
-		err = m.BP.checkW(adr)
+func (m *Memory) Wr16(va uint, val uint16) error {
+	pa, err := m.va2pa(va, AttrW)
+	if err != nil {
+		return err
 	}
-	return err
+	return m.Wr16Phys(pa, val)
 }
 
 // Wr8 writes an 8-bit data value to memory.
-func (m *Memory) Wr8(adr uint, val uint8) error {
-	err := m.findByAddr(adr, 1).Wr8(adr, val)
-	if err == nil {
-		err = m.BP.checkW(adr)
+func (m *Memory) Wr8(va uint, val uint8) error {
+	pa, err := m.va2pa(va, AttrW)
+	if err != nil {
+		return err
 	}
-	return err
+	return m.Wr8Phys(pa, val)
 }
 
 //-----------------------------------------------------------------------------
@@ -247,7 +334,7 @@ func (m *Memory) AddSymbol(s string, adr, size uint) error {
 
 //-----------------------------------------------------------------------------
 
-// Add a breakpoint by symbol name.
+// AddBreakPointByName adds a breakpoint by symbol name.
 func (m *Memory) AddBreakPointByName(s string, attr Attribute) error {
 	sym := m.symByName[s]
 	if sym == nil {

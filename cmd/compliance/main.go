@@ -137,7 +137,7 @@ func getResults(m *mem.Memory) ([]uint32, error) {
 	if start >= end {
 		return nil, errors.New("result length <= 0")
 	}
-	return m.Rd32Range(start, (end-start)>>2), nil
+	return m.Rd32RangePhys(start, (end-start)>>2), nil
 }
 
 func checkExit(m *mem.Memory, errIn error) error {

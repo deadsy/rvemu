@@ -30,6 +30,7 @@ const (
 	ErrRead              // can't read this memory
 	ErrWrite             // can't write this memory
 	ErrExec              // can't read instructions from this memory
+	ErrPage              // error with page table translation
 	ErrBreak             // break on memory access
 )
 
@@ -46,6 +47,9 @@ func (e *Error) Error() string {
 	}
 	if e.Type&ErrExec != 0 {
 		s = append(s, "exec")
+	}
+	if e.Type&ErrPage != 0 {
+		s = append(s, "page")
 	}
 	if e.Type&ErrBreak != 0 {
 		s = append(s, "break")
@@ -70,7 +74,7 @@ const (
 // AttrRW = read/write
 const AttrRW = AttrR | AttrW
 
-// AttrRW = read/write/misaligned
+// AttrRWM = read/write/misaligned
 const AttrRWM = AttrR | AttrW | AttrM
 
 // AttrRX = read/execute
@@ -101,6 +105,20 @@ func (a Attribute) String() string {
 
 //-----------------------------------------------------------------------------
 // memory access errors
+
+func pageError(va uint, attr Attribute) error {
+	n := uint(ErrPage)
+	if attr&AttrR == 0 {
+		n |= ErrRead
+	}
+	if attr&AttrW == 0 {
+		n |= ErrWrite
+	}
+	if attr&AttrX == 0 {
+		n |= ErrExec
+	}
+	return &Error{n, va, ""}
+}
 
 func wrError(addr uint, attr Attribute, name string, align uint) error {
 	var n uint
