@@ -455,6 +455,21 @@ func rdFFLAGS(s *State) uint {
 //-----------------------------------------------------------------------------
 // u/s/m status
 
+// GetMPRV returns the MPRV bit of mstatus.
+func (s *State) GetMPRV() bool {
+	return (s.mstatus & (1 << 17)) != 0
+}
+
+// GetSUM returns the sum bit of mstatus.
+func (s *State) GetSUM() bool {
+	return (s.mstatus & (1 << 18)) != 0
+}
+
+// GetMXR returns the MXR bit of mstatus.
+func (s *State) GetMXR() bool {
+	return (s.mstatus & (1 << 19)) != 0
+}
+
 func wrUSTATUS(s *State, x uint) {
 	s.mstatus = x // TODO mask
 }

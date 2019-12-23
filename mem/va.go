@@ -47,7 +47,24 @@ func (pte sv32pte) ppn(n int) uint {
 	return util.RdBits(uint(pte), 31, 20)
 }
 
+func (pte sv32pte) canRead() bool {
+	return (pte & (1 << 1)) != 0
+}
+
+func (pte sv32pte) canWrite() bool {
+	return (pte & (1 << 2)) != 0
+}
+
+func (pte sv32pte) canExec() bool {
+	return (pte & (1 << 3)) != 0
+}
+
+func (pte sv32pte) userMode() bool {
+	return (pte & (1 << 4)) != 0
+}
+
 func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
+	var pte sv32pte
 
 	var vpn [2]uint
 	vpn[1] = util.RdBits(va, 31, 22)
@@ -66,7 +83,7 @@ func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
 		if err != nil {
 			return 0, pageError(va, attr)
 		}
-		pte := sv32pte(x)
+		pte = sv32pte(x)
 
 		// 3. If pte.v = 0, or if pte.r = 0 and pte.w = 1, stop and raise a page-fault exception corresponding
 		// to the original access type.
@@ -93,6 +110,33 @@ func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
 	// pte.r, pte.w, pte.x, and pte.u bits, given the current privilege mode and the value of the
 	// SUM and MXR fields of the mstatus register. If not, stop and raise a page-fault exception
 	// corresponding to the original access type.
+	if attr&AttrR != 0 && pte.canRead() {
+		return 0, pageError(va, attr)
+	}
+	if attr&AttrW != 0 && pte.canWrite() {
+		return 0, pageError(va, attr)
+	}
+	if attr&AttrX != 0 && pte.canExec() {
+		return 0, pageError(va, attr)
+	}
+
+	switch m.csr.GetMode() {
+	case csr.ModeU:
+		if !pte.userMode() {
+			return 0, pageError(va, attr)
+		}
+	case csr.ModeS:
+		if pte.userMode() {
+			if !m.csr.GetSUM() {
+				// U == 1 and mstatus.SUM == 0
+				return 0, pageError(va, attr)
+			}
+			if attr&AttrX != 0 {
+				// Irrespective of SUM, the supervisor may not execute code on pages with U=1.
+				return 0, pageError(va, attr)
+			}
+		}
+	}
 
 	// 6. If i > 0 and pte.ppn[i − 1 : 0] != 0, this is a misaligned superpage; stop and raise a page-fault
 	// exception corresponding to the original access type.
