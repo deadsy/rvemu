@@ -18,12 +18,12 @@ import (
 //-----------------------------------------------------------------------------
 
 // bare - no translation
-func (m *Memory) bare(va uint, attr Attribute) (uint, error) {
+func (m *Memory) bare(va uint, mode csr.Mode, attr Attribute) (uint, error) {
 	return va, nil
 }
 
 //-----------------------------------------------------------------------------
-// sv32 translation
+// SV32: 32-bit VA maps to 34-bit PA
 
 type sv32pte uint
 
@@ -48,22 +48,26 @@ func (pte sv32pte) ppn(n int) uint {
 }
 
 func (pte sv32pte) canRead() bool {
-	return (pte & (1 << 1)) != 0
+	return (pte & (1 << 1 /*R*/)) != 0
+}
+
+func (pte sv32pte) setRead() {
+	pte |= (1 << 1 /*R*/)
 }
 
 func (pte sv32pte) canWrite() bool {
-	return (pte & (1 << 2)) != 0
+	return (pte & (1 << 2 /*W*/)) != 0
 }
 
 func (pte sv32pte) canExec() bool {
-	return (pte & (1 << 3)) != 0
+	return (pte & (1 << 3 /*X*/)) != 0
 }
 
 func (pte sv32pte) userMode() bool {
-	return (pte & (1 << 4)) != 0
+	return (pte & (1 << 4 /*U*/)) != 0
 }
 
-func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
+func (m *Memory) sv32(va uint, mode csr.Mode, attr Attribute) (uint, error) {
 	var pte sv32pte
 
 	var vpn [2]uint
@@ -110,6 +114,12 @@ func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
 	// pte.r, pte.w, pte.x, and pte.u bits, given the current privilege mode and the value of the
 	// SUM and MXR fields of the mstatus register. If not, stop and raise a page-fault exception
 	// corresponding to the original access type.
+
+	// If mstatus.MXR == 1 and pte.X == 1 then pte.R = 1
+	if m.csr.GetMXR() && pte.canExec() {
+		pte.setRead()
+	}
+	// check the RWX permissions
 	if attr&AttrR != 0 && pte.canRead() {
 		return 0, pageError(va, attr)
 	}
@@ -119,8 +129,8 @@ func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
 	if attr&AttrX != 0 && pte.canExec() {
 		return 0, pageError(va, attr)
 	}
-
-	switch m.csr.GetMode() {
+	// check user/supervisor mode
+	switch mode {
 	case csr.ModeU:
 		if !pte.userMode() {
 			return 0, pageError(va, attr)
@@ -160,20 +170,40 @@ func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
 }
 
 //-----------------------------------------------------------------------------
+// SV39: 39-bit VA maps to 56-bit PA
+
+//-----------------------------------------------------------------------------
+// SV48: 48-bit VA maps to 56-bit PA
+
+//-----------------------------------------------------------------------------
+// SV57: 57-bit VA maps to ?-bit PA
+
+//-----------------------------------------------------------------------------
+// SV64: 64-bit VA maps to ?-bit PA
+
+//-----------------------------------------------------------------------------
 
 // va2pa translates a virtual address to a physical address.
 func (m *Memory) va2pa(va uint, attr Attribute) (uint, error) {
 
-	if m.csr.GetMode() == csr.ModeM {
+	// If mstatus.MPRV == 1 then mode = mstatus.MPP
+	var mode csr.Mode
+	if m.csr.GetMPRV() {
+		mode = m.csr.GetMPP()
+	} else {
+		mode = m.csr.GetMode()
+	}
+
+	if mode == csr.ModeM {
 		// machine mode va == pa
-		return m.bare(va, attr)
+		return m.bare(va, mode, attr)
 	}
 
 	switch m.csr.GetVM() {
 	case csr.Bare:
-		return m.bare(va, attr)
+		return m.bare(va, mode, attr)
 	case csr.SV32:
-		return m.sv32(va, attr)
+		return m.sv32(va, mode, attr)
 	case csr.SV39:
 		return 0, nil
 	case csr.SV48:
