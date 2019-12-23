@@ -67,12 +67,17 @@ const (
 )
 
 func (m Mode) String() string {
-	x := map[uint]string{uint(ModeU): "user", uint(ModeS): "supervisor", uint(ModeM): "machine"}
-	return util.DisplayEnum(uint(m), x, "?")
+	return [4]string{"user", "supervisor", "?", "machine"}[m]
 }
 
+// getMode returns the mode bits from a register address.
 func getMode(reg uint) uint {
 	return (reg >> 8) & 3
+}
+
+// GetMode returns the current processor mode.
+func (s *State) GetMode() Mode {
+	return s.mode
 }
 
 //-----------------------------------------------------------------------------
@@ -725,10 +730,38 @@ func wrMIP(s *State, x uint) {
 //-----------------------------------------------------------------------------
 // supervisor address translation and protection
 
+type VM uint
+
+const (
+	Bare VM = iota
+	SV32
+	SV39
+	SV48
+	SV57
+	SV64
+)
+
+// GetVM returns the VM mode set in the SATP.
+func (s *State) GetVM() VM {
+	return s.vm
+}
+
+// GetPPN returns the physical page number set in the SATP.
+func (s *State) GetPPN() uint {
+	return s.ppn
+}
+
 func wrSATP(s *State, x uint) {
 	s.satp = x
-	// set the SATP value in the memory sub-system
-	s.setSATP(s.satp, s.sxlen)
+	// cache the vm and ppn
+	if s.sxlen == 32 {
+		// RV32
+		s.vm = [2]VM{Bare, SV32}[util.RdBits(s.satp, 31, 31)]
+		s.ppn = util.RdBits(s.satp, 21, 0)
+	}
+	// RV64
+	s.vm = map[uint]VM{0: Bare, 8: SV39, 9: SV48, 10: SV57, 11: SV64}[util.RdBits(s.satp, 63, 60)]
+	s.ppn = util.RdBits(s.satp, 43, 0)
 }
 
 func rdSATP(s *State) uint {
@@ -1048,17 +1081,16 @@ func canWr(reg uint) bool {
 
 //-----------------------------------------------------------------------------
 
-type satpFunc func(satp, sxlen uint)
-
 // State stores the CSR state for the CPU.
 type State struct {
-	mode    Mode     // current privilege mode
-	setSATP satpFunc // callback to set the SATP value in the memory subsystem
-	xlen    uint     // cpu register length 32/64/128
-	mxlen   uint     // machine register length
-	uxlen   uint     // user register length
-	sxlen   uint     // supervisor register length
-	ialign  uint     // instruction alignment 16/32
+	mode   Mode // current privilege mode
+	xlen   uint // cpu register length 32/64/128
+	mxlen  uint // machine register length
+	uxlen  uint // user register length
+	sxlen  uint // supervisor register length
+	ialign uint // instruction alignment 16/32
+	vm     VM   // cached virtual memory mode from SATP
+	ppn    uint // cached physical page number from SATP
 	// combined u/s/m CSRs
 	mstatus uint // u/s/m status
 	mie     uint // u/s/m interrupt enable register
@@ -1091,18 +1123,23 @@ type State struct {
 }
 
 // NewState returns a CSR state object.
-func NewState(xlen, ext uint, cb satpFunc) *State {
+func NewState(xlen, ext uint) *State {
 	s := &State{
-		mode:    ModeM, // start in machine mode
-		setSATP: cb,
-		xlen:    xlen,
-		mxlen:   xlen,
-		uxlen:   xlen,
-		sxlen:   xlen,
-		ialign:  16, // TODO
+		mode:   ModeM, // start in machine mode
+		xlen:   xlen,
+		mxlen:  xlen,
+		uxlen:  xlen,
+		sxlen:  xlen,
+		ialign: 16, // TODO
 	}
 	initMISA(s, ext)
 	return s
+}
+
+func (s *State) Reset() {
+	s.mode = ModeM
+	wrSATP(s, 0)
+	// etc..
 }
 
 // Rd reads from a CSR.
@@ -1110,17 +1147,6 @@ func (s *State) Rd(reg uint) (uint64, error) {
 	if !s.canAccess(reg) {
 		return 0, &Error{reg, ErrPrivilege}
 	}
-	if x, ok := lookup[reg]; ok {
-		if x.rd == nil {
-			return 0, &Error{reg, ErrNoRead}
-		}
-		return uint64(x.rd(s)), nil
-	}
-	return 0, &Error{reg, ErrTodo}
-}
-
-// rdForce reads from a CSR irrespective of privilege level.
-func (s *State) rdForce(reg uint) (uint64, error) {
 	if x, ok := lookup[reg]; ok {
 		if x.rd == nil {
 			return 0, &Error{reg, ErrNoRead}

@@ -11,51 +11,9 @@ package mem
 import (
 	"errors"
 
+	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/util"
 )
-
-//-----------------------------------------------------------------------------
-
-type vmMode uint
-
-const (
-	vmBare vmMode = iota
-	vmSV32
-	vmSV39
-	vmSV48
-	vmSV57
-	vmSV64
-)
-
-// SetSATP is a callback (from CSR) to set the SATP value in the memory subsystem.
-func (m *Memory) SetSATP(satp, sxlen uint) {
-	m.satp = satp
-	if sxlen == 32 {
-		// RV32
-		m.vm = [2]vmMode{vmBare, vmSV32}[(satp>>31)&1]
-	} else {
-		// RV64
-		m.vm = map[uint]vmMode{0: vmBare, 8: vmSV39, 9: vmSV48, 10: vmSV57, 11: vmSV64}[(satp>>60)&15]
-	}
-}
-
-//-----------------------------------------------------------------------------
-
-// pteValid returns true if the PTE is valid
-func pteValid(pte uint) bool {
-	// check V = 1
-	if pte&1 == 0 {
-		return false
-	}
-	// check WR != 10
-	return (pte>>1)&3 != 2
-}
-
-// ptePointer returns true if the PTE points to a next-level page table.
-func ptePointer(pte uint) bool {
-	// check XWRV != 0001
-	return pte&15 == 1
-}
 
 //-----------------------------------------------------------------------------
 
@@ -64,7 +22,31 @@ func (m *Memory) bare(va uint, attr Attribute) (uint, error) {
 	return va, nil
 }
 
-// sv32
+//-----------------------------------------------------------------------------
+// sv32 translation
+
+type sv32pte uint
+
+// isPointer returns true if the PTE points to a next-level page table.
+func (pte sv32pte) isPointer() bool {
+	// XWRV == 0001
+	return pte&15 == 1
+}
+
+// isValid returns true if the PTE is valid.
+func (pte sv32pte) isValid() bool {
+	// v == 1 and WR != 10
+	return (pte&1) == 1 && ((pte>>1)&3) != 2
+}
+
+// ppn returns the physical page number from the PTE.
+func (pte sv32pte) ppn(n int) uint {
+	if n == 0 {
+		return util.RdBits(uint(pte), 19, 10)
+	}
+	return util.RdBits(uint(pte), 31, 20)
+}
+
 func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
 
 	var vpn [2]uint
@@ -73,7 +55,7 @@ func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
 	pageOffset := util.RdBits(va, 11, 0)
 
 	// 1. Let a be satp.ppn × PAGESIZE, and let i = LEVELS − 1. (For Sv32, PAGESIZE=4096 and LEVELS=2.)
-	a := (m.satp & ((1 << 22) - 1)) << 12
+	a := m.csr.GetPPN() << 12
 	i := 1
 
 	for true {
@@ -84,11 +66,11 @@ func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
 		if err != nil {
 			return 0, pageError(va, attr)
 		}
-		pte := uint(x)
+		pte := sv32pte(x)
 
 		// 3. If pte.v = 0, or if pte.r = 0 and pte.w = 1, stop and raise a page-fault exception corresponding
 		// to the original access type.
-		if !pteValid(pte) {
+		if !pte.isValid() {
 			return 0, pageError(va, attr)
 		}
 
@@ -96,17 +78,15 @@ func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
 		// pointer to the next level of the page table. Let i = i − 1. If i < 0, stop and raise a page-fault
 		// exception corresponding to the original access type. Otherwise, let a = pte.ppn × PAGESIZE
 		// and go to step 2.
-		if !ptePointer(pte) {
+		if !pte.isPointer() {
 			break
 		}
 		i = i - 1
 		if i < 0 {
 			return 0, pageError(va, attr)
 		}
-		var ppn [2]uint
-		ppn[0] = util.RdBits(pte, 19, 10)
-		ppn[1] = util.RdBits(pte, 31, 20)
-		a = ppn[0] << 12
+
+		a = pte.ppn(0) << 12
 	}
 
 	// 5. A leaf PTE has been found. Determine if the requested memory access is allowed by the
@@ -139,18 +119,24 @@ func (m *Memory) sv32(va uint, attr Attribute) (uint, error) {
 
 // va2pa translates a virtual address to a physical address.
 func (m *Memory) va2pa(va uint, attr Attribute) (uint, error) {
-	switch m.vm {
-	case vmBare:
+
+	if m.csr.GetMode() == csr.ModeM {
+		// machine mode va == pa
 		return m.bare(va, attr)
-	case vmSV32:
+	}
+
+	switch m.csr.GetVM() {
+	case csr.Bare:
+		return m.bare(va, attr)
+	case csr.SV32:
 		return m.sv32(va, attr)
-	case vmSV39:
+	case csr.SV39:
 		return 0, nil
-	case vmSV48:
+	case csr.SV48:
 		return 0, nil
-	case vmSV57:
+	case csr.SV57:
 		return 0, nil
-	case vmSV64:
+	case csr.SV64:
 		return 0, nil
 	}
 	return 0, errors.New("unknown vm mode")

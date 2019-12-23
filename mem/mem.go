@@ -10,6 +10,8 @@ package mem
 
 import (
 	"fmt"
+
+	"github.com/deadsy/riscv/csr"
 )
 
 //-----------------------------------------------------------------------------
@@ -35,8 +37,7 @@ type Memory struct {
 	Entry     uint64             // entry point from ELF
 	BP        breakPoints        // break points
 	alen      uint               // address bit length
-	vm        vmMode             // virtual memory mode
-	satp      uint               // supervisor address translation and protection CSR
+	csr       *csr.State         // CSR state
 	region    []Region           // memory regions
 	symByAddr map[uint]*Symbol   // symbol table by address
 	symByName map[string]*Symbol // symbol table by name
@@ -44,11 +45,11 @@ type Memory struct {
 }
 
 // newMemory returns a memory object.
-func newMemory(alen uint, empty Attribute) *Memory {
+func newMemory(alen uint, csr *csr.State, empty Attribute) *Memory {
 	return &Memory{
-		alen:      alen,
-		vm:        vmBare,
 		BP:        newBreakPoints(),
+		alen:      alen,
+		csr:       csr,
 		region:    make([]Region, 0),
 		symByAddr: make(map[uint]*Symbol),
 		symByName: make(map[string]*Symbol),
@@ -57,13 +58,13 @@ func newMemory(alen uint, empty Attribute) *Memory {
 }
 
 // NewMem32 returns memory with a 32-bit address bus.
-func NewMem32(empty Attribute) *Memory {
-	return newMemory(32, empty)
+func NewMem32(csr *csr.State, empty Attribute) *Memory {
+	return newMemory(32, csr, empty)
 }
 
 // NewMem64 returns memory with a 64-bit address bus.
-func NewMem64(empty Attribute) *Memory {
-	return newMemory(64, empty)
+func NewMem64(csr *csr.State, empty Attribute) *Memory {
+	return newMemory(64, csr, empty)
 }
 
 // AddrStr returns a string for the address.

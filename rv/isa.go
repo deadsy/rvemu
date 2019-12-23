@@ -474,4 +474,9 @@ func (isa *ISA) lookup(ins uint) *insMeta {
 	return nil
 }
 
+// GetExtensions returns the ISA extension bits.
+func (isa *ISA) GetExtensions() uint {
+	return isa.ext
+}
+
 //-----------------------------------------------------------------------------

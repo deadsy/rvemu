@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 /*
 
-RISC-V 32-bit Emulator
+RISC-V RV32/RV64 Emulator
 
 */
 //-----------------------------------------------------------------------------
@@ -15,6 +15,7 @@ import (
 	"os"
 
 	cli "github.com/deadsy/go-cli"
+	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/mem"
 	"github.com/deadsy/riscv/rv"
 	"github.com/deadsy/riscv/util"
@@ -44,14 +45,12 @@ func newEmu32() (*emuApp, error) {
 	if err != nil {
 		return nil, err
 	}
-	// 32-bit memory systems
-	m := mem.NewMem32(0)
-	// add a stack to the memory
-	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
-
+	// 32-bit CSR and memory
+	csr := csr.NewState(32, isa.GetExtensions())
+	m := mem.NewMem32(csr, 0)
 	return &emuApp{
 		mem:      m,
-		cpu:      rv.NewRV32(isa, m),
+		cpu:      rv.NewRV32(isa, m, csr),
 		elfClass: elf.ELFCLASS32,
 		prompt:   "rv32> ",
 	}, nil
@@ -65,14 +64,12 @@ func newEmu64() (*emuApp, error) {
 	if err != nil {
 		return nil, err
 	}
-	// 64-bit memory system
-	m := mem.NewMem64(0)
-	// add a stack to the memory
-	m.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
-
+	// 64-bit CSR and memory
+	csr := csr.NewState(64, isa.GetExtensions())
+	m := mem.NewMem64(csr, 0)
 	return &emuApp{
 		mem:      m,
-		cpu:      rv.NewRV64(isa, m),
+		cpu:      rv.NewRV64(isa, m, csr),
 		elfClass: elf.ELFCLASS64,
 		prompt:   "rv64> ",
 	}, nil
@@ -122,8 +119,9 @@ func main() {
 	}
 	fmt.Fprintf(os.Stderr, "%s\n", status)
 
-	// add a heap
+	// add a heap and stack
 	app.mem.Add(mem.NewSection("heap", 0x80000000, heapSize, mem.AttrRW))
+	app.mem.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
 	// Break on the "tohost" write (compliance tests).
 	app.mem.AddBreakPointByName("tohost", mem.AttrW)

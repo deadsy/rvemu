@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/mem"
 	"github.com/deadsy/riscv/rv"
 	"github.com/deadsy/riscv/util"
@@ -183,7 +184,9 @@ func (tc *testCase) Test() error {
 			return err
 		}
 		// create the cpu
-		cpu = rv.NewRV32(isa, mem.NewMem32(0))
+		csr := csr.NewState(32, isa.GetExtensions())
+		mem := mem.NewMem32(csr, 0)
+		cpu = rv.NewRV32(isa, mem, csr)
 	} else {
 		// Setup an RV64 CPU
 		// create the ISA
@@ -193,7 +196,9 @@ func (tc *testCase) Test() error {
 			return err
 		}
 		// create the cpu
-		cpu = rv.NewRV64(isa, mem.NewMem64(0))
+		csr := csr.NewState(64, isa.GetExtensions())
+		mem := mem.NewMem64(csr, 0)
+		cpu = rv.NewRV64(isa, mem, csr)
 	}
 
 	// load the elf file
