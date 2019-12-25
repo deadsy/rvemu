@@ -296,6 +296,14 @@ func (s *State) setEPC(pc uint64, mode Mode) {
 //-----------------------------------------------------------------------------
 // u/s/m trap value register
 
+func wrUTVAL(s *State, val uint) {
+	s.utval = val
+}
+
+func wrSTVAL(s *State, val uint) {
+	s.stval = val
+}
+
 func wrMTVAL(s *State, val uint) {
 	s.mtval = val
 }
@@ -846,7 +854,7 @@ var lookup = map[uint]csrDefn{
 	0x040: {"uscratch", wrUSCRATCH, rdUSCRATCH, nil},
 	0x041: {"uepc", nil, rdUEPC, nil},
 	0x042: {"ucause", nil, rdUCAUSE, nil},
-	0x043: {"utval", nil, rdUTVAL, nil},
+	0x043: {"utval", wrUTVAL, rdUTVAL, nil},
 	0x044: {"uip", wrUIP, rdUIP, nil},
 	// User CSRs 0xc00 - 0xc7f (read only)
 	0xc00: {"cycle", nil, nil, nil},
@@ -924,7 +932,7 @@ var lookup = map[uint]csrDefn{
 	0x140: {"sscratch", wrSSCRATCH, rdSSCRATCH, nil},
 	0x141: {"sepc", wrSEPC, rdSEPC, nil},
 	0x142: {"scause", nil, rdSCAUSE, nil},
-	0x143: {"stval", nil, nil, nil},
+	0x143: {"stval", wrSTVAL, rdSTVAL, nil},
 	0x144: {"sip", wrSIP, rdSIP, nil},
 	0x180: {"satp", wrSATP, rdSATP, displaySATP},
 	// Machine CSRs 0xf00 - 0xf7f (read only)

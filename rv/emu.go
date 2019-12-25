@@ -2408,6 +2408,13 @@ func (m *RV) errHandler(err error) error {
 	case ErrIllegal:
 		m.PC = m.CSR.Exception(m.PC, csr.ExInsIllegal, e.ins, false)
 		return nil
+
+	case ErrMemory:
+		em := e.err.(*mem.Error)
+		if (em.Type&mem.ErrBreak == 0) && (em.Ex >= 0) {
+			m.PC = m.CSR.Exception(m.PC, uint(em.Ex), 0, false)
+			return nil
+		}
 	}
 
 	return err
@@ -2462,8 +2469,8 @@ func (m *RV) FloatRegs() string {
 }
 
 // Disassemble the instruction at the address.
-func (m *RV) Disassemble(adr uint) *Disassembly {
-	return m.isa.Disassemble(m.Mem, adr)
+func (m *RV) Disassemble(addr uint) *Disassembly {
+	return m.isa.Disassemble(m.Mem, addr)
 }
 
 //-----------------------------------------------------------------------------

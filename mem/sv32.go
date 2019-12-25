@@ -11,8 +11,6 @@ SV32 Virtual Memory Address Translation
 package mem
 
 import (
-	"fmt"
-
 	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/util"
 )
@@ -137,13 +135,14 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 	var pte sv32pte
 	var pteAddr uint
 
-	fmt.Printf("va %s attr %s\n", va, attr)
+	//fmt.Printf("va %s attr %s\n", va, attr)
 
 	// 1. Let a be satp.ppn × PAGESIZE, and let i = LEVELS − 1. (For Sv32, PAGESIZE=4096 and LEVELS=2.)
 	a := m.csr.GetPPN() << riscvPageShift
-	i := 1
 
+	i := 1
 	for true {
+
 		// 2. Let pte be the value of the PTE at address a+va.vpn[i]×PTESIZE. (For Sv32, PTESIZE=4.)
 		// If accessing pte violates a PMA or PMP check, raise an access exception corresponding to
 		// the original access type.
@@ -153,6 +152,8 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 			return 0, va.pageError(attr)
 		}
 		pte = sv32pte(x)
+
+		//fmt.Printf("%d addr %08x pte %s\n", i, pteAddr, pte)
 
 		// 3. If pte.v = 0, or if pte.r = 0 and pte.w = 1, stop and raise a page-fault exception corresponding
 		// to the original access type.
@@ -174,8 +175,6 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 
 		a = pte.ppn() << riscvPageShift
 	}
-
-	fmt.Printf("%d addr %08x pte %s\n", i, pteAddr, pte)
 
 	// 5. A leaf PTE has been found. Determine if the requested memory access is allowed by the
 	// pte.r, pte.w, pte.x, and pte.u bits, given the current privilege mode and the value of the
@@ -258,7 +257,7 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 		pa += pte.ppn() << riscvPageShift
 	}
 
-	fmt.Printf("pa %09x\n", pa)
+	//fmt.Printf("pa %09x\n", pa)
 	return pa, nil
 }
 

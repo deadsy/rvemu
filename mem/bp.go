@@ -15,6 +15,7 @@ import (
 	"sort"
 
 	"github.com/deadsy/go-cli"
+	"github.com/deadsy/riscv/csr"
 )
 
 //-----------------------------------------------------------------------------
@@ -84,7 +85,7 @@ func (b breakPoints) check(addr uint, access Attribute) *Error {
 			if bp.state == bpBreak {
 				// skip so we don't immediately re-break.
 				bp.state = bpSkip
-				return &Error{ErrBreak, addr, bp.name}
+				return &Error{ErrBreak, csr.ExBreakpoint, addr, bp.name}
 			}
 			if bp.state == bpSkip {
 				// break on the next access.

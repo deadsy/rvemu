@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"math"
 	"strings"
+
+	"github.com/deadsy/riscv/csr"
 )
 
 //-----------------------------------------------------------------------------
@@ -20,6 +22,7 @@ import (
 // Error is a memory acccess error.
 type Error struct {
 	Type uint   // bitmap of memory errors
+	Ex   int    // riscv exception
 	Addr uint   // memory address causing the error
 	Name string // section name for the address
 }
@@ -108,42 +111,54 @@ func (a Attribute) String() string {
 
 func pageError(va uint, attr Attribute) error {
 	n := uint(ErrPage)
-	if attr&AttrR == 0 {
+	ex := -1
+	// The attribute is what the cpu was trying to do when the page error occured.
+	// It's sense is inverted from the other error cases.
+	if attr&AttrR != 0 {
 		n |= ErrRead
+		ex = csr.ExLoadPageFault
 	}
-	if attr&AttrW == 0 {
+	if attr&AttrW != 0 {
 		n |= ErrWrite
+		ex = csr.ExStorePageFault
 	}
-	if attr&AttrX == 0 {
+	if attr&AttrX != 0 {
 		n |= ErrExec
+		ex = csr.ExInsPageFault
 	}
-	return &Error{n, va, ""}
+	return &Error{n, ex, va, ""}
 }
 
 func wrError(addr uint, attr Attribute, name string, align uint) error {
 	var n uint
+	ex := -1
 	if attr&AttrW == 0 {
 		n |= ErrWrite
+		ex = csr.ExStoreAccessFault
 	}
 	if (attr&AttrM == 0) && (addr&(align-1) != 0) {
 		n |= ErrAlign
+		ex = csr.ExStoreAddrMisaligned
 	}
 	if n != 0 {
-		return &Error{n, addr, name}
+		return &Error{n, ex, addr, name}
 	}
 	return nil
 }
 
 func rdError(addr uint, attr Attribute, name string, align uint) error {
 	var n uint
+	ex := -1
 	if attr&AttrR == 0 {
 		n |= ErrRead
+		ex = csr.ExLoadAccessFault
 	}
 	if (attr&AttrM == 0) && (addr&(align-1) != 0) {
 		n |= ErrAlign
+		ex = csr.ExLoadAddrMisaligned
 	}
 	if n != 0 {
-		return &Error{n, addr, name}
+		return &Error{n, ex, addr, name}
 	}
 	return nil
 }
@@ -151,11 +166,20 @@ func rdError(addr uint, attr Attribute, name string, align uint) error {
 func rdInsError(addr uint, attr Attribute, name string) error {
 	// rv32c has mixed 32/16 bit instruction streams so
 	// we allow 32-bit reads on 2 byte address boundaries.
-	err := rdError(addr, attr, name, 2)
-	if err != nil && attr&AttrX == 0 {
-		err.(*Error).Type |= ErrExec
+	var n uint
+	ex := -1
+	if attr&AttrX == 0 {
+		n |= ErrExec
+		ex = csr.ExInsAccessFault
 	}
-	return err
+	if (attr&AttrM == 0) && (addr&1 != 0) {
+		n |= ErrAlign
+		ex = csr.ExInsAddrMisaligned
+	}
+	if n != 0 {
+		return &Error{n, ex, addr, name}
+	}
+	return nil
 }
 
 //-----------------------------------------------------------------------------
@@ -202,11 +226,7 @@ type Section struct {
 
 // NewSection allocates and returns a memory chunk.
 func NewSection(name string, start, size uint, attr Attribute) *Section {
-	// allocate the memory and set it to all ones
 	mem := make([]uint8, size)
-	for i := range mem {
-		mem[i] = 0xff
-	}
 	return &Section{
 		name:  name,
 		attr:  attr,
