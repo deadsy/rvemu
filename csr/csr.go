@@ -760,6 +760,10 @@ const (
 	SV64
 )
 
+func (vm VM) String() string {
+	return []string{"bare", "sv32", "sv39", "sv48", "sv57", "sv64"}[vm]
+}
+
 // GetVM returns the VM mode set in the SATP.
 func (s *State) GetVM() VM {
 	return s.vm
@@ -777,10 +781,11 @@ func wrSATP(s *State, x uint) {
 		// RV32
 		s.vm = [2]VM{Bare, SV32}[util.RdBits(s.satp, 31, 31)]
 		s.ppn = util.RdBits(s.satp, 21, 0)
+	} else {
+		// RV64
+		s.vm = map[uint]VM{0: Bare, 8: SV39, 9: SV48, 10: SV57, 11: SV64}[util.RdBits(s.satp, 63, 60)]
+		s.ppn = util.RdBits(s.satp, 43, 0)
 	}
-	// RV64
-	s.vm = map[uint]VM{0: Bare, 8: SV39, 9: SV48, 10: SV57, 11: SV64}[util.RdBits(s.satp, 63, 60)]
-	s.ppn = util.RdBits(s.satp, 43, 0)
 }
 
 func rdSATP(s *State) uint {

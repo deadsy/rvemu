@@ -110,7 +110,7 @@ func (m *Memory) Display(adr, size, width uint) string {
 			var data [16]string
 			var ascii [16]string
 			for j := 0; j < 16; j++ {
-				x, _ := m.Rd8(adr + uint(j))
+				x, _ := m.Rd8Phys(adr + uint(j))
 				data[j] = fmt.Sprintf("%02x", x)
 				if x >= 32 && x <= 126 {
 					ascii[j] = fmt.Sprintf("%c", x)
@@ -125,7 +125,7 @@ func (m *Memory) Display(adr, size, width uint) string {
 			// read 8x16 bits per line
 			var data [8]string
 			for j := 0; j < 8; j++ {
-				x, _ := m.Rd16(adr + uint(j*2))
+				x, _ := m.Rd16Phys(adr + uint(j*2))
 				data[j] = fmt.Sprintf("%04x", x)
 			}
 			dataStr := strings.Join(data[:], " ")
@@ -134,7 +134,7 @@ func (m *Memory) Display(adr, size, width uint) string {
 			// read 4x32 bits per line
 			var data [4]string
 			for j := 0; j < 4; j++ {
-				x, _ := m.Rd32(adr + uint(j*4))
+				x, _ := m.Rd32Phys(adr + uint(j*4))
 				data[j] = fmt.Sprintf("%08x", x)
 			}
 			dataStr := strings.Join(data[:], " ")
@@ -143,7 +143,7 @@ func (m *Memory) Display(adr, size, width uint) string {
 			// read 2x64 bits per line
 			var data [2]string
 			for j := 0; j < 2; j++ {
-				x, _ := m.Rd64(adr + uint(j*8))
+				x, _ := m.Rd64Phys(adr + uint(j*8))
 				data[j] = fmt.Sprintf("%016x", x)
 			}
 			dataStr := strings.Join(data[:], " ")
