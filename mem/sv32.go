@@ -51,53 +51,64 @@ func (pte sv32pte) isValid() bool {
 	return (pte&1) == 1 && ((pte>>1)&3) != 2
 }
 
-// ppn returns the physical page number from the PTE.
+// ppn returns the full physical page number from the PTE.
 func (pte sv32pte) ppn() uint {
 	return util.RdBits(uint(pte), 31, 10)
 }
 
+// ppn1 returns physical page number 1 from the PTE.
 func (pte sv32pte) ppn1() uint {
 	return util.RdBits(uint(pte), 31, 20)
 }
 
+// ppn0 returns physical page number 0 from the PTE.
 func (pte sv32pte) ppn0() uint {
 	return util.RdBits(uint(pte), 19, 10)
 }
 
-func (pte sv32pte) canRead() bool {
-	return (pte & (1 << 1 /*R*/)) != 0
+// getUser gets the PTE user flag.
+func (pte sv32pte) getUser() bool {
+	return (pte & (1 << 4 /*U*/)) != 0
 }
 
-func (pte sv32pte) setRead() {
-	pte |= (1 << 1 /*R*/)
-}
-
+// getAccess gets the PTE access flag.
 func (pte sv32pte) getAccess() bool {
 	return pte&(1<<6 /*A*/) != 0
 }
 
-func (pte sv32pte) setAccess() {
-	pte |= (1 << 6 /*A*/)
-}
-
+// getDirty gets the PTE dirty flag.
 func (pte sv32pte) getDirty() bool {
 	return pte&(1<<7 /*D*/) != 0
 }
 
+// setRead sets the PTE read bit.
+func (pte sv32pte) setRead() {
+	pte |= (1 << 1 /*R*/)
+}
+
+// setAccess sets the PTE access bit.
+func (pte sv32pte) setAccess() {
+	pte |= (1 << 6 /*A*/)
+}
+
+// setAccess sets the PTE dirty bit.
 func (pte sv32pte) setDirty() {
 	pte |= (1 << 7 /*D*/)
 }
 
+// canRead returns true if the PTE indicates read permission for the page.
+func (pte sv32pte) canRead() bool {
+	return (pte & (1 << 1 /*R*/)) != 0
+}
+
+// canWrite returns true if the PTE indicates write permission for the page.
 func (pte sv32pte) canWrite() bool {
 	return (pte & (1 << 2 /*W*/)) != 0
 }
 
+// canExec returns true if the PTE indicates execute permission for the page.
 func (pte sv32pte) canExec() bool {
 	return (pte & (1 << 3 /*X*/)) != 0
-}
-
-func (pte sv32pte) userMode() bool {
-	return (pte & (1 << 4 /*U*/)) != 0
 }
 
 //-----------------------------------------------------------------------------
@@ -139,10 +150,9 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 
 	// 1. Let a be satp.ppn × PAGESIZE, and let i = LEVELS − 1. (For Sv32, PAGESIZE=4096 and LEVELS=2.)
 	a := m.csr.GetPPN() << riscvPageShift
-
 	i := 1
-	for true {
 
+	for true {
 		// 2. Let pte be the value of the PTE at address a+va.vpn[i]×PTESIZE. (For Sv32, PTESIZE=4.)
 		// If accessing pte violates a PMA or PMP check, raise an access exception corresponding to
 		// the original access type.
@@ -172,7 +182,6 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 		if i < 0 {
 			return 0, va.pageError(attr)
 		}
-
 		a = pte.ppn() << riscvPageShift
 	}
 
@@ -199,11 +208,11 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 	// check user/supervisor mode
 	switch mode {
 	case csr.ModeU:
-		if !pte.userMode() {
+		if !pte.getUser() {
 			return 0, va.pageError(attr)
 		}
 	case csr.ModeS:
-		if pte.userMode() {
+		if pte.getUser() {
 			if !m.csr.GetSUM() {
 				// U == 1 and mstatus.SUM == 0
 				return 0, va.pageError(attr)

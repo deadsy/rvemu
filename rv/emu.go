@@ -2412,7 +2412,7 @@ func (m *RV) errHandler(err error) error {
 	case ErrMemory:
 		em := e.err.(*mem.Error)
 		if (em.Type&mem.ErrBreak == 0) && (em.Ex >= 0) {
-			m.PC = m.CSR.Exception(m.PC, uint(em.Ex), 0, false)
+			m.PC = m.CSR.Exception(m.PC, uint(em.Ex), em.Addr, false)
 			return nil
 		}
 	}
