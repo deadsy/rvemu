@@ -552,24 +552,17 @@ func emu_CSRRCI(m *RV, ins uint) error {
 // rv32i privileged
 
 func emu_URET(m *RV, ins uint) error {
-	return m.errTodo()
+	m.PC = uint64(m.CSR.URET())
+	return nil
 }
 
 func emu_SRET(m *RV, ins uint) error {
-	pc, err := m.CSR.SRET()
-	if err != nil {
-		return m.errCSR(err)
-	}
-	m.PC = uint64(pc)
+	m.PC = uint64(m.CSR.SRET())
 	return nil
 }
 
 func emu_MRET(m *RV, ins uint) error {
-	pc, err := m.CSR.MRET()
-	if err != nil {
-		return m.errCSR(err)
-	}
-	m.PC = uint64(pc)
+	m.PC = uint64(m.CSR.MRET())
 	return nil
 }
 

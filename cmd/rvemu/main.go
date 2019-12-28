@@ -40,7 +40,7 @@ type emuApp struct {
 // newEmu32 returns a 32-bit emulator.
 func newEmu32() (*emuApp, error) {
 	// 32-bit ISA
-	isa := rv.NewISA()
+	isa := rv.NewISA(csr.IsaExtS | csr.IsaExtU)
 	err := isa.Add(rv.ISArv32gc)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func newEmu32() (*emuApp, error) {
 // newEmu64 returns a 64-bit emulator.
 func newEmu64() (*emuApp, error) {
 	// 64-bit ISA
-	isa := rv.NewISA()
+	isa := rv.NewISA(csr.IsaExtS | csr.IsaExtU)
 	err := isa.Add(rv.ISArv64gc)
 	if err != nil {
 		return nil, err

@@ -178,7 +178,7 @@ func (tc *testCase) Test() error {
 	if tc.elfClass == elf.ELFCLASS32 {
 		// Setup an RV32 CPU
 		// create the ISA
-		isa := rv.NewISA()
+		isa := rv.NewISA(csr.IsaExtS | csr.IsaExtU)
 		err := isa.Add(rv.ISArv32gc)
 		if err != nil {
 			return err
@@ -190,7 +190,7 @@ func (tc *testCase) Test() error {
 	} else {
 		// Setup an RV64 CPU
 		// create the ISA
-		isa := rv.NewISA()
+		isa := rv.NewISA(csr.IsaExtS | csr.IsaExtU)
 		err := isa.Add(rv.ISArv64gc)
 		if err != nil {
 			return err

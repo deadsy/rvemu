@@ -70,14 +70,76 @@ func (m Mode) String() string {
 	return [4]string{"user", "supervisor", "?", "machine"}[m]
 }
 
-// getMode returns the mode bits from a register address.
-func getMode(reg uint) uint {
-	return (reg >> 8) & 3
-}
-
 // GetMode returns the current processor mode.
 func (s *State) GetMode() Mode {
 	return s.mode
+}
+
+// setMode sets the current processor mode.
+func (s *State) setMode(mode Mode) {
+	s.mode = mode
+}
+
+// hasMode returns true if the mode is supported.
+func (s *State) hasMode(mode Mode) bool {
+	switch mode {
+	case ModeU:
+		return (s.misa & IsaExtU) != 0
+	case ModeS:
+		return (s.misa & IsaExtS) != 0
+	case ModeM:
+		return true
+	}
+	return false
+}
+
+// getRetMode checks the mode for a U/S/M RET instruction.
+func (s *State) getRetMode(mode Mode) Mode {
+	if s.hasMode(mode) {
+		return mode
+	}
+	return s.minmode
+}
+
+func (s *State) getMinMode() Mode {
+	return s.minmode
+}
+
+// setMinMode caches the minimum privilege mode indicated in the extensions bitmap.
+func (s *State) setMinMode() {
+	s.minmode = ModeM
+	if s.hasMode(ModeS) {
+		s.minmode = ModeS
+	}
+	if s.hasMode(ModeU) {
+		s.minmode = ModeU
+	}
+}
+
+// getNextMode returns the target mode for an exception/interrupt.
+func (s *State) getNextMode(ecode uint, isInterrupt bool) Mode {
+	var sMask, mMask uint
+	if isInterrupt {
+		mMask = s.mideleg
+		sMask = s.sideleg
+	} else {
+		mMask = s.medeleg
+		sMask = s.sedeleg
+	}
+	var nextMode Mode
+	// get target mode implied by delegation registers
+	if mMask&(1<<ecode) == 0 {
+		nextMode = ModeM
+	} else if sMask&(1<<ecode) == 0 {
+		nextMode = ModeS
+	} else {
+		nextMode = ModeU
+	}
+	// exception cannot be taken to lower-privilege mode
+	if nextMode < s.mode {
+		return s.mode
+	}
+	return nextMode
 }
 
 //-----------------------------------------------------------------------------
@@ -623,6 +685,10 @@ func (s *State) mstatusWrSPIE(x uint) {
 	util.WrBits(s.mstatus, x, 5, 5)
 }
 
+func (s *State) mstatusRdUPIE() uint {
+	return util.RdBits(s.mstatus, 4, 4)
+}
+
 func (s *State) mstatusWrUPIE(x uint) {
 	util.WrBits(s.mstatus, x, 4, 4)
 }
@@ -1102,7 +1168,7 @@ var lookup = map[uint]csrDefn{
 // canAccess returns true if the register can be accessed in the current mode.
 func (s *State) canAccess(reg uint) bool {
 	mode := Mode((reg >> 8) & 3)
-	return s.mode >= mode
+	return s.GetMode() >= mode
 }
 
 // canWr returns true if the register can be written.
@@ -1115,14 +1181,15 @@ func canWr(reg uint) bool {
 
 // State stores the CSR state for the CPU.
 type State struct {
-	mode   Mode // current privilege mode
-	xlen   uint // cpu register length 32/64/128
-	mxlen  uint // machine register length
-	uxlen  uint // user register length
-	sxlen  uint // supervisor register length
-	ialign uint // instruction alignment 16/32
-	vm     VM   // cached virtual memory mode from SATP
-	ppn    uint // cached physical page number from SATP
+	mode    Mode // current privilege mode
+	minmode Mode // minimum privilege mode
+	xlen    uint // cpu register length 32/64/128
+	mxlen   uint // machine register length
+	uxlen   uint // user register length
+	sxlen   uint // supervisor register length
+	ialign  uint // instruction alignment 16/32
+	vm      VM   // cached virtual memory mode from SATP
+	ppn     uint // cached physical page number from SATP
 	// combined u/s/m CSRs
 	mstatus uint // u/s/m status
 	mie     uint // u/s/m interrupt enable register
@@ -1165,11 +1232,12 @@ func NewState(xlen, ext uint) *State {
 		ialign: 16, // TODO
 	}
 	initMISA(s, ext)
+	s.setMinMode()
 	return s
 }
 
 func (s *State) Reset() {
-	s.mode = ModeM
+	s.setMode(ModeM)
 	wrSATP(s, 0)
 	// etc..
 }
@@ -1234,6 +1302,11 @@ func Name(reg uint) string {
 	return fmt.Sprintf("0x%03x", reg)
 }
 
+// getMode returns the mode bits from a register address.
+func getMode(reg uint) uint {
+	return (reg >> 8) & 3
+}
+
 type regStrings struct {
 	num    string // 3-nybble register number
 	name   string // register name
@@ -1285,7 +1358,7 @@ func (s *State) regDisplay(reg uint) (*regStrings, error) {
 // Display displays the CSR state.
 func (s *State) Display() string {
 	x := [][]string{}
-	x = append(x, []string{"mode", fmt.Sprintf("%s", s.mode), ""})
+	x = append(x, []string{"mode", fmt.Sprintf("%s", s.GetMode()), ""})
 	// read all registers
 	for reg := uint(0); reg < 4096; reg++ {
 		d, err := s.regDisplay(reg)
@@ -1301,61 +1374,54 @@ func (s *State) Display() string {
 
 //-----------------------------------------------------------------------------
 
-// getModeX returns the target mode for an exception/interrupt.
-func (s *State) getModeX(ecode uint, isInterrupt bool) Mode {
-	var sMask, mMask uint
-	if isInterrupt {
-		mMask = s.mideleg
-		sMask = s.sideleg
-	} else {
-		mMask = s.medeleg
-		sMask = s.sedeleg
-	}
-	var mode Mode
-	// get target mode implied by delegation registers
-	if mMask&(1<<ecode) == 0 {
-		mode = ModeM
-	} else if sMask&(1<<ecode) == 0 {
-		mode = ModeS
-	} else {
-		mode = ModeU
-	}
-	// exception cannot be taken to lower-privilege mode
-	if mode < s.mode {
-		return s.mode
-	}
-	return mode
-}
-
-//-----------------------------------------------------------------------------
-
-// MRET performs an MRET operation.
-func (s *State) MRET() (uint, error) {
-	if !s.canAccess(MSTATUS) {
-		return 0, &Error{MSTATUS, ErrPrivilege}
-	}
-	s.mode = Mode(s.mstatusRdMPP())
+// MRET returns from a machine-mode exception.
+func (s *State) MRET() uint {
+	mpp := Mode(s.mstatusRdMPP())
+	nextMode := s.getRetMode(mpp)
+	// restore previous MIE
 	s.mstatusWrMIE(s.mstatusRdMPIE())
+	// MPIE=1
 	s.mstatusWrMPIE(1)
-	s.mstatusWrMPP(uint(ModeU))
-	return rdMEPC(s), nil
+	// MPP=<minimum_supported_mode>
+	s.mstatusWrMPP(uint(s.getMinMode()))
+	// switch to target mode
+	s.setMode(nextMode)
+	// jump to exception address
+	return rdMEPC(s)
 }
 
-// SRET performs an SRET operation.
-func (s *State) SRET() (uint, error) {
-	if !s.canAccess(SSTATUS) {
-		return 0, &Error{SSTATUS, ErrPrivilege}
-	}
-	s.mode = Mode(s.mstatusRdSPP())
+// SRET returns from a supervisor-mode exception.
+func (s *State) SRET() uint {
+	spp := Mode(s.mstatusRdSPP())
+	nextMode := s.getRetMode(spp)
+	// restore previous SIE
 	s.mstatusWrSIE(s.mstatusRdSPIE())
+	// SPIE=1
 	s.mstatusWrSPIE(1)
-	s.mstatusWrSPP(0)
-	return rdSEPC(s), nil
+	// SPP=<minimum_supported_mode>
+	s.mstatusWrSPP(uint(s.getMinMode()))
+	// switch to target mode
+	s.setMode(nextMode)
+	// jump to exception address
+	return rdSEPC(s)
+}
+
+// URET returns from a user-mode exception.
+func (s *State) URET() uint {
+	nextMode := ModeU
+	// restore previous UIE
+	s.mstatusWrUIE(s.mstatusRdUPIE())
+	// UPIE=1
+	s.mstatusWrUPIE(1)
+	// switch to target mode
+	s.setMode(nextMode)
+	// jump to exception address
+	return rdUEPC(s)
 }
 
 // ECALL performs an environment call exception.
 func (s *State) ECALL(epc uint64, val uint) uint64 {
-	switch s.mode {
+	switch s.GetMode() {
 	case ModeU:
 		return s.Exception(epc, ExEnvCallFromUserMode, val, false)
 	case ModeS:
@@ -1368,26 +1434,18 @@ func (s *State) ECALL(epc uint64, val uint) uint64 {
 
 // Exception performs a cpu exception.
 func (s *State) Exception(epc uint64, ecode, val uint, isInterrupt bool) uint64 {
-	// work out the target mode
-	modeX := s.getModeX(ecode, isInterrupt)
-
-	//fmt.Printf("%s to %s\n", s.mode, modeX)
-
+	// what's the next cpu mode?
+	nextMode := s.getNextMode(ecode, isInterrupt)
 	// update interrupt enable and interrupt enable stack
-	s.updateMSTATUS(modeX)
-
+	s.updateMSTATUS(nextMode)
 	// set the cause register
-	s.setCause(ecode, isInterrupt, modeX)
-
+	s.setCause(ecode, isInterrupt, nextMode)
 	// set the exception program counter
-	s.setEPC(epc, modeX)
-
+	s.setEPC(epc, nextMode)
 	// set the trap value
-	s.setTrapValue(val, modeX)
-
+	s.setTrapValue(val, nextMode)
 	// get exception base address and mode
-	base, mode := s.getTrapVector(modeX)
-
+	base, mode := s.getTrapVector(nextMode)
 	// handle direct or vectored exception
 	var pc uint64
 	if (mode == 0) || !isInterrupt {
@@ -1395,15 +1453,14 @@ func (s *State) Exception(epc uint64, ecode, val uint, isInterrupt bool) uint64 
 	} else {
 		pc = uint64(base + (4 * ecode))
 	}
-
 	// update the mode
-	if modeX == ModeS {
-		s.mstatusWrSPP(uint(s.mode))
-	} else if modeX == ModeM {
-		s.mstatusWrMPP(uint(s.mode))
+	switch nextMode {
+	case ModeS:
+		s.mstatusWrSPP(uint(s.GetMode()))
+	case ModeM:
+		s.mstatusWrMPP(uint(s.GetMode()))
 	}
-	s.mode = modeX
-
+	s.setMode(nextMode)
 	return pc
 }
 

@@ -422,14 +422,15 @@ type insMeta struct {
 
 // ISA is an instruction set
 type ISA struct {
-	ext   uint       // ISA extension bits per CSR misa
+	ext   uint       // ISA extension bits matching misa CSR
 	ins16 []*insMeta // the set of 16-bit instructions in the ISA
 	ins32 []*insMeta // the set of 32-bit instructions in the ISA
 }
 
 // NewISA creates an empty instruction set.
-func NewISA() *ISA {
+func NewISA(ext uint) *ISA {
 	return &ISA{
+		ext:   ext,
 		ins16: make([]*insMeta, 0),
 		ins32: make([]*insMeta, 0),
 	}
