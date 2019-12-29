@@ -93,27 +93,11 @@ func (s *State) hasMode(mode Mode) bool {
 	return false
 }
 
-// getRetMode checks the mode for a U/S/M RET instruction.
-func (s *State) getRetMode(mode Mode) Mode {
-	if s.hasMode(mode) {
-		return mode
-	}
-	return s.minmode
-}
-
 func (s *State) getMinMode() Mode {
-	return s.minmode
-}
-
-// setMinMode caches the minimum privilege mode indicated in the extensions bitmap.
-func (s *State) setMinMode() {
-	s.minmode = ModeM
-	if s.hasMode(ModeS) {
-		s.minmode = ModeS
-	}
 	if s.hasMode(ModeU) {
-		s.minmode = ModeU
+		return ModeU
 	}
+	return ModeM
 }
 
 // getNextMode returns the target mode for an exception/interrupt.
@@ -525,47 +509,108 @@ func rdFFLAGS(s *State) uint {
 //-----------------------------------------------------------------------------
 // u/s/m status
 
+const tsrMask = (1 << 22)
+const twMask = (1 << 21)
+const tvmMask = (1 << 20)
+const mxrMask = (1 << 19)
+const sumMask = (1 << 18)
+const mprvMask = (1 << 17)
+const xsMask = (3 << 15)
+const fsMask = (3 << 13)
+const mppMask = (3 << 11)
+const sppMask = (1 << 8)
+const mpieMask = (1 << 7)
+const spieMask = (1 << 5)
+const upieMask = (1 << 4)
+const mieMask = (1 << 3)
+const sieMask = (1 << 1)
+const uieMask = (1 << 0)
+const uxlMask = (3 << 32)
+const sxlMask = (3 << 34)
+
+type mStatus struct {
+	val      uint // u/s/m status CSR
+	wpriMask uint // read WPRI fields as 0
+	uMask    uint // bits seen in user mode
+	sMask    uint // bits seen in supervisor mode
+}
+
+func (m *mStatus) init(mxlen uint) {
+	m.uMask = uieMask | upieMask
+	m.sMask = uieMask | upieMask | sppMask | spieMask | sieMask
+	m.wpriMask = util.BitMask(2, 2) | util.BitMask(6, 6) | util.BitMask(10, 9) | util.BitMask(30, 23)
+	if mxlen == 64 {
+		m.uMask |= uxlMask
+		m.sMask |= (uxlMask | sxlMask)
+		m.wpriMask |= (util.BitMask(31, 31) | util.BitMask(62, 36))
+	}
+}
+
+func (m *mStatus) wr(x uint, mode Mode) {
+	x &= ^m.wpriMask
+	switch mode {
+	case ModeU:
+		m.val = (m.val & ^m.uMask) | (x & m.uMask)
+	case ModeS:
+		m.val = (m.val & ^m.sMask) | (x & m.sMask)
+	case ModeM:
+		m.val = x
+	}
+}
+
+func (m *mStatus) rd(mode Mode) uint {
+	switch mode {
+	case ModeU:
+		return m.val & m.uMask
+	case ModeS:
+		return m.val & m.sMask
+	case ModeM:
+		return m.val
+	}
+	return 0
+}
+
+func wrUSTATUS(s *State, x uint) {
+	s.mstatus.wr(x, ModeU)
+}
+
+func rdUSTATUS(s *State) uint {
+	return s.mstatus.rd(ModeU)
+}
+
+func wrSSTATUS(s *State, x uint) {
+	s.mstatus.wr(x, ModeS)
+}
+
+func rdSSTATUS(s *State) uint {
+	return s.mstatus.rd(ModeS)
+}
+
+func wrMSTATUS(s *State, x uint) {
+	s.mstatus.wr(x, ModeM)
+}
+
+func rdMSTATUS(s *State) uint {
+	return s.mstatus.rd(ModeM)
+}
+
 // GetMPRV returns the MPRV bit of mstatus.
 func (s *State) GetMPRV() bool {
-	return (s.mstatus & (1 << 17 /*MPRV*/)) != 0
+	return s.mstatus.rd(ModeM)&mprvMask != 0
 }
 
 // GetSUM returns the sum bit of mstatus.
 func (s *State) GetSUM() bool {
-	return (s.mstatus & (1 << 18 /*SUM*/)) != 0
+	return s.mstatus.rd(ModeM)&sumMask != 0
 }
 
 // GetMXR returns the MXR bit of mstatus.
 func (s *State) GetMXR() bool {
-	return (s.mstatus & (1 << 19 /*MXR*/)) != 0
+	return s.mstatus.rd(ModeM)&mxrMask != 0
 }
 
 func (s *State) GetMPP() Mode {
-	return Mode((s.mstatus >> 11 /*MPP*/) & 3)
-}
-
-func wrUSTATUS(s *State, x uint) {
-	s.mstatus = x // TODO mask
-}
-
-func rdUSTATUS(s *State) uint {
-	return s.mstatus // TODO mask
-}
-
-func wrSSTATUS(s *State, x uint) {
-	s.mstatus = x // TODO mask
-}
-
-func rdSSTATUS(s *State) uint {
-	return s.mstatus // TODO mask
-}
-
-func wrMSTATUS(s *State, x uint) {
-	s.mstatus = x
-}
-
-func rdMSTATUS(s *State) uint {
-	return s.mstatus
+	return Mode((s.mstatus.rd(ModeM) >> 11 /*MPP*/) & 3)
 }
 
 func displaySSTATUS(s *State) string {
@@ -573,11 +618,6 @@ func displaySSTATUS(s *State) string {
 	if s.sxlen == 32 {
 		// RV32
 		fs = util.FieldSet{
-			{"sd", 31, 31, util.FmtDec},
-			{"mxr", 19, 19, util.FmtDec},
-			{"sum", 18, 18, util.FmtDec},
-			{"xs", 16, 15, util.FmtDec},
-			{"fs", 14, 13, util.FmtDec},
 			{"spp", 8, 8, util.FmtDec},
 			{"spie", 5, 5, util.FmtDec},
 			{"upie", 4, 4, util.FmtDec},
@@ -587,12 +627,8 @@ func displaySSTATUS(s *State) string {
 	} else {
 		// RV64
 		fs = util.FieldSet{
-			{"sd", s.mxlen - 1, s.mxlen - 1, util.FmtDec},
+			{"sxl", 35, 34, util.FmtDec},
 			{"uxl", 33, 32, util.FmtDec},
-			{"mxr", 19, 19, util.FmtDec},
-			{"sum", 18, 18, util.FmtDec},
-			{"xs", 16, 15, util.FmtDec},
-			{"fs", 14, 13, util.FmtDec},
 			{"spp", 8, 8, util.FmtDec},
 			{"spie", 5, 5, util.FmtDec},
 			{"upie", 4, 4, util.FmtDec},
@@ -600,7 +636,7 @@ func displaySSTATUS(s *State) string {
 			{"uie", 0, 0, util.FmtDec},
 		}
 	}
-	return fs.Display(s.mstatus)
+	return fs.Display(s.mstatus.rd(ModeS))
 }
 
 func displayMSTATUS(s *State) string {
@@ -650,71 +686,71 @@ func displayMSTATUS(s *State) string {
 			{"uie", 0, 0, util.FmtDec},
 		}
 	}
-	return fs.Display(s.mstatus)
+	return fs.Display(s.mstatus.rd(ModeM))
 }
 
 func (s *State) mstatusRdMPP() uint {
-	return util.RdBits(s.mstatus, 12, 11)
+	return util.GetBits(s.mstatus.rd(ModeM), 12, 11)
 }
 
 func (s *State) mstatusWrMPP(x uint) {
-	util.WrBits(s.mstatus, x, 12, 11)
+	s.mstatus.wr(util.SetBits(s.mstatus.val, x, 12, 11), ModeM)
 }
 
 func (s *State) mstatusRdSPP() uint {
-	return util.RdBits(s.mstatus, 8, 8)
+	return util.GetBits(s.mstatus.rd(ModeM), 8, 8)
 }
 
 func (s *State) mstatusWrSPP(x uint) {
-	util.WrBits(s.mstatus, x, 8, 8)
+	s.mstatus.wr(util.SetBits(s.mstatus.val, x, 8, 8), ModeM)
 }
 
 func (s *State) mstatusRdMPIE() uint {
-	return util.RdBits(s.mstatus, 7, 7)
+	return util.GetBits(s.mstatus.rd(ModeM), 7, 7)
 }
 
 func (s *State) mstatusWrMPIE(x uint) {
-	util.WrBits(s.mstatus, x, 7, 7)
+	s.mstatus.wr(util.SetBits(s.mstatus.val, x, 7, 7), ModeM)
 }
 
 func (s *State) mstatusRdSPIE() uint {
-	return util.RdBits(s.mstatus, 5, 5)
+	return util.GetBits(s.mstatus.rd(ModeM), 5, 5)
 }
 
 func (s *State) mstatusWrSPIE(x uint) {
-	util.WrBits(s.mstatus, x, 5, 5)
+	s.mstatus.wr(util.SetBits(s.mstatus.val, x, 5, 5), ModeM)
 }
 
 func (s *State) mstatusRdUPIE() uint {
-	return util.RdBits(s.mstatus, 4, 4)
+	return util.GetBits(s.mstatus.rd(ModeM), 4, 4)
 }
 
 func (s *State) mstatusWrUPIE(x uint) {
-	util.WrBits(s.mstatus, x, 4, 4)
+	s.mstatus.wr(util.SetBits(s.mstatus.val, x, 4, 4), ModeM)
 }
 
 func (s *State) mstatusRdMIE() uint {
-	return util.RdBits(s.mstatus, 3, 3)
+	return util.GetBits(s.mstatus.rd(ModeM), 3, 3)
 }
 
 func (s *State) mstatusWrMIE(x uint) {
-	util.WrBits(s.mstatus, x, 3, 3)
+	s.mstatus.wr(util.SetBits(s.mstatus.val, x, 3, 3), ModeM)
 }
 
 func (s *State) mstatusRdSIE() uint {
-	return util.RdBits(s.mstatus, 1, 1)
+	return util.GetBits(s.mstatus.rd(ModeM), 1, 1)
 }
 
 func (s *State) mstatusWrSIE(x uint) {
-	util.WrBits(s.mstatus, x, 1, 1)
+	s.mstatus.wr(util.SetBits(s.mstatus.val, x, 1, 1), ModeM)
 }
 
 func (s *State) mstatusRdUIE() uint {
-	return util.RdBits(s.mstatus, 0, 0)
+	return util.GetBits(s.mstatus.rd(ModeM), 0, 0)
 }
 
 func (s *State) mstatusWrUIE(x uint) {
-	util.WrBits(s.mstatus, x, 0, 0)
+	s.mstatus.wr(util.SetBits(s.mstatus.val, x, 0, 0), ModeM)
 }
 
 func (s *State) updateMSTATUS(mode Mode) {
@@ -853,12 +889,12 @@ func wrSATP(s *State, x uint) {
 	// cache the vm and ppn
 	if s.sxlen == 32 {
 		// RV32
-		s.vm = [2]VM{Bare, SV32}[util.RdBits(s.satp, 31, 31)]
-		s.ppn = util.RdBits(s.satp, 21, 0)
+		s.vm = [2]VM{Bare, SV32}[util.GetBits(s.satp, 31, 31)]
+		s.ppn = util.GetBits(s.satp, 21, 0)
 	} else {
 		// RV64
-		s.vm = map[uint]VM{0: Bare, 8: SV39, 9: SV48, 10: SV57, 11: SV64}[util.RdBits(s.satp, 63, 60)]
-		s.ppn = util.RdBits(s.satp, 43, 0)
+		s.vm = map[uint]VM{0: Bare, 8: SV39, 9: SV48, 10: SV57, 11: SV64}[util.GetBits(s.satp, 63, 60)]
+		s.ppn = util.GetBits(s.satp, 43, 0)
 	}
 }
 
@@ -1142,10 +1178,10 @@ var lookup = map[uint]csrDefn{
 	0xb9e: {"mhpmcounter30h", nil, nil, nil},
 	0xb9f: {"mhpmcounter31h", nil, nil, nil},
 	// Machine Debug CSRs 0x7a0 - 0x7af (read/write)
-	0x7a0: {"tselect", nil, nil, nil},
-	0x7a1: {"tdata1", nil, nil, nil},
-	0x7a2: {"tdata2", nil, nil, nil},
-	0x7a3: {"tdata3", nil, nil, nil},
+	0x7a0: {"tselect", wrIgnore, rdZero, nil},
+	0x7a1: {"tdata1", wrIgnore, rdZero, nil},
+	0x7a2: {"tdata2", wrIgnore, rdZero, nil},
+	0x7a3: {"tdata3", wrIgnore, rdZero, nil},
 	// Machine Debug Mode Only CSRs 0x7b0 - 0x7bf (read/write)
 	0x7b0: {"dcsr", nil, nil, nil},
 	0x7b1: {"dpc", nil, nil, nil},
@@ -1181,19 +1217,18 @@ func canWr(reg uint) bool {
 
 // State stores the CSR state for the CPU.
 type State struct {
-	mode    Mode // current privilege mode
-	minmode Mode // minimum privilege mode
-	xlen    uint // cpu register length 32/64/128
-	mxlen   uint // machine register length
-	uxlen   uint // user register length
-	sxlen   uint // supervisor register length
-	ialign  uint // instruction alignment 16/32
-	vm      VM   // cached virtual memory mode from SATP
-	ppn     uint // cached physical page number from SATP
+	mode   Mode // current privilege mode
+	xlen   uint // cpu register length 32/64/128
+	mxlen  uint // machine register length
+	uxlen  uint // user register length
+	sxlen  uint // supervisor register length
+	ialign uint // instruction alignment 16/32
+	vm     VM   // cached virtual memory mode from SATP
+	ppn    uint // cached physical page number from SATP
 	// combined u/s/m CSRs
-	mstatus uint // u/s/m status
-	mie     uint // u/s/m interrupt enable register
-	mip     uint // u/s/m interrupt pending register
+	mstatus mStatus // u/s/m status
+	mie     uint    // u/s/m interrupt enable register
+	mip     uint    // u/s/m interrupt pending register
 	// machine CSRs
 	mcause   uint // machine cause register
 	mepc     uint // machine exception program counter
@@ -1232,7 +1267,7 @@ func NewState(xlen, ext uint) *State {
 		ialign: 16, // TODO
 	}
 	initMISA(s, ext)
-	s.setMinMode()
+	s.mstatus.init(s.mxlen)
 	return s
 }
 
@@ -1376,48 +1411,45 @@ func (s *State) Display() string {
 
 // MRET returns from a machine-mode exception.
 func (s *State) MRET() uint {
-	mpp := Mode(s.mstatusRdMPP())
-	nextMode := s.getRetMode(mpp)
 	// restore previous MIE
 	s.mstatusWrMIE(s.mstatusRdMPIE())
+	// switch to target mode
+	s.setMode(Mode(s.mstatusRdMPP()))
 	// MPIE=1
 	s.mstatusWrMPIE(1)
-	// MPP=<minimum_supported_mode>
+	// MPP=U (or M if no user mode)
 	s.mstatusWrMPP(uint(s.getMinMode()))
-	// switch to target mode
-	s.setMode(nextMode)
 	// jump to exception address
 	return rdMEPC(s)
 }
 
 // SRET returns from a supervisor-mode exception.
 func (s *State) SRET() uint {
-	spp := Mode(s.mstatusRdSPP())
-	nextMode := s.getRetMode(spp)
 	// restore previous SIE
 	s.mstatusWrSIE(s.mstatusRdSPIE())
+	// switch to target mode
+	s.setMode(Mode(s.mstatusRdSPP()))
 	// SPIE=1
 	s.mstatusWrSPIE(1)
-	// SPP=<minimum_supported_mode>
+	// SPP=U (or M if no user mode)
 	s.mstatusWrSPP(uint(s.getMinMode()))
-	// switch to target mode
-	s.setMode(nextMode)
 	// jump to exception address
 	return rdSEPC(s)
 }
 
 // URET returns from a user-mode exception.
 func (s *State) URET() uint {
-	nextMode := ModeU
 	// restore previous UIE
 	s.mstatusWrUIE(s.mstatusRdUPIE())
+	// switch to target mode
+	s.setMode(ModeU)
 	// UPIE=1
 	s.mstatusWrUPIE(1)
-	// switch to target mode
-	s.setMode(nextMode)
 	// jump to exception address
 	return rdUEPC(s)
 }
+
+//-----------------------------------------------------------------------------
 
 // ECALL performs an environment call exception.
 func (s *State) ECALL(epc uint64, val uint) uint64 {

@@ -53,17 +53,17 @@ func (pte sv32pte) isValid() bool {
 
 // ppn returns the full physical page number from the PTE.
 func (pte sv32pte) ppn() uint {
-	return util.RdBits(uint(pte), 31, 10)
+	return util.GetBits(uint(pte), 31, 10)
 }
 
 // ppn1 returns physical page number 1 from the PTE.
 func (pte sv32pte) ppn1() uint {
-	return util.RdBits(uint(pte), 31, 20)
+	return util.GetBits(uint(pte), 31, 20)
 }
 
 // ppn0 returns physical page number 0 from the PTE.
 func (pte sv32pte) ppn0() uint {
-	return util.RdBits(uint(pte), 19, 10)
+	return util.GetBits(uint(pte), 19, 10)
 }
 
 // getUser gets the PTE user flag.
@@ -127,13 +127,13 @@ func (va sv32va) String() string {
 
 func (va sv32va) vpn(i int) uint {
 	if i == 1 {
-		return util.RdBits(uint(va), 31, 22)
+		return util.GetBits(uint(va), 31, 22)
 	}
-	return util.RdBits(uint(va), 21, 12)
+	return util.GetBits(uint(va), 21, 12)
 }
 
 func (va sv32va) ofs() uint {
-	return util.RdBits(uint(va), 11, 0)
+	return util.GetBits(uint(va), 11, 0)
 }
 
 func (va sv32va) pageError(attr Attribute) error {
