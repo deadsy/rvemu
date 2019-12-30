@@ -11,6 +11,8 @@ SV32 Virtual Memory Address Translation
 package mem
 
 import (
+	"fmt"
+
 	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/util"
 )
@@ -22,7 +24,6 @@ type sv32pte uint
 
 func (pte sv32pte) String() string {
 	fs := util.FieldSet{
-		{"raw", 31, 0, util.FmtHex8},
 		{"ppn", 31, 10, util.FmtHex},
 		{"ppn1", 31, 20, util.FmtHex},
 		{"ppn0", 19, 10, util.FmtHex},
@@ -142,33 +143,39 @@ func (va sv32va) pageError(attr Attribute) error {
 
 //-----------------------------------------------------------------------------
 
-func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
+func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute, debug bool) (uint, []string, error) {
 	var pte sv32pte
 	var pteAddr uint
+	dbg := []string{}
 
-	//fmt.Printf("va %s attr %s\n", va, attr)
+	if debug {
+		dbg = append(dbg, fmt.Sprintf("%08x va %s attr %s", uint(va), va, attr))
+		dbg = append(dbg, fmt.Sprintf("satp %s", csr.DisplaySATP(m.csr)))
+	}
 
-	// 1. Let a be satp.ppn × PAGESIZE, and let i = LEVELS − 1. (For Sv32, PAGESIZE=4096 and LEVELS=2.)
-	a := m.csr.GetPPN() << riscvPageShift
+	// 1. Let baseAddr be satp.ppn × PAGESIZE, and let i = LEVELS − 1. (For Sv32, PAGESIZE=4096 and LEVELS=2.)
+	baseAddr := m.csr.GetPPN() << riscvPageShift
 	i := 1
 
 	for true {
 		// 2. Let pte be the value of the PTE at address a+va.vpn[i]×PTESIZE. (For Sv32, PTESIZE=4.)
 		// If accessing pte violates a PMA or PMP check, raise an access exception corresponding to
 		// the original access type.
-		pteAddr = a + (va.vpn(i) << 2)
+		pteAddr = baseAddr + (va.vpn(i) << 2)
 		x, err := m.Rd32Phys(pteAddr)
 		if err != nil {
-			return 0, va.pageError(attr)
+			return 0, dbg, va.pageError(attr)
 		}
 		pte = sv32pte(x)
 
-		//fmt.Printf("%d addr %08x pte %s\n", i, pteAddr, pte)
+		if debug {
+			dbg = append(dbg, fmt.Sprintf("%09x pte%d %s", pteAddr, i, pte))
+		}
 
 		// 3. If pte.v = 0, or if pte.r = 0 and pte.w = 1, stop and raise a page-fault exception corresponding
 		// to the original access type.
 		if !pte.isValid() {
-			return 0, va.pageError(attr)
+			return 0, dbg, va.pageError(attr)
 		}
 
 		// 4. Otherwise, the PTE is valid. If pte.r = 1 or pte.x = 1, go to step 5. Otherwise, this PTE is a
@@ -180,9 +187,9 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 		}
 		i = i - 1
 		if i < 0 {
-			return 0, va.pageError(attr)
+			return 0, dbg, va.pageError(attr)
 		}
-		a = pte.ppn() << riscvPageShift
+		baseAddr = pte.ppn() << riscvPageShift
 	}
 
 	// 5. A leaf PTE has been found. Determine if the requested memory access is allowed by the
@@ -196,30 +203,30 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 	}
 	// check the RWX permissions
 	if attr&AttrR != 0 && !pte.canRead() {
-		return 0, va.pageError(attr)
+		return 0, dbg, va.pageError(attr)
 	}
 	if attr&AttrW != 0 && !pte.canWrite() {
-		return 0, va.pageError(attr)
+		return 0, dbg, va.pageError(attr)
 	}
 	if attr&AttrX != 0 && !pte.canExec() {
-		return 0, va.pageError(attr)
+		return 0, dbg, va.pageError(attr)
 	}
 
 	// check user/supervisor mode
 	switch mode {
 	case csr.ModeU:
 		if !pte.getUser() {
-			return 0, va.pageError(attr)
+			return 0, dbg, va.pageError(attr)
 		}
 	case csr.ModeS:
 		if pte.getUser() {
 			if !m.csr.GetSUM() {
 				// U == 1 and mstatus.SUM == 0
-				return 0, va.pageError(attr)
+				return 0, dbg, va.pageError(attr)
 			}
 			if attr&AttrX != 0 {
 				// Irrespective of SUM, the supervisor may not execute code on pages with U=1.
-				return 0, va.pageError(attr)
+				return 0, dbg, va.pageError(attr)
 			}
 		}
 	}
@@ -227,7 +234,7 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 	// 6. If i > 0 and pte.ppn[i − 1 : 0] != 0, this is a misaligned superpage; stop and raise a page-fault
 	// exception corresponding to the original access type.
 	if i > 0 && pte.ppn0() != 0 {
-		return 0, va.pageError(attr)
+		return 0, dbg, va.pageError(attr)
 	}
 
 	// 7. If pte.a = 0, or if the memory access is a store and pte.d = 0, either raise a page-fault
@@ -238,20 +245,24 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 	// • This update and the loading of pte in step 2 must be atomic; in particular, no intervening
 	//   store to the PTE may be perceived to have occurred in-between.
 
-	var pteUpdate bool
+	var access, dirty bool
 	if !pte.getAccess() {
-		pte.setAccess()
-		pteUpdate = true
+		access = true
 	}
 	if attr&AttrW != 0 && !pte.getDirty() {
-		pte.setDirty()
-		pteUpdate = true
+		dirty = true
 	}
-	if pteUpdate {
-		err := m.Wr32Phys(pteAddr, uint32(pte))
-		if err != nil {
-			return 0, va.pageError(attr)
+	if access || dirty {
+		// Note: We may have set the R bit previously, so re-read the pte.
+		x, _ := m.Rd32Phys(pteAddr)
+		pte := sv32pte(x)
+		if access {
+			pte.setAccess()
 		}
+		if dirty {
+			pte.setDirty()
+		}
+		m.Wr32Phys(pteAddr, uint32(pte))
 	}
 
 	// 8. The translation is successful. The translated physical address is given as follows:
@@ -266,8 +277,11 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute) (uint, error) {
 		pa += pte.ppn() << riscvPageShift
 	}
 
-	//fmt.Printf("pa %09x\n", pa)
-	return pa, nil
+	if debug {
+		dbg = append(dbg, fmt.Sprintf("pa %09x", pa))
+	}
+
+	return pa, dbg, nil
 }
 
 //-----------------------------------------------------------------------------

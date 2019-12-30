@@ -10,6 +10,7 @@ package mem
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/deadsy/riscv/csr"
 )
@@ -21,8 +22,14 @@ const riscvPageShift = 12
 //-----------------------------------------------------------------------------
 
 // bare - no translation
-func (m *Memory) bare(va uint, mode csr.Mode, attr Attribute) (uint, error) {
-	return va, nil
+func (m *Memory) bare(va uint, mode csr.Mode, attr Attribute, debug bool) (uint, []string, error) {
+	dbg := []string{}
+	if debug {
+		dbg = append(dbg, fmt.Sprintf("%08x va", va))
+		dbg = append(dbg, fmt.Sprintf("satp %s", csr.DisplaySATP(m.csr)))
+		dbg = append(dbg, fmt.Sprintf("%08x pa", va))
+	}
+	return va, dbg, nil
 }
 
 //-----------------------------------------------------------------------------
@@ -40,7 +47,7 @@ func (m *Memory) bare(va uint, mode csr.Mode, attr Attribute) (uint, error) {
 //-----------------------------------------------------------------------------
 
 // va2pa translates a virtual address to a physical address.
-func (m *Memory) va2pa(va uint, attr Attribute) (uint, error) {
+func (m *Memory) va2pa(va uint, attr Attribute, debug bool) (uint, []string, error) {
 
 	// If mstatus.MPRV == 1 then mode = mstatus.MPP
 	var mode csr.Mode
@@ -52,24 +59,24 @@ func (m *Memory) va2pa(va uint, attr Attribute) (uint, error) {
 
 	if mode == csr.ModeM {
 		// machine mode va == pa
-		return m.bare(va, mode, attr)
+		return m.bare(va, mode, attr, debug)
 	}
 
 	switch m.csr.GetVM() {
 	case csr.Bare:
-		return m.bare(va, mode, attr)
+		return m.bare(va, mode, attr, debug)
 	case csr.SV32:
-		return m.sv32(sv32va(va), mode, attr)
+		return m.sv32(sv32va(va), mode, attr, debug)
 	case csr.SV39:
-		return 0, nil
+		return 0, nil, nil
 	case csr.SV48:
-		return 0, nil
+		return 0, nil, nil
 	case csr.SV57:
-		return 0, nil
+		return 0, nil, nil
 	case csr.SV64:
-		return 0, nil
+		return 0, nil, nil
 	}
-	return 0, errors.New("unknown vm mode")
+	return 0, nil, errors.New("unknown vm mode")
 }
 
 //-----------------------------------------------------------------------------

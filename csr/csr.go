@@ -912,7 +912,7 @@ func fmtMode64(x uint) string {
 	return util.DisplayEnum(x, m, "reserved")
 }
 
-func displaySATP(s *State) string {
+func DisplaySATP(s *State) string {
 	var fs util.FieldSet
 	if s.sxlen == 32 {
 		// RV32
@@ -1036,7 +1036,7 @@ var lookup = map[uint]csrDefn{
 	0x142: {"scause", nil, rdSCAUSE, nil},
 	0x143: {"stval", wrSTVAL, rdSTVAL, nil},
 	0x144: {"sip", wrSIP, rdSIP, nil},
-	0x180: {"satp", wrSATP, rdSATP, displaySATP},
+	0x180: {"satp", wrSATP, rdSATP, DisplaySATP},
 	// Machine CSRs 0xf00 - 0xf7f (read only)
 	0xf11: {"mvendorid", nil, rdZero, nil},
 	0xf12: {"marchid", nil, rdZero, nil},

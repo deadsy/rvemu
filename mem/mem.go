@@ -179,7 +179,7 @@ func (m *Memory) Rd32RangePhys(pa, n uint) []uint32 {
 
 // RdIns reads a 32-bit instruction from memory.
 func (m *Memory) RdIns(va uint) (uint, error) {
-	pa, err := m.va2pa(va, AttrRX)
+	pa, _, err := m.va2pa(va, AttrRX, false)
 	if err != nil {
 		return 0, err
 	}
@@ -188,7 +188,7 @@ func (m *Memory) RdIns(va uint) (uint, error) {
 
 // Rd64 reads a 64-bit data value from memory.
 func (m *Memory) Rd64(va uint) (uint64, error) {
-	pa, err := m.va2pa(va, AttrR)
+	pa, _, err := m.va2pa(va, AttrR, false)
 	if err != nil {
 		return 0, err
 	}
@@ -197,7 +197,7 @@ func (m *Memory) Rd64(va uint) (uint64, error) {
 
 // Rd32 reads a 32-bit data value from memory.
 func (m *Memory) Rd32(va uint) (uint32, error) {
-	pa, err := m.va2pa(va, AttrR)
+	pa, _, err := m.va2pa(va, AttrR, false)
 	if err != nil {
 		return 0, err
 	}
@@ -206,7 +206,7 @@ func (m *Memory) Rd32(va uint) (uint32, error) {
 
 // Rd16 reads a 16-bit data value from memory.
 func (m *Memory) Rd16(va uint) (uint16, error) {
-	pa, err := m.va2pa(va, AttrR)
+	pa, _, err := m.va2pa(va, AttrR, false)
 	if err != nil {
 		return 0, err
 	}
@@ -215,7 +215,7 @@ func (m *Memory) Rd16(va uint) (uint16, error) {
 
 // Rd8 reads an 8-bit data value from memory.
 func (m *Memory) Rd8(va uint) (uint8, error) {
-	pa, err := m.va2pa(va, AttrR)
+	pa, _, err := m.va2pa(va, AttrR, false)
 	if err != nil {
 		return 0, err
 	}
@@ -266,7 +266,7 @@ func (m *Memory) Wr8Phys(pa uint, val uint8) error {
 
 // Wr64 writes a 64-bit data value to memory.
 func (m *Memory) Wr64(va uint, val uint64) error {
-	pa, err := m.va2pa(va, AttrW)
+	pa, _, err := m.va2pa(va, AttrW, false)
 	if err != nil {
 		return err
 	}
@@ -275,7 +275,7 @@ func (m *Memory) Wr64(va uint, val uint64) error {
 
 // Wr32 writes a 32-bit data value to memory.
 func (m *Memory) Wr32(va uint, val uint32) error {
-	pa, err := m.va2pa(va, AttrW)
+	pa, _, err := m.va2pa(va, AttrW, false)
 	if err != nil {
 		return err
 	}
@@ -284,7 +284,7 @@ func (m *Memory) Wr32(va uint, val uint32) error {
 
 // Wr16 writes a 16-bit data value to memory.
 func (m *Memory) Wr16(va uint, val uint16) error {
-	pa, err := m.va2pa(va, AttrW)
+	pa, _, err := m.va2pa(va, AttrW, false)
 	if err != nil {
 		return err
 	}
@@ -293,7 +293,7 @@ func (m *Memory) Wr16(va uint, val uint16) error {
 
 // Wr8 writes an 8-bit data value to memory.
 func (m *Memory) Wr8(va uint, val uint8) error {
-	pa, err := m.va2pa(va, AttrW)
+	pa, _, err := m.va2pa(va, AttrW, false)
 	if err != nil {
 		return err
 	}
