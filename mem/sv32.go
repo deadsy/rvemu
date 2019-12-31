@@ -149,7 +149,7 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute, debug bool) (uin
 	dbg := []string{}
 
 	if debug {
-		dbg = append(dbg, fmt.Sprintf("%08x va %s attr %s", uint(va), va, attr))
+		dbg = append(dbg, fmt.Sprintf("va   %08x %s", uint(va), va))
 		dbg = append(dbg, fmt.Sprintf("satp %s", csr.DisplaySATP(m.csr)))
 	}
 
@@ -169,7 +169,7 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute, debug bool) (uin
 		pte = sv32pte(x)
 
 		if debug {
-			dbg = append(dbg, fmt.Sprintf("%09x pte%d %s", pteAddr, i, pte))
+			dbg = append(dbg, fmt.Sprintf("pte%d [%09x] %s", i, pteAddr, pte))
 		}
 
 		// 3. If pte.v = 0, or if pte.r = 0 and pte.w = 1, stop and raise a page-fault exception corresponding
@@ -278,7 +278,7 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute, debug bool) (uin
 	}
 
 	if debug {
-		dbg = append(dbg, fmt.Sprintf("pa %09x", pa))
+		dbg = append(dbg, fmt.Sprintf("pa   %09x", pa))
 	}
 
 	return pa, dbg, nil

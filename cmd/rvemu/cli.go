@@ -12,6 +12,7 @@ import (
 	"fmt"
 
 	cli "github.com/deadsy/go-cli"
+	"github.com/deadsy/riscv/mem"
 	"github.com/deadsy/riscv/util"
 )
 
@@ -305,6 +306,26 @@ var memBreakpointMenu = cli.Menu{
 
 //-----------------------------------------------------------------------------
 
+var helpPageTable = []cli.Help{
+	{"<va>", "address (hex) - default is PC"},
+}
+
+var cmdPageTable = cli.Leaf{
+	Descr: "display a page table walk",
+	F: func(c *cli.CLI, args []string) {
+		cpu := c.User.(*emuApp).cpu
+		adr, err := util.AddrArg(uint(cpu.PC), maxAdr, args)
+		if err != nil {
+			c.User.Put(fmt.Sprintf("%s\n", err))
+			return
+		}
+		m := c.User.(*emuApp).mem
+		c.User.Put(fmt.Sprintf("%s\n", m.PageTableWalk(adr, mem.AttrR)))
+	},
+}
+
+//-----------------------------------------------------------------------------
+
 // root menu
 var menuRoot = cli.Menu{
 	{"bp", memBreakpointMenu, "breakpoint functions"},
@@ -316,6 +337,7 @@ var menuRoot = cli.Menu{
 	{"history", cmdHistory, cli.HistoryHelp},
 	{"map", cmdMap},
 	{"md", memDisplayMenu, "memory display"},
+	{"pt", cmdPageTable, helpPageTable},
 	{"rf", cmdFloatRegisters},
 	{"ri", cmdIntRegisters},
 	{"reset", cmdReset},

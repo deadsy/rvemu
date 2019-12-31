@@ -11,6 +11,7 @@ package mem
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/deadsy/riscv/csr"
 )
@@ -25,9 +26,9 @@ const riscvPageShift = 12
 func (m *Memory) bare(va uint, mode csr.Mode, attr Attribute, debug bool) (uint, []string, error) {
 	dbg := []string{}
 	if debug {
-		dbg = append(dbg, fmt.Sprintf("%08x va", va))
+		dbg = append(dbg, fmt.Sprintf("va   %08x", va))
 		dbg = append(dbg, fmt.Sprintf("satp %s", csr.DisplaySATP(m.csr)))
-		dbg = append(dbg, fmt.Sprintf("%08x pa", va))
+		dbg = append(dbg, fmt.Sprintf("pa   %08x", va))
 	}
 	return va, dbg, nil
 }
@@ -77,6 +78,16 @@ func (m *Memory) va2pa(va uint, attr Attribute, debug bool) (uint, []string, err
 		return 0, nil, nil
 	}
 	return 0, nil, errors.New("unknown vm mode")
+}
+
+//-----------------------------------------------------------------------------
+
+func (m *Memory) PageTableWalk(va uint, attr Attribute) string {
+	_, s, err := m.va2pa(va, attr, true)
+	if err != nil {
+		s = append(s, err.Error())
+	}
+	return strings.Join(s, "\n")
 }
 
 //-----------------------------------------------------------------------------
