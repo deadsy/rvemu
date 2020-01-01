@@ -9,6 +9,7 @@ Dump strings for memory.
 package mem
 
 import (
+	"encoding/binary"
 	"fmt"
 	"sort"
 	"strings"
@@ -69,7 +70,15 @@ func (m *Memory) Symbols() string {
 //-----------------------------------------------------------------------------
 
 // Display returns a string for a contiguous region of memory.
-func (m *Memory) Display(adr, size, width uint) string {
+func (m *Memory) Display(adr, size, width uint, vm bool) string {
+
+	fmtx := ""
+	if m.alen == 32 {
+		fmtx = "%08x %s %s"
+	} else {
+		fmtx = "%016x %s %s"
+	}
+
 	s := []string{}
 
 	// round down address to 16 byte boundary
@@ -78,77 +87,60 @@ func (m *Memory) Display(adr, size, width uint) string {
 	// round up n to an integral multiple of 16 bytes
 	size = (size + 15) & ^uint(15)
 
-	// build the header
-	var hdr, fmtx string
-	if m.alen == 32 {
-		hdr = "addr      "
-		fmtx = "%08x  "
-	} else {
-		hdr = "addr              "
-		fmtx = "%016x  "
-	}
-	switch width {
-	case 8:
-		hdr += "0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F"
-		fmtx += "%s %s"
-	case 16:
-		hdr += "0    2    4    6    8    A    C    E"
-		fmtx += "%s"
-	case 32:
-		hdr += "0        4        8        C"
-		fmtx += "%s"
-	case 64:
-		hdr += "0                8"
-		fmtx += "%s"
-	}
-	s = append(s, hdr)
-
 	// read and print the data
 	for i := 0; i < int(size>>4); i++ {
-		if width == 8 {
-			// read 16x8 bits per line
-			var data [16]string
-			var ascii [16]string
-			for j := 0; j < 16; j++ {
-				x, _ := m.Rd8Phys(adr + uint(j))
-				data[j] = fmt.Sprintf("%02x", x)
-				if x >= 32 && x <= 126 {
-					ascii[j] = fmt.Sprintf("%c", x)
-				} else {
-					ascii[j] = "."
-				}
+
+		// read 16 bytes per line
+		var data [16]uint8
+		var ascii [16]string
+		for j := range data {
+			if vm {
+				data[j], _ = m.Rd8(adr + uint(j))
+			} else {
+				data[j], _ = m.Rd8Phys(adr + uint(j))
 			}
-			dataStr := strings.Join(data[:], " ")
-			asciiStr := strings.Join(ascii[:], "")
-			s = append(s, fmt.Sprintf(fmtx, adr, dataStr, asciiStr))
-		} else if width == 16 {
-			// read 8x16 bits per line
-			var data [8]string
-			for j := 0; j < 8; j++ {
-				x, _ := m.Rd16Phys(adr + uint(j*2))
-				data[j] = fmt.Sprintf("%04x", x)
+			if data[j] >= 32 && data[j] <= 126 {
+				ascii[j] = fmt.Sprintf("%c", data[j])
+			} else {
+				ascii[j] = "."
 			}
-			dataStr := strings.Join(data[:], " ")
-			s = append(s, fmt.Sprintf(fmtx, adr, dataStr))
-		} else if width == 32 {
-			// read 4x32 bits per line
-			var data [4]string
-			for j := 0; j < 4; j++ {
-				x, _ := m.Rd32Phys(adr + uint(j*4))
-				data[j] = fmt.Sprintf("%08x", x)
-			}
-			dataStr := strings.Join(data[:], " ")
-			s = append(s, fmt.Sprintf(fmtx, adr, dataStr))
-		} else if width == 64 {
-			// read 2x64 bits per line
-			var data [2]string
-			for j := 0; j < 2; j++ {
-				x, _ := m.Rd64Phys(adr + uint(j*8))
-				data[j] = fmt.Sprintf("%016x", x)
-			}
-			dataStr := strings.Join(data[:], " ")
-			s = append(s, fmt.Sprintf(fmtx, adr, dataStr))
 		}
+
+		// create the data string
+		dataStr := ""
+		switch width {
+		case 8:
+			var xStr [16]string
+			for j := range xStr {
+				xStr[j] = fmt.Sprintf("%02x", data[j])
+			}
+			dataStr = strings.Join(xStr[:], " ")
+		case 16:
+			var xStr [8]string
+			for j := range xStr {
+				val := binary.LittleEndian.Uint16(data[2*j:])
+				xStr[j] = fmt.Sprintf("%04x", val)
+			}
+			dataStr = strings.Join(xStr[:], " ")
+		case 32:
+			var xStr [4]string
+			for j := range xStr {
+				val := binary.LittleEndian.Uint32(data[4*j:])
+				xStr[j] = fmt.Sprintf("%08x", val)
+			}
+			dataStr = strings.Join(xStr[:], " ")
+		case 64:
+			var xStr [2]string
+			for j := range xStr {
+				val := binary.LittleEndian.Uint64(data[8*j:])
+				xStr[j] = fmt.Sprintf("%016x", val)
+			}
+			dataStr = strings.Join(xStr[:], " ")
+		}
+
+		asciiStr := strings.Join(ascii[:], "")
+		s = append(s, fmt.Sprintf(fmtx, adr, dataStr, asciiStr))
+
 		adr += 16
 		adr &= (1 << m.alen) - 1
 	}

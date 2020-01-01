@@ -45,15 +45,15 @@ var cmdExit = cli.Leaf{
 }
 
 //-----------------------------------------------------------------------------
-// memory functions
+// virtual memory functions
 
 var helpMemDisplay = []cli.Help{
 	{"<adr> [len]", "address (hex) - default is 0"},
 	{"", "length (hex) - default is 0x40"},
 }
 
-var cmdMemDisplay8 = cli.Leaf{
-	Descr: "display memory (8-bits)",
+var cmdVmDisplay8 = cli.Leaf{
+	Descr: "display virtual memory (8-bits)",
 	F: func(c *cli.CLI, args []string) {
 		adr, size, err := util.MemArg(0, maxAdr, args)
 		if err != nil {
@@ -61,12 +61,12 @@ var cmdMemDisplay8 = cli.Leaf{
 			return
 		}
 		m := c.User.(*emuApp).mem
-		c.User.Put(m.Display(adr, size, 8))
+		c.User.Put(m.Display(adr, size, 8, true))
 	},
 }
 
-var cmdMemDisplay16 = cli.Leaf{
-	Descr: "display memory (16-bits)",
+var cmdVmDisplay16 = cli.Leaf{
+	Descr: "display virtual memory (16-bits)",
 	F: func(c *cli.CLI, args []string) {
 		adr, size, err := util.MemArg(0, maxAdr, args)
 		if err != nil {
@@ -74,12 +74,12 @@ var cmdMemDisplay16 = cli.Leaf{
 			return
 		}
 		m := c.User.(*emuApp).mem
-		c.User.Put(m.Display(adr, size, 16))
+		c.User.Put(m.Display(adr, size, 16, true))
 	},
 }
 
-var cmdMemDisplay32 = cli.Leaf{
-	Descr: "display memory (32-bits)",
+var cmdVmDisplay32 = cli.Leaf{
+	Descr: "display virtual memory (32-bits)",
 	F: func(c *cli.CLI, args []string) {
 		adr, size, err := util.MemArg(0, maxAdr, args)
 		if err != nil {
@@ -87,12 +87,12 @@ var cmdMemDisplay32 = cli.Leaf{
 			return
 		}
 		m := c.User.(*emuApp).mem
-		c.User.Put(m.Display(adr, size, 32))
+		c.User.Put(m.Display(adr, size, 32, true))
 	},
 }
 
-var cmdMemDisplay64 = cli.Leaf{
-	Descr: "display memory (64-bits)",
+var cmdVmDisplay64 = cli.Leaf{
+	Descr: "display virtual memory (64-bits)",
 	F: func(c *cli.CLI, args []string) {
 		adr, size, err := util.MemArg(0, maxAdr, args)
 		if err != nil {
@@ -100,16 +100,79 @@ var cmdMemDisplay64 = cli.Leaf{
 			return
 		}
 		m := c.User.(*emuApp).mem
-		c.User.Put(m.Display(adr, size, 64))
+		c.User.Put(m.Display(adr, size, 64, true))
 	},
 }
 
 // memDisplayMenu submenu items
-var memDisplayMenu = cli.Menu{
-	{"b", cmdMemDisplay8, helpMemDisplay},
-	{"h", cmdMemDisplay16, helpMemDisplay},
-	{"w", cmdMemDisplay32, helpMemDisplay},
-	{"d", cmdMemDisplay64, helpMemDisplay},
+var memDisplayVm = cli.Menu{
+	{"b", cmdVmDisplay8, helpMemDisplay},
+	{"h", cmdVmDisplay16, helpMemDisplay},
+	{"w", cmdVmDisplay32, helpMemDisplay},
+	{"d", cmdVmDisplay64, helpMemDisplay},
+}
+
+//-----------------------------------------------------------------------------
+// physical memory functions
+
+var cmdPmDisplay8 = cli.Leaf{
+	Descr: "display physical memory (8-bits)",
+	F: func(c *cli.CLI, args []string) {
+		adr, size, err := util.MemArg(0, maxAdr, args)
+		if err != nil {
+			c.User.Put(fmt.Sprintf("%s\n", err))
+			return
+		}
+		m := c.User.(*emuApp).mem
+		c.User.Put(m.Display(adr, size, 8, false))
+	},
+}
+
+var cmdPmDisplay16 = cli.Leaf{
+	Descr: "display physical memory (16-bits)",
+	F: func(c *cli.CLI, args []string) {
+		adr, size, err := util.MemArg(0, maxAdr, args)
+		if err != nil {
+			c.User.Put(fmt.Sprintf("%s\n", err))
+			return
+		}
+		m := c.User.(*emuApp).mem
+		c.User.Put(m.Display(adr, size, 16, false))
+	},
+}
+
+var cmdPmDisplay32 = cli.Leaf{
+	Descr: "display physical memory (32-bits)",
+	F: func(c *cli.CLI, args []string) {
+		adr, size, err := util.MemArg(0, maxAdr, args)
+		if err != nil {
+			c.User.Put(fmt.Sprintf("%s\n", err))
+			return
+		}
+		m := c.User.(*emuApp).mem
+		c.User.Put(m.Display(adr, size, 32, false))
+	},
+}
+
+var cmdPmDisplay64 = cli.Leaf{
+	Descr: "display physical memory (64-bits)",
+	F: func(c *cli.CLI, args []string) {
+		adr, size, err := util.MemArg(0, maxAdr, args)
+		if err != nil {
+			c.User.Put(fmt.Sprintf("%s\n", err))
+			return
+		}
+		m := c.User.(*emuApp).mem
+		c.User.Put(m.Display(adr, size, 64, false))
+	},
+}
+
+// memDisplayMenu submenu items
+var memDisplayPm = cli.Menu{
+	{"b", cmdPmDisplay8, helpMemDisplay},
+	{"h", cmdPmDisplay16, helpMemDisplay},
+	{"w", cmdPmDisplay32, helpMemDisplay},
+	{"d", cmdPmDisplay64, helpMemDisplay},
 }
 
 //-----------------------------------------------------------------------------
@@ -336,7 +399,7 @@ var menuRoot = cli.Menu{
 	{"help", cmdHelp},
 	{"history", cmdHistory, cli.HistoryHelp},
 	{"map", cmdMap},
-	{"md", memDisplayMenu, "memory display"},
+	{"pm", memDisplayPm, "physical memory menu"},
 	{"pt", cmdPageTable, helpPageTable},
 	{"rf", cmdFloatRegisters},
 	{"ri", cmdIntRegisters},
@@ -344,6 +407,7 @@ var menuRoot = cli.Menu{
 	{"step", cmdStep, helpGo},
 	{"sym", cmdSymbol},
 	{"trace", cmdTrace, helpGo},
+	{"vm", memDisplayVm, "virtual memory menu"},
 }
 
 //-----------------------------------------------------------------------------
