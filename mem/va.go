@@ -3,6 +3,12 @@
 
 Virtual Address Translation
 
+SV32: 32-bit VA maps to 34-bit PA
+SV39: 39-bit VA maps to 56-bit PA
+SV48: 48-bit VA maps to 56-bit PA
+SV57: 57-bit VA maps to ?-bit PA
+SV64: 64-bit VA maps to ?-bit PA
+
 */
 //-----------------------------------------------------------------------------
 
@@ -32,18 +38,6 @@ func (m *Memory) bare(va uint, mode csr.Mode, attr Attribute, debug bool) (uint,
 	}
 	return va, dbg, nil
 }
-
-//-----------------------------------------------------------------------------
-// SV39: 39-bit VA maps to 56-bit PA
-
-//-----------------------------------------------------------------------------
-// SV48: 48-bit VA maps to 56-bit PA
-
-//-----------------------------------------------------------------------------
-// SV57: 57-bit VA maps to ?-bit PA
-
-//-----------------------------------------------------------------------------
-// SV64: 64-bit VA maps to ?-bit PA
 
 //-----------------------------------------------------------------------------
 
@@ -82,6 +76,7 @@ func (m *Memory) va2pa(va uint, attr Attribute, debug bool) (uint, []string, err
 
 //-----------------------------------------------------------------------------
 
+// PageTableWalk returns a string annotating the va->pa page table walk.
 func (m *Memory) PageTableWalk(va uint, attr Attribute) string {
 	_, s, err := m.va2pa(va, attr, true)
 	if err != nil {
