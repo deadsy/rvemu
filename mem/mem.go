@@ -149,15 +149,6 @@ func (m *Memory) Rd8Phys(pa uint) (uint8, error) {
 	return val, err
 }
 
-// Rd32RangePhys reads a range of 32-bit data values from memory.
-func (m *Memory) Rd32RangePhys(pa, n uint) []uint32 {
-	x := make([]uint32, n)
-	for i := uint(0); i < n; i++ {
-		x[i], _ = m.Rd32(pa + (i * 4))
-	}
-	return x
-}
-
 //-----------------------------------------------------------------------------
 // Virtual Address Read Functions
 
@@ -282,6 +273,34 @@ func (m *Memory) Wr8(va uint, val uint8) error {
 		return err
 	}
 	return m.Wr8Phys(pa, val)
+}
+
+//-----------------------------------------------------------------------------
+
+// RdBuf reads a buffer of data from memory.
+func (m *Memory) RdBuf(addr, n, width uint, vm bool) []uint {
+	x := make([]uint, n)
+	for i := range x {
+		pa := addr + (uint(i) * (width >> 3))
+		if vm {
+			pa, _, _ = m.va2pa(pa, AttrR, false)
+		}
+		switch width {
+		case 8:
+			val, _ := m.Rd8Phys(pa)
+			x[i] = uint(val)
+		case 16:
+			val, _ := m.Rd16Phys(pa)
+			x[i] = uint(val)
+		case 32:
+			val, _ := m.Rd32Phys(pa)
+			x[i] = uint(val)
+		case 64:
+			val, _ := m.Rd64Phys(pa)
+			x[i] = uint(val)
+		}
+	}
+	return x
 }
 
 //-----------------------------------------------------------------------------

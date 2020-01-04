@@ -93,40 +93,40 @@ func (tc *testCase) Fixups(m *rv.RV) {
 
 //-----------------------------------------------------------------------------
 
-// compareSlice32 compares uint32 slices.
-func compareSlice32(a, b []uint32) error {
+// compareSlice compares uint slices.
+func compareSlice(a, b []uint) error {
 	if len(a) != len(b) {
-		return errors.New("len(a) != len(b)")
+		return fmt.Errorf("len(a) %d != len(b) %d", len(a), len(b))
 	}
 	for i := range a {
 		if a[i] != b[i] {
-			return fmt.Errorf("x[%d] %08x (expected) != %08x (actual)", i, a[i], b[i])
+			return fmt.Errorf("x[%d] %x (expected) != %x (actual)", i, a[i], b[i])
 		}
 	}
 	return nil
 }
 
 // getSignature reads the signature file.
-func getSignature(filename string) ([]uint32, error) {
+func getSignature(filename string) ([]uint, error) {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 	x := strings.Split(string(buf), "\n")
 	x = x[:len(x)-1]
-	sig := make([]uint32, len(x))
+	sig := make([]uint, len(x))
 	for i := range sig {
 		k, err := strconv.ParseUint(x[i], 16, 32)
 		if err != nil {
 			return nil, err
 		}
-		sig[i] = uint32(k)
+		sig[i] = uint(k)
 	}
 	return sig, nil
 }
 
 // getResults gets the test results from memory.
-func getResults(m *mem.Memory) ([]uint32, error) {
+func getResults(m *mem.Memory) ([]uint, error) {
 	start, err := m.SymbolGetAddress("begin_signature")
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func getResults(m *mem.Memory) ([]uint32, error) {
 	if start >= end {
 		return nil, errors.New("result length <= 0")
 	}
-	return m.Rd32RangePhys(start, (end-start)>>2), nil
+	return m.RdBuf(start, (end-start)>>2, 32, false), nil
 }
 
 func checkExit(m *mem.Memory, errIn error) error {
@@ -252,7 +252,7 @@ func (tc *testCase) Test() error {
 		return err
 	}
 	// compare the result and signature
-	err = compareSlice32(result, sig)
+	err = compareSlice(result, sig)
 	if err != nil {
 		return err
 	}
