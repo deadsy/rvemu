@@ -123,8 +123,8 @@ func main() {
 	app.mem.Add(mem.NewSection("heap", 0x80000000, heapSize, mem.AttrRW))
 	app.mem.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
-	// Break on the "tohost" write (compliance tests).
-	app.mem.AddBreakPointByName("tohost", mem.AttrW)
+	// Callback on the "tohost" write (compliance tests).
+	app.mem.AddCallPointByName("tohost", mem.AttrW)
 
 	// create the cli
 	c := cli.NewCLI(app)

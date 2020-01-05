@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
 /*
 
-Memory Breakpoints
+Memory Monitor Points
 
-Return a break exception when specific memory addresses have RWX access.
+Perform a debug action when specific memory addresses have RWX access.
 
 */
 //-----------------------------------------------------------------------------
@@ -15,146 +15,140 @@ import (
 	"sort"
 
 	"github.com/deadsy/go-cli"
-	"github.com/deadsy/riscv/csr"
 )
 
 //-----------------------------------------------------------------------------
 
-type bpState uint
+type mpType uint
 
 const (
-	bpOff   bpState = iota // disabled
-	bpBreak                // break when hit
-	bpSkip                 // skip once, break next time
+	tBreak mpType = iota // break point
+	tCall                // call a function
 )
 
-var bpStateStr = map[bpState]string{
-	bpOff:   "off",
-	bpBreak: "brk",
-	bpSkip:  "skip",
-}
-
-func (s bpState) String() string {
-	return bpStateStr[s]
+func (t mpType) String() string {
+	return []string{"break", "call"}[t]
 }
 
 //-----------------------------------------------------------------------------
 
-type breakPoint struct {
+type mpState uint
+
+const (
+	sOff  mpState = iota // disabled
+	sOn                  // enabled
+	sSkip                // skip
+)
+
+func (s mpState) String() string {
+	return []string{"off", "on", "skip"}[s]
+}
+
+//-----------------------------------------------------------------------------
+
+type mPoint struct {
 	name   string
 	addr   uint
 	access Attribute
-	state  bpState
-}
-
-type breakPoints map[uint]*breakPoint
-
-func newBreakPoints() breakPoints {
-	return make(map[uint]*breakPoint)
-}
-
-// Add a breakpoint
-func (b breakPoints) add(bp *breakPoint) {
-	b[bp.addr] = bp
-}
-
-// Remove a breakpoint
-func (b breakPoints) remove(addr uint) {
-	delete(b, addr)
-}
-
-// Set a breakpoint
-func (b breakPoints) set(addr uint) {
-	if bp, ok := b[addr]; ok {
-		bp.state = bpBreak
-	}
-}
-
-// Clr a breakpoint
-func (b breakPoints) clr(addr uint) {
-	if bp, ok := b[addr]; ok {
-		bp.state = bpOff
-	}
+	typ    mpType
+	state  mpState
 }
 
 //-----------------------------------------------------------------------------
 
-func (b breakPoints) check(addr uint, access Attribute) *Error {
-	if bp, ok := b[addr]; ok {
-		if access&bp.access != 0 {
-			if bp.state == bpBreak {
-				// skip so we don't immediately re-break.
-				bp.state = bpSkip
-				return &Error{ErrBreak, csr.ExBreakpoint, addr, bp.name}
-			}
-			if bp.state == bpSkip {
-				// break on the next access.
-				bp.state = bpBreak
-			}
+func (m *Memory) monitor(addr, size uint, access Attribute) {
+	mp, ok := m.mp[addr]
+	if !ok {
+		return
+	}
+	if access&mp.access == 0 || mp.state == sOff {
+		// no trigger
+		return
+	}
+	if mp.state == sSkip {
+		// trigger on the next access
+		mp.state = sOn
+		return
+	}
+
+	switch mp.typ {
+	case tBreak:
+		// set the pending breakpoint
+		if m.brk == nil {
+			m.brk = breakError(addr, access, mp.name)
 		}
+	case tCall:
 	}
+}
+
+//-----------------------------------------------------------------------------
+
+// AddBreakPoint adds a breakpoint
+func (m *Memory) AddBreakPoint(name string, addr uint, attr Attribute) {
+	m.mp[addr] = &mPoint{name, addr, attr, tBreak, sOn}
+}
+
+// AddBreakPointByName adds a breakpoint by symbol name.
+func (m *Memory) AddBreakPointByName(name string, attr Attribute) error {
+	s := m.SymbolByName(name)
+	if s == nil {
+		return fmt.Errorf("symbol \"%s\" not found", name)
+	}
+	m.AddBreakPoint(s.Name, s.Addr, attr)
 	return nil
 }
 
-func (b breakPoints) checkR(addr uint) error {
-	err := b.check(addr, AttrR)
-	if err != nil {
-		err.Type |= ErrRead
-		return err
-	}
-	return nil
+// AddCallPoint adds a callpoint.
+func (m *Memory) AddCallPoint(name string, addr uint, attr Attribute) {
+	m.mp[addr] = &mPoint{name, addr, attr, tCall, sOn}
 }
 
-func (b breakPoints) checkW(addr uint) error {
-	err := b.check(addr, AttrW)
-	if err != nil {
-		err.Type |= ErrWrite
-		return err
+// AddCallPointByName adds a callpoint by symbol name.
+func (m *Memory) AddCallPointByName(name string, attr Attribute) error {
+	s := m.SymbolByName(name)
+	if s == nil {
+		return fmt.Errorf("symbol \"%s\" not found", name)
 	}
-	return nil
-}
-
-func (b breakPoints) checkX(addr uint) error {
-	err := b.check(addr, AttrX)
-	if err != nil {
-		err.Type |= ErrExec
-		return err
-	}
+	m.AddCallPoint(s.Name, s.Addr, attr)
 	return nil
 }
 
 //-----------------------------------------------------------------------------
 
-// sort breakpoints by address
-type bpByAddr []*breakPoint
+// GetBreak returned (and resets) any pending breakpoint.
+func (m *Memory) GetBreak() error {
+	err := m.brk
+	m.brk = nil
+	return err
+}
 
-func (a bpByAddr) Len() int           { return len(a) }
-func (a bpByAddr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a bpByAddr) Less(i, j int) bool { return a[i].addr < a[j].addr }
+//-----------------------------------------------------------------------------
 
-// Display a string for the breakpoints
-func (b breakPoints) Display(alen uint) string {
-	if len(b) == 0 {
-		return "no breakpoints"
-	}
-	fmtx := "%08x"
-	if alen == 64 {
-		fmtx = "%016x"
+// sort monitor points by address
+type mpByAddr []*mPoint
+
+func (a mpByAddr) Len() int           { return len(a) }
+func (a mpByAddr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a mpByAddr) Less(i, j int) bool { return a[i].addr < a[j].addr }
+
+// Display a string for the monitor points.
+func (m *Memory) DisplayMonitorPoints() string {
+	if len(m.mp) == 0 {
+		return "no monitor points"
 	}
 	// list of break points
-	bpList := []*breakPoint{}
-	for _, v := range b {
-		bpList = append(bpList, v)
+	mpList := []*mPoint{}
+	for _, v := range m.mp {
+		mpList = append(mpList, v)
 	}
 	// sort by address
-	sort.Sort(bpByAddr(bpList))
+	sort.Sort(mpByAddr(mpList))
 	// display string
-	s := make([][]string, len(bpList))
-	for i, bp := range bpList {
-		addrStr := fmt.Sprintf(fmtx, bp.addr)
-		s[i] = []string{addrStr, bp.access.String(), bp.state.String()}
+	s := make([][]string, len(mpList))
+	for i, mp := range mpList {
+		s[i] = []string{m.AddrStr(mp.addr), mp.access.String(), mp.typ.String(), mp.state.String()}
 	}
-	return cli.TableString(s, []int{0, 0, 0}, 1)
+	return cli.TableString(s, []int{0, 0, 0, 0}, 1)
 }
 
 //-----------------------------------------------------------------------------

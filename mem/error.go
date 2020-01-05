@@ -61,6 +61,20 @@ func (e *Error) Error() string {
 
 //-----------------------------------------------------------------------------
 
+func breakError(addr uint, attr Attribute, name string) error {
+	n := uint(ErrBreak)
+	if attr&AttrR != 0 {
+		n |= ErrRead
+	}
+	if attr&AttrW != 0 {
+		n |= ErrWrite
+	}
+	if attr&AttrX != 0 {
+		n |= ErrExec
+	}
+	return &Error{n, csr.ExBreakpoint, addr, name}
+}
+
 func pageError(va uint, attr Attribute) error {
 	n := uint(ErrPage)
 	ex := -1

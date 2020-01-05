@@ -2424,6 +2424,12 @@ func (m *RV) Run() error {
 		return m.errHandler(m.errMemory(err))
 	}
 
+	// check for break points
+	err = m.Mem.GetBreak()
+	if err != nil {
+		return m.errMemory(err)
+	}
+
 	// lookup and emulate the instruction
 	im := m.isa.lookup(ins)
 	if im == nil {
@@ -2435,6 +2441,12 @@ func (m *RV) Run() error {
 		return m.errHandler(err)
 	}
 	m.insCount++
+
+	// check for breaks points
+	err = m.Mem.GetBreak()
+	if err != nil {
+		return m.errMemory(err)
+	}
 
 	// stuck PC detection
 	if m.PC == m.lastPC {

@@ -19,7 +19,8 @@ import (
 // Memory is emulated target memory.
 type Memory struct {
 	Entry     uint64             // entry point from ELF
-	BP        breakPoints        // break points
+	brk       error              // pending breakpoint
+	mp        map[uint]*mPoint   // monitor points
 	alen      uint               // address bit length
 	csr       *csr.State         // CSR state
 	region    []Region           // memory regions
@@ -31,7 +32,7 @@ type Memory struct {
 // newMemory returns a memory object.
 func newMemory(alen uint, csr *csr.State, empty Attribute) *Memory {
 	return &Memory{
-		BP:        newBreakPoints(),
+		mp:        make(map[uint]*mPoint),
 		alen:      alen,
 		csr:       csr,
 		region:    make([]Region, 0),
@@ -107,45 +108,35 @@ func (m *Memory) GetSectionName(adr uint) string {
 // RdInsPhys reads a 32-bit instruction from memory.
 func (m *Memory) RdInsPhys(pa uint) (uint, error) {
 	val, err := m.findByAddr(pa, 4).RdIns(pa)
-	if err == nil {
-		err = m.BP.checkX(pa)
-	}
+	m.monitor(pa, 4, AttrX)
 	return val, err
 }
 
 // Rd64Phys reads a 64-bit data value from memory.
 func (m *Memory) Rd64Phys(pa uint) (uint64, error) {
 	val, err := m.findByAddr(pa, 8).Rd64(pa)
-	if err == nil {
-		err = m.BP.checkR(pa)
-	}
+	m.monitor(pa, 8, AttrR)
 	return val, err
 }
 
 // Rd32Phys reads a 32-bit data value from memory.
 func (m *Memory) Rd32Phys(pa uint) (uint32, error) {
 	val, err := m.findByAddr(pa, 4).Rd32(pa)
-	if err == nil {
-		err = m.BP.checkR(pa)
-	}
+	m.monitor(pa, 4, AttrR)
 	return val, err
 }
 
 // Rd16Phys reads a 16-bit data value from memory.
 func (m *Memory) Rd16Phys(pa uint) (uint16, error) {
 	val, err := m.findByAddr(pa, 2).Rd16(pa)
-	if err == nil {
-		err = m.BP.checkR(pa)
-	}
+	m.monitor(pa, 2, AttrR)
 	return val, err
 }
 
 // Rd8Phys reads an 8-bit data value from memory.
 func (m *Memory) Rd8Phys(pa uint) (uint8, error) {
 	val, err := m.findByAddr(pa, 1).Rd8(pa)
-	if err == nil {
-		err = m.BP.checkR(pa)
-	}
+	m.monitor(pa, 1, AttrR)
 	return val, err
 }
 
@@ -203,36 +194,28 @@ func (m *Memory) Rd8(va uint) (uint8, error) {
 // Wr64Phys writes a 64-bit data value to memory.
 func (m *Memory) Wr64Phys(pa uint, val uint64) error {
 	err := m.findByAddr(pa, 8).Wr64(pa, val)
-	if err == nil {
-		err = m.BP.checkW(pa)
-	}
+	m.monitor(pa, 8, AttrW)
 	return err
 }
 
 // Wr32Phys writes a 32-bit data value to memory.
 func (m *Memory) Wr32Phys(pa uint, val uint32) error {
 	err := m.findByAddr(pa, 4).Wr32(pa, val)
-	if err == nil {
-		err = m.BP.checkW(pa)
-	}
+	m.monitor(pa, 4, AttrW)
 	return err
 }
 
 // Wr16Phys writes a 16-bit data value to memory.
 func (m *Memory) Wr16Phys(pa uint, val uint16) error {
 	err := m.findByAddr(pa, 2).Wr16(pa, val)
-	if err == nil {
-		err = m.BP.checkW(pa)
-	}
+	m.monitor(pa, 2, AttrW)
 	return err
 }
 
 // Wr8Phys writes an 8-bit data value to memory.
 func (m *Memory) Wr8Phys(pa uint, val uint8) error {
 	err := m.findByAddr(pa, 1).Wr8(pa, val)
-	if err == nil {
-		err = m.BP.checkW(pa)
-	}
+	m.monitor(pa, 1, AttrW)
 	return err
 }
 
@@ -301,18 +284,6 @@ func (m *Memory) RdBuf(addr, n, width uint, vm bool) []uint {
 		}
 	}
 	return x
-}
-
-//-----------------------------------------------------------------------------
-
-// AddBreakPointByName adds a breakpoint by symbol name.
-func (m *Memory) AddBreakPointByName(s string, attr Attribute) error {
-	sym := m.symByName[s]
-	if sym == nil {
-		return fmt.Errorf("%s not found", s)
-	}
-	m.BP.add(&breakPoint{sym.Name, sym.Addr, attr, bpBreak})
-	return nil
 }
 
 //-----------------------------------------------------------------------------

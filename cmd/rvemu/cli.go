@@ -327,44 +327,44 @@ var cmdMap = cli.Leaf{
 }
 
 //-----------------------------------------------------------------------------
-// breakpoints
+// memory monitors
 
-var helpBreakpointAdd = []cli.Help{}
+var helpMonitorAdd = []cli.Help{}
 
-var helpBreakpointSetClr = []cli.Help{}
+var helpMonitorSetClr = []cli.Help{}
 
-var cmdBreakpointAdd = cli.Leaf{
-	Descr: "add a breakpoint",
+var cmdMonitorAdd = cli.Leaf{
+	Descr: "add a monitor point",
 	F: func(c *cli.CLI, args []string) {
 	},
 }
 
-var cmdBreakpointSet = cli.Leaf{
-	Descr: "set a breakpoint",
+var cmdMonitorSet = cli.Leaf{
+	Descr: "set a monitor point",
 	F: func(c *cli.CLI, args []string) {
 	},
 }
 
-var cmdBreakpointClr = cli.Leaf{
-	Descr: "clear a breakpoint",
+var cmdMonitorClr = cli.Leaf{
+	Descr: "clear a monitor point",
 	F: func(c *cli.CLI, args []string) {
 	},
 }
 
-var cmdBreakpointShow = cli.Leaf{
-	Descr: "show the breakpoints",
+var cmdMonitorShow = cli.Leaf{
+	Descr: "show the monitor points",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*emuApp).mem
-		c.User.Put(fmt.Sprintf("%s\n", m.BP.Display(32)))
+		c.User.Put(fmt.Sprintf("%s\n", m.DisplayMonitorPoints()))
 	},
 }
 
-// memBreakpointMenu submenu items
-var memBreakpointMenu = cli.Menu{
-	{"add", cmdBreakpointAdd, helpBreakpointAdd},
-	{"clr", cmdBreakpointClr, helpBreakpointSetClr},
-	{"set", cmdBreakpointSet, helpBreakpointSetClr},
-	{"show", cmdBreakpointShow},
+// memMonitorMenu submenu items
+var memMonitorMenu = cli.Menu{
+	{"add", cmdMonitorAdd, helpMonitorAdd},
+	{"clr", cmdMonitorClr, helpMonitorSetClr},
+	{"set", cmdMonitorSet, helpMonitorSetClr},
+	{"show", cmdMonitorShow},
 }
 
 //-----------------------------------------------------------------------------
@@ -391,7 +391,6 @@ var cmdPageTable = cli.Leaf{
 
 // root menu
 var menuRoot = cli.Menu{
-	{"bp", memBreakpointMenu, "breakpoint functions"},
 	{"csr", cmdCSR},
 	{"da", cmdDisassemble, helpDisassemble},
 	{"exit", cmdExit},
@@ -399,6 +398,7 @@ var menuRoot = cli.Menu{
 	{"help", cmdHelp},
 	{"history", cmdHistory, cli.HistoryHelp},
 	{"map", cmdMap},
+	{"mm", memMonitorMenu, "memory monitor functions"},
 	{"pm", memDisplayPm, "physical memory menu"},
 	{"pt", cmdPageTable, helpPageTable},
 	{"rf", cmdFloatRegisters},
