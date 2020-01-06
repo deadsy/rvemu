@@ -85,10 +85,15 @@ func (u *emuApp) Put(s string) {
 //-----------------------------------------------------------------------------
 
 func tohostCallback(m *mem.Memory, bp *mem.BreakPoint) bool {
-	fmt.Printf("%s\n", bp)
-	x, _ := m.Rd64Phys(bp.Addr - 4)
-	fmt.Printf("%016x\n", x)
-	return true
+	addr := bp.Addr - 4
+	brk := true
+	x, _ := m.Rd64Phys(addr)
+	if (x >> 32) == 0x01010000 {
+		fmt.Printf("%s", string(x&0xff))
+		m.Wr64Phys(addr, 0)
+		brk = false
+	}
+	return brk
 }
 
 //-----------------------------------------------------------------------------
