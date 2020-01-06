@@ -18,21 +18,21 @@ import (
 
 // Memory is emulated target memory.
 type Memory struct {
-	Entry     uint64             // entry point from ELF
-	brk       error              // pending breakpoint
-	mp        map[uint]*mPoint   // monitor points
-	alen      uint               // address bit length
-	csr       *csr.State         // CSR state
-	region    []Region           // memory regions
-	symByAddr map[uint]*Symbol   // symbol table by address
-	symByName map[string]*Symbol // symbol table by name
-	noMemory  Region             // empty memory region
+	Entry     uint64               // entry point from ELF
+	brk       error                // pending breakpoint
+	bp        map[uint]*BreakPoint // break points
+	alen      uint                 // address bit length
+	csr       *csr.State           // CSR state
+	region    []Region             // memory regions
+	symByAddr map[uint]*Symbol     // symbol table by address
+	symByName map[string]*Symbol   // symbol table by name
+	noMemory  Region               // empty memory region
 }
 
 // newMemory returns a memory object.
 func newMemory(alen uint, csr *csr.State, empty Attribute) *Memory {
 	return &Memory{
-		mp:        make(map[uint]*mPoint),
+		bp:        make(map[uint]*BreakPoint),
 		alen:      alen,
 		csr:       csr,
 		region:    make([]Region, 0),
@@ -52,12 +52,16 @@ func NewMem64(csr *csr.State, empty Attribute) *Memory {
 	return newMemory(64, csr, empty)
 }
 
-// AddrStr returns a string for the address.
-func (m *Memory) AddrStr(addr uint) string {
-	if m.alen == 32 {
+func addrStr(addr, alen uint) string {
+	if alen == 32 {
 		return fmt.Sprintf("%08x", addr)
 	}
 	return fmt.Sprintf("%016x", addr)
+}
+
+// AddrStr returns a string for the address.
+func (m *Memory) AddrStr(addr uint) string {
+	return addrStr(addr, m.alen)
 }
 
 // Add a memory region to the memory.

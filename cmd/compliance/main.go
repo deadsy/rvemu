@@ -212,7 +212,7 @@ func (tc *testCase) Test() error {
 	cpu.Mem.Add(mem.NewSection("heap", 0x80000000, heapSize, mem.AttrRW))
 
 	// Break on the "tohost" write (compliance tests).
-	cpu.Mem.AddBreakPointByName("tohost", mem.AttrW)
+	cpu.Mem.AddBreakPointByName("tohost", mem.AttrW, nil)
 
 	// apply per test fixups
 	tc.Fixups(cpu)

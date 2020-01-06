@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 /*
 
-Memory Monitor Points
+Memory Break Points
 
 Perform a debug action when specific memory addresses have RWX access.
 
@@ -13,103 +13,93 @@ package mem
 import (
 	"fmt"
 	"sort"
-
-	"github.com/deadsy/go-cli"
+	"strings"
 )
 
 //-----------------------------------------------------------------------------
 
-type mpType uint
+type bpState uint
 
 const (
-	tBreak mpType = iota // break point
-	tCall                // call a function
-)
-
-func (t mpType) String() string {
-	return []string{"break", "call"}[t]
-}
-
-//-----------------------------------------------------------------------------
-
-type mpState uint
-
-const (
-	sOff  mpState = iota // disabled
+	sOff  bpState = iota // disabled
 	sOn                  // enabled
 	sSkip                // skip
 )
 
-func (s mpState) String() string {
+func (s bpState) String() string {
 	return []string{"off", "on", "skip"}[s]
 }
 
 //-----------------------------------------------------------------------------
 
-type mPoint struct {
-	name   string
-	addr   uint
-	access Attribute
-	typ    mpType
-	state  mpState
+type bpFunc func(m *Memory, bp *BreakPoint) bool
+
+type BreakPoint struct {
+	Name   string    // breakpoint name
+	Addr   uint      // address for trigger
+	Access Attribute // access for trigger
+	alen   uint      // address bit length
+	state  bpState   // breakpoint state
+	cond   bpFunc    // condition function
+}
+
+func (mon *BreakPoint) String() string {
+	s := []string{}
+	s = append(s, addrStr(mon.Addr, mon.alen))
+	s = append(s, mon.Access.String())
+	s = append(s, mon.state.String())
+	return strings.Join(s, " ")
 }
 
 //-----------------------------------------------------------------------------
 
 func (m *Memory) monitor(addr, size uint, access Attribute) {
-	mp, ok := m.mp[addr]
+	bp, ok := m.bp[addr]
 	if !ok {
 		return
 	}
-	if access&mp.access == 0 || mp.state == sOff {
+	if access&bp.Access == 0 || bp.state == sOff {
 		// no trigger
 		return
 	}
-	if mp.state == sSkip {
+	if bp.state == sSkip {
 		// trigger on the next access
-		mp.state = sOn
+		bp.state = sOn
 		return
 	}
-
-	switch mp.typ {
-	case tBreak:
-		// set the pending breakpoint
-		if m.brk == nil {
-			m.brk = breakError(addr, access, mp.name)
-		}
-	case tCall:
+	// triggered...
+	brk := true
+	if bp.cond != nil {
+		brk = bp.cond(m, bp)
+	}
+	// should we break?
+	if brk && m.brk == nil {
+		m.brk = breakError(addr, access, bp.Name)
 	}
 }
 
 //-----------------------------------------------------------------------------
 
-// AddBreakPoint adds a breakpoint
-func (m *Memory) AddBreakPoint(name string, addr uint, attr Attribute) {
-	m.mp[addr] = &mPoint{name, addr, attr, tBreak, sOn}
+// AddBreakPoint adds a break point.
+func (m *Memory) AddBreakPoint(name string, addr uint, attr Attribute, cond bpFunc) {
+	bp := &BreakPoint{
+		Name:   name,
+		Addr:   addr,
+		Access: attr,
+		alen:   m.alen,
+		state:  sOn,
+		cond:   cond,
+	}
+	m.bp[addr] = bp
 }
 
-// AddBreakPointByName adds a breakpoint by symbol name.
-func (m *Memory) AddBreakPointByName(name string, attr Attribute) error {
+// AddBreakPointByName adds a break point by symbol name.
+func (m *Memory) AddBreakPointByName(name string, attr Attribute, cond bpFunc) error {
 	s := m.SymbolByName(name)
 	if s == nil {
 		return fmt.Errorf("symbol \"%s\" not found", name)
 	}
-	m.AddBreakPoint(s.Name, s.Addr, attr)
-	return nil
-}
-
-// AddCallPoint adds a callpoint.
-func (m *Memory) AddCallPoint(name string, addr uint, attr Attribute) {
-	m.mp[addr] = &mPoint{name, addr, attr, tCall, sOn}
-}
-
-// AddCallPointByName adds a callpoint by symbol name.
-func (m *Memory) AddCallPointByName(name string, attr Attribute) error {
-	s := m.SymbolByName(name)
-	if s == nil {
-		return fmt.Errorf("symbol \"%s\" not found", name)
-	}
-	m.AddCallPoint(s.Name, s.Addr, attr)
+	m.AddBreakPoint(s.Name, s.Addr, attr, cond)
 	return nil
 }
 
@@ -125,30 +115,30 @@ func (m *Memory) GetBreak() error {
 //-----------------------------------------------------------------------------
 
 // sort monitor points by address
-type mpByAddr []*mPoint
+type bpByAddr []*BreakPoint
 
-func (a mpByAddr) Len() int           { return len(a) }
-func (a mpByAddr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a mpByAddr) Less(i, j int) bool { return a[i].addr < a[j].addr }
+func (a bpByAddr) Len() int           { return len(a) }
+func (a bpByAddr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a bpByAddr) Less(i, j int) bool { return a[i].Addr < a[j].Addr }
 
-// Display a string for the monitor points.
-func (m *Memory) DisplayMonitorPoints() string {
-	if len(m.mp) == 0 {
-		return "no monitor points"
+// Display a string for the break points.
+func (m *Memory) DisplayBreakPoints() string {
+	if len(m.bp) == 0 {
+		return "no break points"
 	}
 	// list of break points
-	mpList := []*mPoint{}
-	for _, v := range m.mp {
-		mpList = append(mpList, v)
+	bpList := []*BreakPoint{}
+	for _, v := range m.bp {
+		bpList = append(bpList, v)
 	}
 	// sort by address
-	sort.Sort(mpByAddr(mpList))
+	sort.Sort(bpByAddr(bpList))
 	// display string
-	s := make([][]string, len(mpList))
-	for i, mp := range mpList {
-		s[i] = []string{m.AddrStr(mp.addr), mp.access.String(), mp.typ.String(), mp.state.String()}
+	s := make([]string, len(bpList))
+	for i, bp := range bpList {
+		s[i] = bp.String()
 	}
-	return cli.TableString(s, []int{0, 0, 0, 0}, 1)
+	return strings.Join(s, "\n")
 }
 
 //-----------------------------------------------------------------------------

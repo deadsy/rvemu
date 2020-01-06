@@ -84,6 +84,15 @@ func (u *emuApp) Put(s string) {
 
 //-----------------------------------------------------------------------------
 
+func tohostCallback(m *mem.Memory, bp *mem.BreakPoint) bool {
+	fmt.Printf("%s\n", bp)
+	x, _ := m.Rd64Phys(bp.Addr - 4)
+	fmt.Printf("%016x\n", x)
+	return true
+}
+
+//-----------------------------------------------------------------------------
+
 func main() {
 	// command line flags
 	fname := flag.String("f", "out.bin", "file to load (ELF)")
@@ -124,7 +133,15 @@ func main() {
 	app.mem.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
 	// Callback on the "tohost" write (compliance tests).
-	app.mem.AddCallPointByName("tohost", mem.AttrW)
+	sym := app.mem.SymbolByName("tohost")
+	if sym != nil {
+		if sym.Size == 8 && elfClass == elf.ELFCLASS32 {
+			// trap on a write to the ms word
+			app.mem.AddBreakPoint(sym.Name, sym.Addr+4, mem.AttrW, tohostCallback)
+		} else {
+			app.mem.AddBreakPoint(sym.Name, sym.Addr, mem.AttrW, tohostCallback)
+		}
+	}
 
 	// create the cli
 	c := cli.NewCLI(app)

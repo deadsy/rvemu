@@ -329,42 +329,42 @@ var cmdMap = cli.Leaf{
 //-----------------------------------------------------------------------------
 // memory monitors
 
-var helpMonitorAdd = []cli.Help{}
+var helpBreakPointAdd = []cli.Help{}
 
-var helpMonitorSetClr = []cli.Help{}
+var helpBreakPointSetClr = []cli.Help{}
 
-var cmdMonitorAdd = cli.Leaf{
+var cmdBreakPointAdd = cli.Leaf{
 	Descr: "add a monitor point",
 	F: func(c *cli.CLI, args []string) {
 	},
 }
 
-var cmdMonitorSet = cli.Leaf{
+var cmdBreakPointSet = cli.Leaf{
 	Descr: "set a monitor point",
 	F: func(c *cli.CLI, args []string) {
 	},
 }
 
-var cmdMonitorClr = cli.Leaf{
+var cmdBreakPointClr = cli.Leaf{
 	Descr: "clear a monitor point",
 	F: func(c *cli.CLI, args []string) {
 	},
 }
 
-var cmdMonitorShow = cli.Leaf{
+var cmdBreakPointShow = cli.Leaf{
 	Descr: "show the monitor points",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*emuApp).mem
-		c.User.Put(fmt.Sprintf("%s\n", m.DisplayMonitorPoints()))
+		c.User.Put(fmt.Sprintf("%s\n", m.DisplayBreakPoints()))
 	},
 }
 
-// memMonitorMenu submenu items
-var memMonitorMenu = cli.Menu{
-	{"add", cmdMonitorAdd, helpMonitorAdd},
-	{"clr", cmdMonitorClr, helpMonitorSetClr},
-	{"set", cmdMonitorSet, helpMonitorSetClr},
-	{"show", cmdMonitorShow},
+// memBreakPointMenu submenu items
+var memBreakPointMenu = cli.Menu{
+	{"add", cmdBreakPointAdd, helpBreakPointAdd},
+	{"clr", cmdBreakPointClr, helpBreakPointSetClr},
+	{"set", cmdBreakPointSet, helpBreakPointSetClr},
+	{"show", cmdBreakPointShow},
 }
 
 //-----------------------------------------------------------------------------
@@ -398,7 +398,7 @@ var menuRoot = cli.Menu{
 	{"help", cmdHelp},
 	{"history", cmdHistory, cli.HistoryHelp},
 	{"map", cmdMap},
-	{"mm", memMonitorMenu, "memory monitor functions"},
+	{"mm", memBreakPointMenu, "memory monitor functions"},
 	{"pm", memDisplayPm, "physical memory menu"},
 	{"pt", cmdPageTable, helpPageTable},
 	{"rf", cmdFloatRegisters},
