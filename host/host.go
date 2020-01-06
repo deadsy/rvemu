@@ -36,8 +36,8 @@ func NewHost(m *mem.Memory) *Host {
 // they want to send a character to the host.
 const charMagic = 0x01010000
 
-// To intercepts writes to the tohost memory location.
-func (h *Host) To(m *mem.Memory, bp *mem.BreakPoint) bool {
+// To64 intercepts writes to a 64-bit tohost memory location.
+func (h *Host) To64(m *mem.Memory, bp *mem.BreakPoint) bool {
 	// break by default unless we consume the write
 	brk := true
 	val, _ := m.Rd64Phys(h.addr)
@@ -51,8 +51,16 @@ func (h *Host) To(m *mem.Memory, bp *mem.BreakPoint) bool {
 	return brk
 }
 
+// To32 intercepts writes to a 32-bit tohost memory location.
+func (h *Host) To32(m *mem.Memory, bp *mem.BreakPoint) bool {
+	return true
+}
+
 // GetText returns the string of characters written "tohost".
 func (h *Host) GetText() string {
+	if h.text == nil {
+		return ""
+	}
 	return string(h.text)
 }
 
