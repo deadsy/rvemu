@@ -111,37 +111,27 @@ func (m *Memory) GetSectionName(adr uint) string {
 
 // RdInsPhys reads a 32-bit instruction from memory.
 func (m *Memory) RdInsPhys(pa uint) (uint, error) {
-	val, err := m.findByAddr(pa, 4).RdIns(pa)
-	m.monitor(pa, 4, AttrX)
-	return val, err
+	return m.findByAddr(pa, 4).RdIns(pa)
 }
 
 // Rd64Phys reads a 64-bit data value from memory.
 func (m *Memory) Rd64Phys(pa uint) (uint64, error) {
-	val, err := m.findByAddr(pa, 8).Rd64(pa)
-	m.monitor(pa, 8, AttrR)
-	return val, err
+	return m.findByAddr(pa, 8).Rd64(pa)
 }
 
 // Rd32Phys reads a 32-bit data value from memory.
 func (m *Memory) Rd32Phys(pa uint) (uint32, error) {
-	val, err := m.findByAddr(pa, 4).Rd32(pa)
-	m.monitor(pa, 4, AttrR)
-	return val, err
+	return m.findByAddr(pa, 4).Rd32(pa)
 }
 
 // Rd16Phys reads a 16-bit data value from memory.
 func (m *Memory) Rd16Phys(pa uint) (uint16, error) {
-	val, err := m.findByAddr(pa, 2).Rd16(pa)
-	m.monitor(pa, 2, AttrR)
-	return val, err
+	return m.findByAddr(pa, 2).Rd16(pa)
 }
 
 // Rd8Phys reads an 8-bit data value from memory.
 func (m *Memory) Rd8Phys(pa uint) (uint8, error) {
-	val, err := m.findByAddr(pa, 1).Rd8(pa)
-	m.monitor(pa, 1, AttrR)
-	return val, err
+	return m.findByAddr(pa, 1).Rd8(pa)
 }
 
 //-----------------------------------------------------------------------------
@@ -153,7 +143,9 @@ func (m *Memory) RdIns(va uint) (uint, error) {
 	if err != nil {
 		return 0, err
 	}
-	return m.RdInsPhys(pa)
+	val, err := m.RdInsPhys(pa)
+	m.monitor(pa, 4, AttrX)
+	return val, err
 }
 
 // Rd64 reads a 64-bit data value from memory.
@@ -162,7 +154,9 @@ func (m *Memory) Rd64(va uint) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return m.Rd64Phys(pa)
+	val, err := m.Rd64Phys(pa)
+	m.monitor(pa, 8, AttrR)
+	return val, err
 }
 
 // Rd32 reads a 32-bit data value from memory.
@@ -171,7 +165,9 @@ func (m *Memory) Rd32(va uint) (uint32, error) {
 	if err != nil {
 		return 0, err
 	}
-	return m.Rd32Phys(pa)
+	val, err := m.Rd32Phys(pa)
+	m.monitor(pa, 4, AttrR)
+	return val, err
 }
 
 // Rd16 reads a 16-bit data value from memory.
@@ -180,7 +176,9 @@ func (m *Memory) Rd16(va uint) (uint16, error) {
 	if err != nil {
 		return 0, err
 	}
-	return m.Rd16Phys(pa)
+	val, err := m.Rd16Phys(pa)
+	m.monitor(pa, 2, AttrR)
+	return val, err
 }
 
 // Rd8 reads an 8-bit data value from memory.
@@ -189,7 +187,9 @@ func (m *Memory) Rd8(va uint) (uint8, error) {
 	if err != nil {
 		return 0, err
 	}
-	return m.Rd8Phys(pa)
+	val, err := m.Rd8Phys(pa)
+	m.monitor(pa, 1, AttrR)
+	return val, err
 }
 
 //-----------------------------------------------------------------------------
@@ -197,30 +197,22 @@ func (m *Memory) Rd8(va uint) (uint8, error) {
 
 // Wr64Phys writes a 64-bit data value to memory.
 func (m *Memory) Wr64Phys(pa uint, val uint64) error {
-	err := m.findByAddr(pa, 8).Wr64(pa, val)
-	m.monitor(pa, 8, AttrW)
-	return err
+	return m.findByAddr(pa, 8).Wr64(pa, val)
 }
 
 // Wr32Phys writes a 32-bit data value to memory.
 func (m *Memory) Wr32Phys(pa uint, val uint32) error {
-	err := m.findByAddr(pa, 4).Wr32(pa, val)
-	m.monitor(pa, 4, AttrW)
-	return err
+	return m.findByAddr(pa, 4).Wr32(pa, val)
 }
 
 // Wr16Phys writes a 16-bit data value to memory.
 func (m *Memory) Wr16Phys(pa uint, val uint16) error {
-	err := m.findByAddr(pa, 2).Wr16(pa, val)
-	m.monitor(pa, 2, AttrW)
-	return err
+	return m.findByAddr(pa, 2).Wr16(pa, val)
 }
 
 // Wr8Phys writes an 8-bit data value to memory.
 func (m *Memory) Wr8Phys(pa uint, val uint8) error {
-	err := m.findByAddr(pa, 1).Wr8(pa, val)
-	m.monitor(pa, 1, AttrW)
-	return err
+	return m.findByAddr(pa, 1).Wr8(pa, val)
 }
 
 //-----------------------------------------------------------------------------
@@ -232,7 +224,9 @@ func (m *Memory) Wr64(va uint, val uint64) error {
 	if err != nil {
 		return err
 	}
-	return m.Wr64Phys(pa, val)
+	err = m.Wr64Phys(pa, val)
+	m.monitor(pa, 8, AttrW)
+	return err
 }
 
 // Wr32 writes a 32-bit data value to memory.
@@ -241,7 +235,9 @@ func (m *Memory) Wr32(va uint, val uint32) error {
 	if err != nil {
 		return err
 	}
-	return m.Wr32Phys(pa, val)
+	err = m.Wr32Phys(pa, val)
+	m.monitor(pa, 4, AttrW)
+	return err
 }
 
 // Wr16 writes a 16-bit data value to memory.
@@ -250,7 +246,9 @@ func (m *Memory) Wr16(va uint, val uint16) error {
 	if err != nil {
 		return err
 	}
-	return m.Wr16Phys(pa, val)
+	err = m.Wr16Phys(pa, val)
+	m.monitor(pa, 2, AttrW)
+	return err
 }
 
 // Wr8 writes an 8-bit data value to memory.
@@ -259,7 +257,9 @@ func (m *Memory) Wr8(va uint, val uint8) error {
 	if err != nil {
 		return err
 	}
-	return m.Wr8Phys(pa, val)
+	err = m.Wr8Phys(pa, val)
+	m.monitor(pa, 1, AttrW)
+	return err
 }
 
 //-----------------------------------------------------------------------------

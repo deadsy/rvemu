@@ -34,6 +34,7 @@ func (s bpState) String() string {
 
 type bpFunc func(m *Memory, bp *BreakPoint) bool
 
+// BreakPoint stores the information for a memory breakpoint.
 type BreakPoint struct {
 	Name   string    // breakpoint name
 	Addr   uint      // address for trigger
@@ -121,7 +122,7 @@ func (a bpByAddr) Len() int           { return len(a) }
 func (a bpByAddr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a bpByAddr) Less(i, j int) bool { return a[i].Addr < a[j].Addr }
 
-// Display a string for the break points.
+// DisplayBreakPoints displays a string for the memory break points.
 func (m *Memory) DisplayBreakPoints() string {
 	if len(m.bp) == 0 {
 		return "no break points"
