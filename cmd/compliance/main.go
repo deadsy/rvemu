@@ -206,14 +206,14 @@ func (tc *testCase) Test() error {
 	var tohost *host.Host
 	sym := cpu.Mem.SymbolByName("tohost")
 	if sym != nil {
-		tohost = host.NewHost(sym.Addr)
+		tohost = host.NewHost(cpu.Mem, sym.Addr)
 		if sym.Size == 8 {
 			// trap on a write to the most significant word
-			fn := func(m *mem.Memory, bp *mem.BreakPoint) bool { return tohost.To64(m, bp) }
+			fn := func(bp *mem.BreakPoint) bool { return tohost.To64(bp) }
 			cpu.Mem.AddBreakPoint(sym.Name, sym.Addr+4, mem.AttrW, fn)
 		} else {
 			// 32-bit variable
-			fn := func(m *mem.Memory, bp *mem.BreakPoint) bool { return tohost.To32(m, bp) }
+			fn := func(bp *mem.BreakPoint) bool { return tohost.To32(bp) }
 			cpu.Mem.AddBreakPoint(sym.Name, sym.Addr, mem.AttrW, fn)
 		}
 	}

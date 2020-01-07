@@ -32,7 +32,7 @@ func (s bpState) String() string {
 
 //-----------------------------------------------------------------------------
 
-type bpFunc func(m *Memory, bp *BreakPoint) bool
+type bpFunc func(bp *BreakPoint) bool
 
 // BreakPoint stores the information for a memory breakpoint.
 type BreakPoint struct {
@@ -71,7 +71,7 @@ func (m *Memory) monitor(addr, size uint, access Attribute) {
 	// triggered...
 	brk := true
 	if bp.cond != nil {
-		brk = bp.cond(m, bp)
+		brk = bp.cond(bp)
 	}
 	// should we break?
 	if brk && m.brk == nil {

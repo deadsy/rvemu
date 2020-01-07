@@ -128,14 +128,14 @@ func main() {
 	// Callback on the "tohost" write (compliance tests).
 	sym := app.mem.SymbolByName("tohost")
 	if sym != nil {
-		app.host = host.NewHost(sym.Addr)
+		app.host = host.NewHost(app.mem, sym.Addr)
 		if sym.Size == 8 {
 			// trap on a write to the most significant word
-			fn := func(m *mem.Memory, bp *mem.BreakPoint) bool { return app.host.To64(m, bp) }
+			fn := func(bp *mem.BreakPoint) bool { return app.host.To64(bp) }
 			app.mem.AddBreakPoint(sym.Name, sym.Addr+4, mem.AttrW, fn)
 		} else {
 			// 32-bit variable
-			fn := func(m *mem.Memory, bp *mem.BreakPoint) bool { return app.host.To32(m, bp) }
+			fn := func(bp *mem.BreakPoint) bool { return app.host.To32(bp) }
 			app.mem.AddBreakPoint(sym.Name, sym.Addr, mem.AttrW, fn)
 		}
 	}

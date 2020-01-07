@@ -23,14 +23,16 @@ import (
 
 // Host stores the state of writes to the "tohost" location.
 type Host struct {
-	addr   uint // base address of "tohost" symbol
+	mem    *mem.Memory // memory sub-system
+	addr   uint        // base address of "tohost" symbol
 	status uint
 	text   []rune // characters written "tohost"
 }
 
 // NewHost returns a Host empty structure.
-func NewHost(addr uint) *Host {
+func NewHost(mem *mem.Memory, addr uint) *Host {
 	return &Host{
+		mem:  mem,
 		addr: addr,
 		text: make([]rune, 0, 128),
 	}
@@ -57,14 +59,14 @@ func (h *Host) Passed() bool {
 const charMagic = 0x01010000
 
 // To64 intercepts writes to a 64-bit tohost memory location.
-func (h *Host) To64(m *mem.Memory, bp *mem.BreakPoint) bool {
+func (h *Host) To64(bp *mem.BreakPoint) bool {
 	// get the tohost value
-	val, _ := m.Rd64Phys(h.addr)
+	val, _ := h.mem.Rd64Phys(h.addr)
 	// Is this a character write?
 	if (val >> 32) == charMagic {
 		h.text = append(h.text, rune(val&0xff))
 		// signal write consumption to the risc-v test.
-		m.Wr64Phys(h.addr, 0)
+		h.mem.Wr64Phys(h.addr, 0)
 		// no break
 		return false
 	}
@@ -76,9 +78,9 @@ func (h *Host) To64(m *mem.Memory, bp *mem.BreakPoint) bool {
 //-----------------------------------------------------------------------------
 
 // To32 intercepts writes to a 32-bit tohost memory location.
-func (h *Host) To32(m *mem.Memory, bp *mem.BreakPoint) bool {
+func (h *Host) To32(bp *mem.BreakPoint) bool {
 	// get the tohost value
-	val, _ := m.Rd32Phys(h.addr)
+	val, _ := h.mem.Rd32Phys(h.addr)
 	h.status = uint(val)
 	// break
 	return true
