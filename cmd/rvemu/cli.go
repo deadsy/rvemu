@@ -389,6 +389,16 @@ var cmdPageTable = cli.Leaf{
 
 //-----------------------------------------------------------------------------
 
+var cmdHost = cli.Leaf{
+	Descr: "display host state",
+	F: func(c *cli.CLI, args []string) {
+		host := c.User.(*emuApp).host
+		c.User.Put(fmt.Sprintf("%s\n", host))
+	},
+}
+
+//-----------------------------------------------------------------------------
+
 // root menu
 var menuRoot = cli.Menu{
 	{"csr", cmdCSR},
@@ -397,6 +407,7 @@ var menuRoot = cli.Menu{
 	{"go", cmdGo, helpGo},
 	{"help", cmdHelp},
 	{"history", cmdHistory, cli.HistoryHelp},
+	{"host", cmdHost},
 	{"map", cmdMap},
 	{"mm", memBreakPointMenu, "memory monitor functions"},
 	{"pm", memDisplayPm, "physical memory menu"},

@@ -16,6 +16,7 @@ import (
 
 	cli "github.com/deadsy/go-cli"
 	"github.com/deadsy/riscv/csr"
+	"github.com/deadsy/riscv/host"
 	"github.com/deadsy/riscv/mem"
 	"github.com/deadsy/riscv/rv"
 	"github.com/deadsy/riscv/util"
@@ -34,6 +35,7 @@ type emuApp struct {
 	mem      *mem.Memory
 	cpu      *rv.RV
 	elfClass elf.Class
+	host     *host.Host
 	prompt   string
 }
 
@@ -84,20 +86,6 @@ func (u *emuApp) Put(s string) {
 
 //-----------------------------------------------------------------------------
 
-func tohostCallback(m *mem.Memory, bp *mem.BreakPoint) bool {
-	addr := bp.Addr - 4
-	brk := true
-	x, _ := m.Rd64Phys(addr)
-	if (x >> 32) == 0x01010000 {
-		fmt.Printf("%s", string(x&0xff))
-		m.Wr64Phys(addr, 0)
-		brk = false
-	}
-	return brk
-}
-
-//-----------------------------------------------------------------------------
-
 func main() {
 	// command line flags
 	fname := flag.String("f", "out.bin", "file to load (ELF)")
@@ -140,11 +128,15 @@ func main() {
 	// Callback on the "tohost" write (compliance tests).
 	sym := app.mem.SymbolByName("tohost")
 	if sym != nil {
-		if sym.Size == 8 && elfClass == elf.ELFCLASS32 {
-			// trap on a write to the ms word
-			app.mem.AddBreakPoint(sym.Name, sym.Addr+4, mem.AttrW, tohostCallback)
+		app.host = host.NewHost(sym.Addr)
+		if sym.Size == 8 {
+			// trap on a write to the most significant word
+			fn := func(m *mem.Memory, bp *mem.BreakPoint) bool { return app.host.To64(m, bp) }
+			app.mem.AddBreakPoint(sym.Name, sym.Addr+4, mem.AttrW, fn)
 		} else {
-			app.mem.AddBreakPoint(sym.Name, sym.Addr, mem.AttrW, tohostCallback)
+			// 32-bit variable
+			fn := func(m *mem.Memory, bp *mem.BreakPoint) bool { return app.host.To32(m, bp) }
+			app.mem.AddBreakPoint(sym.Name, sym.Addr, mem.AttrW, fn)
 		}
 	}
 

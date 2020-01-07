@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/deadsy/riscv/csr"
+	"github.com/deadsy/riscv/host"
 	"github.com/deadsy/riscv/mem"
 	"github.com/deadsy/riscv/rv"
 	"github.com/deadsy/riscv/util"
@@ -141,7 +142,7 @@ func getResults(m *mem.Memory) ([]uint, error) {
 	return m.RdBuf(start, (end-start)>>2, 32, false), nil
 }
 
-func checkExit(m *mem.Memory, errIn error) error {
+func checkExit(tohost *host.Host, errIn error) error {
 	// we are expecting a breakpoint on write to "tohost".
 	e := errIn.(*rv.Error)
 	em := e.GetMemError()
@@ -151,19 +152,9 @@ func checkExit(m *mem.Memory, errIn error) error {
 	if em.Type != mem.ErrWrite|mem.ErrBreak {
 		return errIn
 	}
-	// get the symbol
-	addr, err := m.SymbolGetAddress("tohost")
-	if err != nil {
-		return fmt.Errorf("\"tohost\" symbol not found, %s", errIn)
-	}
-	// check the address
-	if em.Addr != addr {
-		return fmt.Errorf("breakpoint not on \"tohost\", %s", errIn)
-	}
 	// check the exit status
-	status, _ := m.Rd32(addr)
-	if status != 1 {
-		return fmt.Errorf("(%d), %s", status, errIn)
+	if !tohost.Passed() {
+		return fmt.Errorf("%s", tohost)
 	}
 	// looks good
 	return nil
@@ -211,8 +202,21 @@ func (tc *testCase) Test() error {
 	cpu.Mem.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 	cpu.Mem.Add(mem.NewSection("heap", 0x80000000, heapSize, mem.AttrRW))
 
-	// Break on the "tohost" write (compliance tests).
-	cpu.Mem.AddBreakPointByName("tohost", mem.AttrW, nil)
+	// Callback on the "tohost" write (compliance tests).
+	var tohost *host.Host
+	sym := cpu.Mem.SymbolByName("tohost")
+	if sym != nil {
+		tohost = host.NewHost(sym.Addr)
+		if sym.Size == 8 {
+			// trap on a write to the most significant word
+			fn := func(m *mem.Memory, bp *mem.BreakPoint) bool { return tohost.To64(m, bp) }
+			cpu.Mem.AddBreakPoint(sym.Name, sym.Addr+4, mem.AttrW, fn)
+		} else {
+			// 32-bit variable
+			fn := func(m *mem.Memory, bp *mem.BreakPoint) bool { return tohost.To32(m, bp) }
+			cpu.Mem.AddBreakPoint(sym.Name, sym.Addr, mem.AttrW, fn)
+		}
+	}
 
 	// apply per test fixups
 	tc.Fixups(cpu)
@@ -231,7 +235,7 @@ func (tc *testCase) Test() error {
 	}
 
 	// check for a normal exit
-	err = checkExit(cpu.Mem, err)
+	err = checkExit(tohost, err)
 	if err != nil {
 		return err
 	}

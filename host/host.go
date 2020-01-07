@@ -12,25 +12,45 @@ acess via the breakpoint mechanism and records interesting state.
 
 package host
 
-import "github.com/deadsy/riscv/mem"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/deadsy/riscv/mem"
+)
 
 //-----------------------------------------------------------------------------
 
+// Host stores the state of writes to the "tohost" location.
 type Host struct {
-	addr uint   // base address of "tohost" symbol
-	text []rune // characters written "tohost"
+	addr   uint // base address of "tohost" symbol
+	status uint
+	text   []rune // characters written "tohost"
 }
 
-func NewHost(m *mem.Memory) *Host {
-	sym := m.SymbolByName("tohost")
-	if sym == nil {
-		return nil
-	}
+// NewHost returns a Host empty structure.
+func NewHost(addr uint) *Host {
 	return &Host{
-		addr: sym.Addr,
+		addr: addr,
 		text: make([]rune, 0, 128),
 	}
 }
+
+func (h *Host) String() string {
+	s := []string{}
+	s = append(s, fmt.Sprintf("(%d)", h.status))
+	if h.text != nil {
+		s = append(s, strings.TrimSpace(string(h.text)))
+	}
+	return strings.Join(s, " ")
+}
+
+// Passed returns if the compliance test has passed.
+func (h *Host) Passed() bool {
+	return h.status == 1
+}
+
+//-----------------------------------------------------------------------------
 
 // The risc-v compliance tests use this as the upper word in "tohost" when
 // they want to send a character to the host.
@@ -38,30 +58,30 @@ const charMagic = 0x01010000
 
 // To64 intercepts writes to a 64-bit tohost memory location.
 func (h *Host) To64(m *mem.Memory, bp *mem.BreakPoint) bool {
-	// break by default unless we consume the write
-	brk := true
+	// get the tohost value
 	val, _ := m.Rd64Phys(h.addr)
 	// Is this a character write?
 	if (val >> 32) == charMagic {
 		h.text = append(h.text, rune(val&0xff))
 		// signal write consumption to the risc-v test.
 		m.Wr64Phys(h.addr, 0)
-		brk = false
+		// no break
+		return false
 	}
-	return brk
-}
-
-// To32 intercepts writes to a 32-bit tohost memory location.
-func (h *Host) To32(m *mem.Memory, bp *mem.BreakPoint) bool {
+	h.status = uint(val)
+	// break
 	return true
 }
 
-// GetText returns the string of characters written "tohost".
-func (h *Host) GetText() string {
-	if h.text == nil {
-		return ""
-	}
-	return string(h.text)
+//-----------------------------------------------------------------------------
+
+// To32 intercepts writes to a 32-bit tohost memory location.
+func (h *Host) To32(m *mem.Memory, bp *mem.BreakPoint) bool {
+	// get the tohost value
+	val, _ := m.Rd32Phys(h.addr)
+	h.status = uint(val)
+	// break
+	return true
 }
 
 //-----------------------------------------------------------------------------
