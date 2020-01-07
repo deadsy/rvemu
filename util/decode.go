@@ -21,7 +21,7 @@ func FmtDec(x uint) string {
 	return fmt.Sprintf("%d", x)
 }
 
-// FmtDec formats a uint as a hexadecimal string.
+// FmtHex formats a uint as a hexadecimal string.
 func FmtHex(x uint) string {
 	return fmt.Sprintf("%x", x)
 }

@@ -329,6 +329,7 @@ func (e *Error) Error() string {
 	return "unknown exception at PC " + pcStr
 }
 
+// GetMemError returns a memory error from the general CPU error.
 func (e *Error) GetMemError() *mem.Error {
 	if e.Type != ErrMemory {
 		return nil
@@ -336,6 +337,7 @@ func (e *Error) GetMemError() *mem.Error {
 	return e.err.(*mem.Error)
 }
 
+// GetCSRError returns a CSR error from the general CPU error.
 func (e *Error) GetCSRError() *csr.Error {
 	if e.Type != ErrCSR {
 		return nil

@@ -83,18 +83,18 @@ func (pte sv32pte) getDirty() bool {
 }
 
 // setRead sets the PTE read bit.
-func (pte sv32pte) setRead() {
-	pte |= (1 << 1 /*R*/)
+func (pte sv32pte) setRead() sv32pte {
+	return pte | (1 << 1 /*R*/)
 }
 
 // setAccess sets the PTE access bit.
-func (pte sv32pte) setAccess() {
-	pte |= (1 << 6 /*A*/)
+func (pte sv32pte) setAccess() sv32pte {
+	return pte | (1 << 6 /*A*/)
 }
 
-// setAccess sets the PTE dirty bit.
-func (pte sv32pte) setDirty() {
-	pte |= (1 << 7 /*D*/)
+// setDirty sets the PTE dirty bit.
+func (pte sv32pte) setDirty() sv32pte {
+	return pte | (1 << 7 /*D*/)
 }
 
 // canRead returns true if the PTE indicates read permission for the page.
@@ -199,7 +199,7 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute, debug bool) (uin
 
 	// If mstatus.MXR == 1 and pte.X == 1 then pte.R = 1
 	if m.csr.GetMXR() && pte.canExec() {
-		pte.setRead()
+		pte = pte.setRead()
 	}
 	// check the RWX permissions
 	if attr&AttrR != 0 && !pte.canRead() {
@@ -257,10 +257,10 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute, debug bool) (uin
 		x, _ := m.Rd32Phys(pteAddr)
 		pte := sv32pte(x)
 		if access {
-			pte.setAccess()
+			pte = pte.setAccess()
 		}
 		if dirty {
-			pte.setDirty()
+			pte = pte.setDirty()
 		}
 		m.Wr32Phys(pteAddr, uint32(pte))
 	}

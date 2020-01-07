@@ -78,7 +78,7 @@ func breakError(addr uint, attr Attribute, name string) error {
 func pageError(va uint, attr Attribute) error {
 	n := uint(ErrPage)
 	ex := -1
-	// The attribute is what the cpu was trying to do when the page error occured.
+	// The attribute is what the cpu was trying to do when the page error occurred.
 	// It's sense is inverted from the other error cases.
 	if attr&AttrR != 0 {
 		n |= ErrRead
