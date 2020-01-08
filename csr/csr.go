@@ -101,7 +101,7 @@ func (s *State) getMinMode() Mode {
 }
 
 // getNextMode returns the target mode for an exception/interrupt.
-func (s *State) getNextMode(ecode uint, isInterrupt bool) Mode {
+func (s *State) getNextMode(code uint, isInterrupt bool) Mode {
 	var sMask, mMask uint
 	if isInterrupt {
 		mMask = s.mideleg
@@ -112,9 +112,9 @@ func (s *State) getNextMode(ecode uint, isInterrupt bool) Mode {
 	}
 	var nextMode Mode
 	// get target mode implied by delegation registers
-	if mMask&(1<<ecode) == 0 {
+	if mMask&(1<<code) == 0 {
 		nextMode = ModeM
-	} else if sMask&(1<<ecode) == 0 {
+	} else if sMask&(1<<code) == 0 {
 		nextMode = ModeS
 	} else {
 		nextMode = ModeU
@@ -147,6 +147,87 @@ const (
 
 //-----------------------------------------------------------------------------
 
+// ICode is a RISC-V interrupt code.
+type ICode uint
+
+const (
+	IntUserSoftware       ICode = 0  // User software interrupt
+	IntSupervisorSoftware ICode = 1  // Supervisor software interrupt
+	IntMachineSoftware    ICode = 3  // Machine software interrupt
+	IntUserTimer          ICode = 4  // User timer interrupt
+	IntSupervisorTimer    ICode = 5  // Supervisor timer interrupt
+	IntMachineTimer       ICode = 7  // Machine timer interrupt
+	IntUserExternal       ICode = 8  // User external interrupt
+	IntSupervisorExternal ICode = 9  // Supervisor external interrupt
+	IntMachineExternal    ICode = 11 // Machine external interrupt
+)
+
+func (n ICode) String() string {
+	return [16]string{
+		"IntUserSoftware",       // 0
+		"IntSupervisorSoftware", // 1
+		"IntUnknown(2)",         // 2
+		"IntMachineSoftware",    // 3
+		"IntUserTimer",          // 4
+		"IntSupervisorTimer",    // 5
+		"IntUnknown(6)",         // 6
+		"IntMachineTimer",       // 7
+		"IntUserExternal",       // 8
+		"IntSupervisorExternal", // 9
+		"IntUnknown(10)",        // 10
+		"IntMachineExternal",    // 11
+		"IntUnknown(12)",        // 12
+		"IntUnknown(13)",        // 13
+		"IntUnknown(14)",        // 14
+		"IntUnknown(15)",        // 15
+	}[n]
+}
+
+// ECode is a RISC-V exception code.
+type ECode uint
+
+const (
+	ExInsAddrMisaligned         ECode = 0  // Instruction address misaligned
+	ExInsAccessFault            ECode = 1  // Instruction access fault
+	ExInsIllegal                ECode = 2  // Illegal instruction
+	ExBreakpoint                ECode = 3  // Breakpoint
+	ExLoadAddrMisaligned        ECode = 4  // Load address misaligned
+	ExLoadAccessFault           ECode = 5  // Load access fault
+	ExStoreAddrMisaligned       ECode = 6  // Store/AMO address misaligned
+	ExStoreAccessFault          ECode = 7  // Store/AMO access fault
+	ExEnvCallFromUserMode       ECode = 8  // Environment call from U-mode
+	ExEnvCallFromSupervisorMode ECode = 9  // Environment call from S-mode
+	ExUnknown10                 ECode = 10 // unknown 10
+	ExEnvCallFromMachineMode    ECode = 11 // Environment call from M-mode
+	ExInsPageFault              ECode = 12 // Instruction page fault
+	ExLoadPageFault             ECode = 13 // Load page fault
+	ExUnknown14                 ECode = 14 // unknown 14
+	ExStorePageFault            ECode = 15 // Store/AMO page fault
+)
+
+func (n ECode) String() string {
+	return [16]string{
+		"ExInsAddrMisaligned",         // 0
+		"ExInsAccessFault",            // 1
+		"ExInsIllegal",                // 2
+		"ExBreakpoint",                // 3
+		"ExLoadAddrMisaligned",        // 4
+		"ExLoadAccessFault",           // 5
+		"ExStoreAddrMisaligned",       // 6
+		"ExStoreAccessFault",          // 7
+		"ExEnvCallFromUserMode",       // 8
+		"ExEnvCallFromSupervisorMode", // 9
+		"ExUnknown(10)",               // 10
+		"ExEnvCallFromMachineMode",    // 11
+		"ExInsPageFault",              // 12
+		"ExLoadPageFault",             // 13
+		"ExUnknown(14)",               // 14
+		"ExStorePageFault",            // 15
+	}[n]
+}
+
+//-----------------------------------------------------------------------------
+
 // wrIgnore is a no-op write function.
 func wrIgnore(s *State, val uint) {
 }
@@ -158,37 +239,6 @@ func rdZero(s *State) uint {
 
 //-----------------------------------------------------------------------------
 // u/s/m cause register
-
-// interrupts
-const (
-	IntUserSoftware       = 0  // User software interrupt
-	IntSupervisorSoftware = 1  // Supervisor software interrupt
-	IntMachineSoftware    = 3  // Machine software interrupt
-	IntUserTimer          = 4  // User timer interrupt
-	IntSupervisorTimer    = 5  // Supervisor timer interrupt
-	IntMachineTimer       = 7  // Machine timer interrupt
-	IntUserExternal       = 8  // User external interrupt
-	IntSupervisorExternal = 9  // Supervisor external interrupt
-	IntMachineExternal    = 11 // Machine external interrupt
-)
-
-// exceptions
-const (
-	ExInsAddrMisaligned         = 0  // Instruction address misaligned
-	ExInsAccessFault            = 1  // Instruction access fault
-	ExInsIllegal                = 2  // Illegal instruction
-	ExBreakpoint                = 3  // Breakpoint
-	ExLoadAddrMisaligned        = 4  // Load address misaligned
-	ExLoadAccessFault           = 5  // Load access fault
-	ExStoreAddrMisaligned       = 6  // Store/AMO address misaligned
-	ExStoreAccessFault          = 7  // Store/AMO access fault
-	ExEnvCallFromUserMode       = 8  // Environment call from U-mode
-	ExEnvCallFromSupervisorMode = 9  // Environment call from S-mode
-	ExEnvCallFromMachineMode    = 11 // Environment call from M-mode
-	ExInsPageFault              = 12 // Instruction page fault
-	ExLoadPageFault             = 13 // Load page fault
-	ExStorePageFault            = 15 // Store/AMO page fault
-)
 
 func (s *State) setCause(ecode uint, isInterrupt bool, mode Mode) {
 	cause := ecode
@@ -1455,23 +1505,23 @@ func (s *State) URET() uint {
 func (s *State) ECALL(epc uint64, val uint) uint64 {
 	switch s.GetMode() {
 	case ModeU:
-		return s.Exception(epc, ExEnvCallFromUserMode, val, false)
+		return s.Exception(epc, uint(ExEnvCallFromUserMode), val, false)
 	case ModeS:
-		return s.Exception(epc, ExEnvCallFromSupervisorMode, val, false)
+		return s.Exception(epc, uint(ExEnvCallFromSupervisorMode), val, false)
 	case ModeM:
-		return s.Exception(epc, ExEnvCallFromMachineMode, val, false)
+		return s.Exception(epc, uint(ExEnvCallFromMachineMode), val, false)
 	}
 	return 0
 }
 
 // Exception performs a cpu exception.
-func (s *State) Exception(epc uint64, ecode, val uint, isInterrupt bool) uint64 {
+func (s *State) Exception(epc uint64, code, val uint, isInterrupt bool) uint64 {
 	// what's the next cpu mode?
-	nextMode := s.getNextMode(ecode, isInterrupt)
+	nextMode := s.getNextMode(code, isInterrupt)
 	// update interrupt enable and interrupt enable stack
 	s.updateMSTATUS(nextMode)
 	// set the cause register
-	s.setCause(ecode, isInterrupt, nextMode)
+	s.setCause(code, isInterrupt, nextMode)
 	// set the exception program counter
 	s.setEPC(epc, nextMode)
 	// set the trap value
@@ -1483,7 +1533,7 @@ func (s *State) Exception(epc uint64, ecode, val uint, isInterrupt bool) uint64 
 	if (mode == 0) || !isInterrupt {
 		pc = uint64(base)
 	} else {
-		pc = uint64(base + (4 * ecode))
+		pc = uint64(base + (4 * code))
 	}
 	// update the mode
 	switch nextMode {

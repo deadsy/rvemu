@@ -444,7 +444,7 @@ func emu_ECALL(m *RV, ins uint) error {
 }
 
 func emu_EBREAK(m *RV, ins uint) error {
-	m.PC = m.CSR.Exception(m.PC, csr.ExBreakpoint, uint(m.PC), false)
+	m.PC = m.CSR.Exception(m.PC, uint(csr.ExBreakpoint), uint(m.PC), false)
 	return nil
 }
 
@@ -1620,7 +1620,7 @@ func emu_C_MV(m *RV, ins uint) error {
 }
 
 func emu_C_EBREAK(m *RV, ins uint) error {
-	m.PC = m.CSR.Exception(m.PC, csr.ExBreakpoint, uint(m.PC), false)
+	m.PC = m.CSR.Exception(m.PC, uint(csr.ExBreakpoint), uint(m.PC), false)
 	return nil
 }
 
@@ -2399,12 +2399,11 @@ func (m *RV) errHandler(err error) error {
 	// handle the error
 	switch e.Type {
 	case ErrIllegal:
-		m.PC = m.CSR.Exception(m.PC, csr.ExInsIllegal, e.ins, false)
+		m.PC = m.CSR.Exception(m.PC, uint(csr.ExInsIllegal), e.ins, false)
 		return nil
-
 	case ErrMemory:
 		em := e.err.(*mem.Error)
-		if (em.Type&mem.ErrBreak == 0) && (em.Ex >= 0) {
+		if em.Type&mem.ErrBreak == 0 {
 			m.PC = m.CSR.Exception(m.PC, uint(em.Ex), em.Addr, false)
 			return nil
 		}

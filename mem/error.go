@@ -19,10 +19,10 @@ import (
 
 // Error is a memory acccess error.
 type Error struct {
-	Type uint   // bitmap of memory errors
-	Ex   int    // riscv exception
-	Addr uint   // memory address causing the error
-	Name string // section name for the address
+	Type uint      // bitmap of memory errors
+	Ex   csr.ECode // exception code
+	Addr uint      // memory address causing the error
+	Name string    // section name for the address
 }
 
 // Memory error bits.
@@ -56,7 +56,7 @@ func (e *Error) Error() string {
 		s = append(s, "break")
 	}
 	errStr := strings.Join(s, ",")
-	return fmt.Sprintf("%s @ %08x (%s)", errStr, e.Addr, e.Name)
+	return fmt.Sprintf("%s %s @ %08x (%s)", e.Ex, errStr, e.Addr, e.Name)
 }
 
 //-----------------------------------------------------------------------------
@@ -77,7 +77,7 @@ func breakError(addr uint, attr Attribute, name string) error {
 
 func pageError(va uint, attr Attribute) error {
 	n := uint(ErrPage)
-	ex := -1
+	ex := csr.ExUnknown10
 	// The attribute is what the cpu was trying to do when the page error occurred.
 	// It's sense is inverted from the other error cases.
 	if attr&AttrR != 0 {
@@ -97,7 +97,7 @@ func pageError(va uint, attr Attribute) error {
 
 func wrError(addr uint, attr Attribute, name string, align uint) error {
 	var n uint
-	ex := -1
+	ex := csr.ExUnknown10
 	if attr&AttrW == 0 {
 		n |= ErrWrite
 		ex = csr.ExStoreAccessFault
@@ -114,7 +114,7 @@ func wrError(addr uint, attr Attribute, name string, align uint) error {
 
 func rdError(addr uint, attr Attribute, name string, align uint) error {
 	var n uint
-	ex := -1
+	ex := csr.ExUnknown10
 	if attr&AttrR == 0 {
 		n |= ErrRead
 		ex = csr.ExLoadAccessFault
@@ -133,7 +133,7 @@ func rdInsError(addr uint, attr Attribute, name string) error {
 	// rv32c has mixed 32/16 bit instruction streams so
 	// we allow 32-bit reads on 2 byte address boundaries.
 	var n uint
-	ex := -1
+	ex := csr.ExUnknown10
 	if attr&AttrX == 0 {
 		n |= ErrExec
 		ex = csr.ExInsAccessFault
