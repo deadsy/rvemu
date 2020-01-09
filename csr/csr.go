@@ -587,7 +587,7 @@ type mStatus struct {
 
 func (m *mStatus) init(mxlen uint) {
 	m.uMask = uieMask | upieMask
-	m.sMask = uieMask | upieMask | sppMask | spieMask | sieMask
+	m.sMask = uieMask | upieMask | sppMask | spieMask | sieMask | sumMask
 	m.wpriMask = util.BitMask(2, 2) | util.BitMask(6, 6) | util.BitMask(10, 9) | util.BitMask(30, 23)
 	if mxlen == 64 {
 		m.uMask |= uxlMask

@@ -41,7 +41,7 @@ func Mulhu2(u, v uint64) uint64 {
 
 // Mulhs returns the upper 64-bits of the product of 2 signed 64-bit integers.
 func Mulhs(u, v int64) int64 {
-	p := Mulhu1(uint64(u), uint64(v))
+	p := Mulhu2(uint64(u), uint64(v))
 	t1 := (u >> 63) & v
 	t2 := (v >> 63) & u
 	return int64(p) - t1 - t2
