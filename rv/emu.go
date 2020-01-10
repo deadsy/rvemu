@@ -26,7 +26,6 @@ import (
 	"math"
 	"sync"
 
-	"github.com/deadsy/riscv/big"
 	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/mem"
 )
@@ -604,10 +603,7 @@ func emu_MULH(m *RV, ins uint) error {
 		c := (a * b) >> 32
 		x = uint64(c)
 	} else {
-		a := big.Int128FromInt(int64(m.rdX(rs1)))
-		b := big.Int128FromInt(int64(m.rdX(rs2)))
-		c := a.Mul(b)
-		x = c.Hi
+		x = uint64(mulhss(int64(m.rdX(rs1)), int64(m.rdX(rs2))))
 	}
 	m.wrX(rd, x)
 	m.PC += 4
@@ -623,10 +619,7 @@ func emu_MULHSU(m *RV, ins uint) error {
 		c := (a * b) >> 32
 		x = uint64(c)
 	} else {
-		a := big.Int128FromInt(int64(m.rdX(rs1)))
-		b := big.Int128FromUint(m.rdX(rs2))
-		c := a.Mul(b)
-		x = c.Hi
+		x = uint64(mulhsu(int64(m.rdX(rs1)), m.rdX(rs2)))
 	}
 	m.wrX(rd, x)
 	m.PC += 4
@@ -642,10 +635,7 @@ func emu_MULHU(m *RV, ins uint) error {
 		c := (a * b) >> 32
 		x = uint64(c)
 	} else {
-		a := big.Uint128FromUint(m.rdX(rs1))
-		b := big.Uint128FromUint(m.rdX(rs2))
-		c := a.Mul(b)
-		x = c.Hi
+		x = mulhuu(m.rdX(rs1), m.rdX(rs2))
 	}
 	m.wrX(rd, x)
 	m.PC += 4

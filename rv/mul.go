@@ -3,6 +3,10 @@
 
 Multiply Utilities
 
+We need the upper 64-bits of the product of 64-bit operands.
+Go has no native 128-bit integer type. so we work this out
+using 64-bit operations.
+
 */
 //-----------------------------------------------------------------------------
 
@@ -12,13 +16,12 @@ package rv
 
 const mask32 = (1 << 32) - 1
 
-// mulhu64 returns the upper 64-bits of the product of 2 unsigned 64-bit integers.
-func mulhu64(u, v uint64) uint64 {
+// mulhuu returns the upper 64-bits of the product of 2 unsigned 64-bit integers.
+func mulhuu(u, v uint64) uint64 {
 	ul := uint(u & mask32)
 	vl := uint(v & mask32)
 	uh := uint(u >> 32)
 	vh := uint(v >> 32)
-
 	w0 := ul * vl
 	t := uh*vl + (w0 >> 32)
 	w1 := t & mask32
@@ -27,12 +30,19 @@ func mulhu64(u, v uint64) uint64 {
 	return uint64(uh*vh + w2 + (w1 >> 32))
 }
 
-// mulhs64 returns the upper 64-bits of the product of 2 signed 64-bit integers.
-func mulhs64(u, v int64) int64 {
-	p := mulhu64(uint64(u), uint64(v))
+// mulhss returns the upper 64-bits of the product of 2 signed 64-bit integers.
+func mulhss(u, v int64) int64 {
+	p := mulhuu(uint64(u), uint64(v))
 	t1 := (u >> 63) & v
 	t2 := (v >> 63) & u
 	return int64(p) - t1 - t2
+}
+
+// mulhsu returns the upper 64-bits of the product of signed and unsigned 64-bit integers.
+func mulhsu(u int64, v uint64) int64 {
+	p := mulhuu(uint64(u), v)
+	t1 := (u >> 63) & int64(v)
+	return int64(p) - t1
 }
 
 //-----------------------------------------------------------------------------
