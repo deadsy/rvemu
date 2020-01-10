@@ -343,7 +343,7 @@ var rv64cTest = []daTest{
 //-----------------------------------------------------------------------------
 
 func testSet(module []ISAModule, tests []daTest) error {
-	isa := NewISA()
+	isa := NewISA(0)
 	err := isa.Add(module)
 	if err != nil {
 		return err

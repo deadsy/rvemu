@@ -1,12 +1,12 @@
 //-----------------------------------------------------------------------------
 /*
 
-Utility Function Testing
+Multiply Function Testing
 
 */
 //-----------------------------------------------------------------------------
 
-package util
+package rv
 
 import (
 	"fmt"
@@ -68,12 +68,12 @@ func Test_Mulhu(t *testing.T) {
 	}
 
 	for _, v := range test {
-		x := Mulhu2(v.a, v.b)
+		x := mulhu64(v.a, v.b)
 		if x != v.result {
 			fmt.Printf("%x x %x = %x (expected %x)\n", v.a, v.b, x, v.result)
 			t.Error("FAIL")
 		}
-		x = Mulhu2(v.b, v.a)
+		x = mulhu64(v.b, v.a)
 		if x != v.result {
 			fmt.Printf("%x x %x = %x (expected %x)\n", v.b, v.a, x, v.result)
 			t.Error("FAIL")
@@ -115,12 +115,12 @@ func Test_Mulhs(t *testing.T) {
 	}
 
 	for _, v := range test {
-		x := Mulhs(v.a, v.b)
+		x := mulhs64(v.a, v.b)
 		if x != v.result {
 			fmt.Printf("%x x %x = %x (expected %x)\n", v.a, v.b, x, v.result)
 			t.Error("FAIL")
 		}
-		x = Mulhs(v.b, v.a)
+		x = mulhs64(v.b, v.a)
 		if x != v.result {
 			fmt.Printf("%x x %x = %x (expected %x)\n", v.b, v.a, x, v.result)
 			t.Error("FAIL")
