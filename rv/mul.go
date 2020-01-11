@@ -1,10 +1,10 @@
 //-----------------------------------------------------------------------------
 /*
 
-Multiply Utilities
+Multiply High Utilities
 
 We need the upper 64-bits of the product of 64-bit operands.
-Go has no native 128-bit integer type. so we work this out
+Go does not have a 128-bit integer type, so we work this out
 using 64-bit operations.
 
 */
@@ -18,16 +18,16 @@ const mask32 = (1 << 32) - 1
 
 // mulhuu returns the upper 64-bits of the product of 2 unsigned 64-bit integers.
 func mulhuu(u, v uint64) uint64 {
-	ul := uint(u & mask32)
-	vl := uint(v & mask32)
-	uh := uint(u >> 32)
-	vh := uint(v >> 32)
+	ul := u & mask32
+	vl := v & mask32
+	uh := u >> 32
+	vh := v >> 32
 	w0 := ul * vl
 	t := uh*vl + (w0 >> 32)
 	w1 := t & mask32
 	w2 := t >> 32
 	w1 = ul*vh + w1
-	return uint64(uh*vh + w2 + (w1 >> 32))
+	return uh*vh + w2 + (w1 >> 32)
 }
 
 // mulhss returns the upper 64-bits of the product of 2 signed 64-bit integers.
