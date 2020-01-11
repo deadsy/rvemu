@@ -150,6 +150,7 @@ const (
 // ICode is a RISC-V interrupt code.
 type ICode uint
 
+// Interrupt Codes
 const (
 	IntUserSoftware       ICode = 0  // User software interrupt
 	IntSupervisorSoftware ICode = 1  // Supervisor software interrupt
@@ -186,6 +187,7 @@ func (n ICode) String() string {
 // ECode is a RISC-V exception code.
 type ECode uint
 
+// Exception Codes
 const (
 	ExInsAddrMisaligned         ECode = 0  // Instruction address misaligned
 	ExInsAccessFault            ECode = 1  // Instruction access fault
@@ -270,6 +272,7 @@ func rdUCAUSE(s *State) uint {
 //-----------------------------------------------------------------------------
 // machine isa register
 
+// ISA Extension Bitmap
 const (
 	IsaExtA = (1 << iota) // Atomic extension
 	IsaExtB               // Tentatively reserved for Bit-Manipulation extension
@@ -559,6 +562,25 @@ func rdFFLAGS(s *State) uint {
 //-----------------------------------------------------------------------------
 // u/s/m status
 
+// xsState is the state of the float/user extension (XS/FS bitfields in mstatus)
+type xsState uint
+
+const (
+	xsOff   xsState = 0 // extension is off
+	xsInit  xsState = 1 // extension is in the initial state
+	xsClean xsState = 2 // extension state not modified since context switch
+	xsDirty xsState = 3 // extension state modified since context switch
+)
+
+func (s xsState) String() string {
+	return []string{"off", "init", "clean", "dirty"}[s]
+}
+
+// IsFloatOff returns true if the floating point has been disabled in mstatus.fs.
+func (s *State) IsFloatOff() bool {
+	return s.mstatusRdFS() == uint(xsOff)
+}
+
 const tsrMask = (1 << 22)
 const twMask = (1 << 21)
 const tvmMask = (1 << 20)
@@ -586,12 +608,24 @@ type mStatus struct {
 }
 
 func (m *mStatus) init(mxlen uint) {
-	m.uMask = uieMask | upieMask
-	m.sMask = uieMask | upieMask | sppMask | spieMask | sieMask | sumMask
-	m.wpriMask = util.BitMask(2, 2) | util.BitMask(6, 6) | util.BitMask(10, 9) | util.BitMask(30, 23)
+
+	// mark the initial state for FS and XS
+	m.val = (uint(xsInit) << 15 /*XS*/) | (uint(xsInit) << 13 /*FS*/)
+
+	// sxlen == uxlen == mxlen
 	if mxlen == 64 {
+		m.val |= (2 << 32 /*UXL*/) | (2 << 34 /*SXL*/)
+	}
+
+	// set up the access masks
+	m.uMask = uieMask | upieMask
+	m.sMask = uieMask | upieMask | sppMask | spieMask | sieMask | sumMask | xsMask | fsMask | mxrMask
+	m.wpriMask = util.BitMask(2, 2) | util.BitMask(6, 6) | util.BitMask(10, 9) | util.BitMask(30, 23)
+	if mxlen == 32 {
+		m.sMask |= (1 << 31 /*SD*/)
+	} else {
 		m.uMask |= uxlMask
-		m.sMask |= (uxlMask | sxlMask)
+		m.sMask |= uxlMask | sxlMask | (1 << 63 /*SD*/)
 		m.wpriMask |= (util.BitMask(31, 31) | util.BitMask(62, 36))
 	}
 }
@@ -659,8 +693,13 @@ func (s *State) GetMXR() bool {
 	return s.mstatus.rd(ModeM)&mxrMask != 0
 }
 
+// GetMPP returns the MPP bits of mstatus.
 func (s *State) GetMPP() Mode {
 	return Mode((s.mstatus.rd(ModeM) >> 11 /*MPP*/) & 3)
+}
+
+func fmtXS(x uint) string {
+	return xsState(x).String()
 }
 
 func displaySSTATUS(s *State) string {
@@ -668,6 +707,11 @@ func displaySSTATUS(s *State) string {
 	if s.sxlen == 32 {
 		// RV32
 		fs = util.FieldSet{
+			{"sd", 31, 31, util.FmtDec},
+			{"mxr", 19, 19, util.FmtDec},
+			{"sum", 18, 18, util.FmtDec},
+			{"xs", 16, 15, fmtXS},
+			{"fs", 14, 13, fmtXS},
 			{"spp", 8, 8, util.FmtDec},
 			{"spie", 5, 5, util.FmtDec},
 			{"upie", 4, 4, util.FmtDec},
@@ -677,8 +721,13 @@ func displaySSTATUS(s *State) string {
 	} else {
 		// RV64
 		fs = util.FieldSet{
+			{"sd", s.mxlen - 1, s.mxlen - 1, util.FmtDec},
 			{"sxl", 35, 34, util.FmtDec},
 			{"uxl", 33, 32, util.FmtDec},
+			{"mxr", 19, 19, util.FmtDec},
+			{"sum", 18, 18, util.FmtDec},
+			{"xs", 16, 15, fmtXS},
+			{"fs", 14, 13, fmtXS},
 			{"spp", 8, 8, util.FmtDec},
 			{"spie", 5, 5, util.FmtDec},
 			{"upie", 4, 4, util.FmtDec},
@@ -701,8 +750,8 @@ func displayMSTATUS(s *State) string {
 			{"mxr", 19, 19, util.FmtDec},
 			{"sum", 18, 18, util.FmtDec},
 			{"mprv", 17, 17, util.FmtDec},
-			{"xs", 16, 15, util.FmtDec},
-			{"fs", 14, 13, util.FmtDec},
+			{"xs", 16, 15, fmtXS},
+			{"fs", 14, 13, fmtXS},
 			{"mpp", 12, 11, util.FmtDec},
 			{"spp", 8, 8, util.FmtDec},
 			{"mpie", 7, 7, util.FmtDec},
@@ -724,8 +773,8 @@ func displayMSTATUS(s *State) string {
 			{"mxr", 19, 19, util.FmtDec},
 			{"sum", 18, 18, util.FmtDec},
 			{"mprv", 17, 17, util.FmtDec},
-			{"xs", 16, 15, util.FmtDec},
-			{"fs", 14, 13, util.FmtDec},
+			{"xs", 16, 15, fmtXS},
+			{"fs", 14, 13, fmtXS},
 			{"mpp", 12, 11, util.FmtDec},
 			{"spp", 8, 8, util.FmtDec},
 			{"mpie", 7, 7, util.FmtDec},
@@ -801,6 +850,14 @@ func (s *State) mstatusRdUIE() uint {
 
 func (s *State) mstatusWrUIE(x uint) {
 	s.mstatus.wr(util.SetBits(s.mstatus.val, x, 0, 0), ModeM)
+}
+
+func (s *State) mstatusRdFS() uint {
+	return util.GetBits(s.mstatus.rd(ModeM), 14, 13)
+}
+
+func (s *State) mstatusWrFS(x uint) {
+	s.mstatus.wr(util.SetBits(s.mstatus.val, x, 14, 13), ModeM)
 }
 
 func (s *State) updateMSTATUS(mode Mode) {
@@ -909,8 +966,10 @@ func wrMIP(s *State, x uint) {
 //-----------------------------------------------------------------------------
 // supervisor address translation and protection
 
+// VM is the virtual memory mode.
 type VM uint
 
+// Virtual memory mode.
 const (
 	Bare VM = iota
 	SV32
@@ -962,6 +1021,7 @@ func fmtMode64(x uint) string {
 	return util.DisplayEnum(x, m, "reserved")
 }
 
+// DisplaySATP returns a display string for the SATP register.
 func DisplaySATP(s *State) string {
 	var fs util.FieldSet
 	if s.sxlen == 32 {
@@ -980,6 +1040,44 @@ func DisplaySATP(s *State) string {
 		}
 	}
 	return fs.Display(s.satp)
+}
+
+//-----------------------------------------------------------------------------
+// mcycle
+
+func rdMCYCLE(s *State) uint {
+	if s.mxlen == 32 {
+		return uint(uint32(s.mcycle))
+	}
+	return uint(s.mcycle)
+}
+
+func rdMCYCLEH(s *State) uint {
+	return uint(s.mcycle >> 32)
+}
+
+// IncClockCycles increments the CSR clock cycle counter.
+func (s *State) IncClockCycles(n uint) {
+	s.mcycle += uint64(n)
+}
+
+//-----------------------------------------------------------------------------
+// minstret
+
+func rdMINSTRET(s *State) uint {
+	if s.mxlen == 32 {
+		return uint(uint32(s.minstret))
+	}
+	return uint(s.minstret)
+}
+
+func rdMINSTRETH(s *State) uint {
+	return uint(s.minstret >> 32)
+}
+
+// IncInstructions increments the CSR instructions retired counter.
+func (s *State) IncInstructions() {
+	s.minstret++
 }
 
 //-----------------------------------------------------------------------------
@@ -1009,9 +1107,9 @@ var lookup = map[uint]csrDefn{
 	0x043: {"utval", wrUTVAL, rdUTVAL, nil},
 	0x044: {"uip", wrUIP, rdUIP, nil},
 	// User CSRs 0xc00 - 0xc7f (read only)
-	0xc00: {"cycle", nil, nil, nil},
+	0xc00: {"cycle", nil, rdMCYCLE, nil},
 	0xc01: {"time", nil, nil, nil},
-	0xc02: {"instret", nil, nil, nil},
+	0xc02: {"instret", nil, rdMINSTRET, nil},
 	0xc03: {"hpmcounter3", nil, nil, nil},
 	0xc04: {"hpmcounter4", nil, nil, nil},
 	0xc05: {"hpmcounter5", nil, nil, nil},
@@ -1042,9 +1140,9 @@ var lookup = map[uint]csrDefn{
 	0xc1e: {"hpmcounter30", nil, nil, nil},
 	0xc1f: {"hpmcounter31", nil, nil, nil},
 	// User CSRs 0xc80 - 0xcbf (read only)
-	0xc80: {"cycleh", nil, nil, nil},
+	0xc80: {"cycleh", nil, rdMCYCLEH, nil},
 	0xc81: {"timeh", nil, nil, nil},
-	0xc82: {"instreth", nil, nil, nil},
+	0xc82: {"instreth", nil, rdMINSTRETH, nil},
 	0xc83: {"hpmcounter3h", nil, nil, nil},
 	0xc84: {"hpmcounter4h", nil, nil, nil},
 	0xc85: {"hpmcounter5h", nil, nil, nil},
@@ -1164,8 +1262,8 @@ var lookup = map[uint]csrDefn{
 	0x3be: {"pmpaddr14", wrIgnore, nil, nil},
 	0x3bf: {"pmpaddr15", wrIgnore, nil, nil},
 	// Machine CSRs 0xb00 - 0xb7f (read/write)
-	0xb00: {"mcycle", nil, nil, nil},
-	0xb02: {"minstret", nil, nil, nil},
+	0xb00: {"mcycle", nil, rdMCYCLE, nil},
+	0xb02: {"minstret", nil, rdMINSTRET, nil},
 	0xb03: {"mhpmcounter3", nil, nil, nil},
 	0xb04: {"mhpmcounter4", nil, nil, nil},
 	0xb05: {"mhpmcounter5", nil, nil, nil},
@@ -1196,8 +1294,8 @@ var lookup = map[uint]csrDefn{
 	0xb1e: {"mhpmcounter30", nil, nil, nil},
 	0xb1f: {"mhpmcounter31", nil, nil, nil},
 	// Machine CSRs 0xb80 - 0xbbf (read/write)
-	0xb80: {"mcycleh", nil, nil, nil},
-	0xb82: {"minstreth", nil, nil, nil},
+	0xb80: {"mcycleh", nil, rdMCYCLEH, nil},
+	0xb82: {"minstreth", nil, rdMINSTRETH, nil},
 	0xb83: {"mhpmcounter3h", nil, nil, nil},
 	0xb84: {"mhpmcounter4h", nil, nil, nil},
 	0xb85: {"mhpmcounter5h", nil, nil, nil},
@@ -1280,14 +1378,16 @@ type State struct {
 	mie     uint    // u/s/m interrupt enable register
 	mip     uint    // u/s/m interrupt pending register
 	// machine CSRs
-	mcause   uint // machine cause register
-	mepc     uint // machine exception program counter
-	mscratch uint // machine scratch register
-	mtvec    uint // machine trap vector base address register
-	mtval    uint // machine trap value register
-	misa     uint // machine isa register
-	medeleg  uint // machine exception delegation register
-	mideleg  uint // machine interrupt delegation register
+	mcause   uint   // machine cause register
+	mepc     uint   // machine exception program counter
+	mscratch uint   // machine scratch register
+	mtvec    uint   // machine trap vector base address register
+	mtval    uint   // machine trap value register
+	misa     uint   // machine isa register
+	medeleg  uint   // machine exception delegation register
+	mideleg  uint   // machine interrupt delegation register
+	mcycle   uint64 // machine clock cycles
+	minstret uint64 // number of retired instructions
 	// Supervisor CSRs
 	scause   uint // supervisor cause register
 	sepc     uint // supervisor exception program counter
@@ -1321,6 +1421,7 @@ func NewState(xlen, ext uint) *State {
 	return s
 }
 
+// Reset resets the state of the CSR sub-system.
 func (s *State) Reset() {
 	s.setMode(ModeM)
 	wrSATP(s, 0)

@@ -454,12 +454,12 @@ func emu_CSRRW(m *RV, ins uint) error {
 	if rd != 0 {
 		t, err = m.CSR.Rd(csr)
 		if err != nil {
-			return m.errCSR(err)
+			return m.errCSR(err, ins)
 		}
 	}
 	err = m.CSR.Wr(csr, m.rdX(rs1))
 	if err != nil {
-		return m.errCSR(err)
+		return m.errCSR(err, ins)
 	}
 	m.wrX(rd, t)
 	m.PC += 4
@@ -470,12 +470,12 @@ func emu_CSRRS(m *RV, ins uint) error {
 	csr, rs1, rd := decodeIb(ins)
 	t, err := m.CSR.Rd(csr)
 	if err != nil {
-		return m.errCSR(err)
+		return m.errCSR(err, ins)
 	}
 	if rs1 != 0 {
 		err := m.CSR.Wr(csr, t|m.rdX(rs1))
 		if err != nil {
-			return m.errCSR(err)
+			return m.errCSR(err, ins)
 		}
 	}
 	m.wrX(rd, t)
@@ -487,12 +487,12 @@ func emu_CSRRC(m *RV, ins uint) error {
 	csr, rs1, rd := decodeIb(ins)
 	t, err := m.CSR.Rd(csr)
 	if err != nil {
-		return m.errCSR(err)
+		return m.errCSR(err, ins)
 	}
 	if rs1 != 0 {
 		err := m.CSR.Wr(csr, t & ^m.rdX(rs1))
 		if err != nil {
-			return m.errCSR(err)
+			return m.errCSR(err, ins)
 		}
 	}
 	m.wrX(rd, t)
@@ -505,13 +505,13 @@ func emu_CSRRWI(m *RV, ins uint) error {
 	if rd != 0 {
 		t, err := m.CSR.Rd(csr)
 		if err != nil {
-			return m.errCSR(err)
+			return m.errCSR(err, ins)
 		}
 		m.wrX(rd, t)
 	}
 	err := m.CSR.Wr(csr, uint64(zimm))
 	if err != nil {
-		return m.errCSR(err)
+		return m.errCSR(err, ins)
 	}
 	m.PC += 4
 	return nil
@@ -521,11 +521,11 @@ func emu_CSRRSI(m *RV, ins uint) error {
 	csr, zimm, rd := decodeIb(ins)
 	t, err := m.CSR.Rd(csr)
 	if err != nil {
-		return m.errCSR(err)
+		return m.errCSR(err, ins)
 	}
 	err = m.CSR.Wr(csr, t|uint64(zimm))
 	if err != nil {
-		return m.errCSR(err)
+		return m.errCSR(err, ins)
 	}
 	m.wrX(rd, t)
 	m.PC += 4
@@ -536,11 +536,11 @@ func emu_CSRRCI(m *RV, ins uint) error {
 	csr, zimm, rd := decodeIb(ins)
 	t, err := m.CSR.Rd(csr)
 	if err != nil {
-		return m.errCSR(err)
+		return m.errCSR(err, ins)
 	}
 	err = m.CSR.Wr(csr, t & ^uint64(zimm))
 	if err != nil {
-		return m.errCSR(err)
+		return m.errCSR(err, ins)
 	}
 	m.wrX(rd, t)
 	m.PC += 4
@@ -901,6 +901,9 @@ func emu_AMOMAXU_W(m *RV, ins uint) error {
 // rv32f
 
 func emu_FLW(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	imm, rs1, rd := decodeIa(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
 	x, err := m.Mem.Rd32(adr)
@@ -913,6 +916,9 @@ func emu_FLW(m *RV, ins uint) error {
 }
 
 func emu_FSW(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	imm, rs2, rs1 := decodeS(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
 	err := m.Mem.Wr32(adr, uint32(m.F[rs2]))
@@ -924,6 +930,9 @@ func emu_FSW(m *RV, ins uint) error {
 }
 
 func emu_FMADD_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_s(uint32(m.F[rs1]), uint32(m.F[rs2]), uint32(m.F[rs3]), rm, m.CSR)
 	if err != nil {
@@ -935,6 +944,9 @@ func emu_FMADD_S(m *RV, ins uint) error {
 }
 
 func emu_FMSUB_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_s(uint32(m.F[rs1]), uint32(m.F[rs2]), neg32(uint32(m.F[rs3])), rm, m.CSR)
 	if err != nil {
@@ -946,6 +958,9 @@ func emu_FMSUB_S(m *RV, ins uint) error {
 }
 
 func emu_FNMSUB_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_s(neg32(uint32(m.F[rs1])), uint32(m.F[rs2]), uint32(m.F[rs3]), rm, m.CSR)
 	if err != nil {
@@ -957,6 +972,9 @@ func emu_FNMSUB_S(m *RV, ins uint) error {
 }
 
 func emu_FNMADD_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_s(neg32(uint32(m.F[rs1])), uint32(m.F[rs2]), neg32(uint32(m.F[rs3])), rm, m.CSR)
 	if err != nil {
@@ -968,6 +986,9 @@ func emu_FNMADD_S(m *RV, ins uint) error {
 }
 
 func emu_FADD_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fadd_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
@@ -979,6 +1000,9 @@ func emu_FADD_S(m *RV, ins uint) error {
 }
 
 func emu_FSUB_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fsub_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
@@ -990,6 +1014,9 @@ func emu_FSUB_S(m *RV, ins uint) error {
 }
 
 func emu_FMUL_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fmul_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
@@ -1001,6 +1028,9 @@ func emu_FMUL_S(m *RV, ins uint) error {
 }
 
 func emu_FDIV_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fdiv_s(uint32(m.F[rs1]), uint32(m.F[rs2]), rm, m.CSR)
 	if err != nil {
@@ -1012,6 +1042,9 @@ func emu_FDIV_S(m *RV, ins uint) error {
 }
 
 func emu_FSQRT_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fsqrt_s(uint32(m.F[rs1]), rm, m.CSR)
 	if err != nil {
@@ -1023,6 +1056,9 @@ func emu_FSQRT_S(m *RV, ins uint) error {
 }
 
 func emu_FSGNJ_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	sign := m.F[rs2] & f32SignMask
 	m.F[rd] = sign | (m.F[rs1] & mask30to0) | upper32
@@ -1031,6 +1067,9 @@ func emu_FSGNJ_S(m *RV, ins uint) error {
 }
 
 func emu_FSGNJN_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	sign := ^m.F[rs2] & f32SignMask
 	m.F[rd] = sign | (m.F[rs1] & mask30to0) | upper32
@@ -1039,6 +1078,9 @@ func emu_FSGNJN_S(m *RV, ins uint) error {
 }
 
 func emu_FSGNJX_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	sign := (m.F[rs1] ^ m.F[rs2]) & f32SignMask
 	m.F[rd] = sign | (m.F[rs1] & mask30to0) | upper32
@@ -1047,6 +1089,9 @@ func emu_FSGNJX_S(m *RV, ins uint) error {
 }
 
 func emu_FMIN_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	m.F[rd] = uint64(fmin_s(uint32(m.F[rs1]), uint32(m.F[rs2]), m.CSR)) | upper32
 	m.PC += 4
@@ -1054,6 +1099,9 @@ func emu_FMIN_S(m *RV, ins uint) error {
 }
 
 func emu_FMAX_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	m.F[rd] = uint64(fmax_s(uint32(m.F[rs1]), uint32(m.F[rs2]), m.CSR)) | upper32
 	m.PC += 4
@@ -1061,6 +1109,9 @@ func emu_FMAX_S(m *RV, ins uint) error {
 }
 
 func emu_FCVT_W_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_w_s(uint32(m.F[rs1]), rm, m.CSR)
 	if err != nil {
@@ -1072,6 +1123,9 @@ func emu_FCVT_W_S(m *RV, ins uint) error {
 }
 
 func emu_FCVT_WU_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_wu_s(uint32(m.F[rs1]), rm, m.CSR)
 	if err != nil {
@@ -1083,6 +1137,9 @@ func emu_FCVT_WU_S(m *RV, ins uint) error {
 }
 
 func emu_FMV_X_W(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, uint64(int32(m.F[rs1])))
 	m.PC += 4
@@ -1090,6 +1147,9 @@ func emu_FMV_X_W(m *RV, ins uint) error {
 }
 
 func emu_FEQ_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, uint64(feq_s(uint32(m.F[rs1]), uint32(m.F[rs2]), m.CSR)))
 	m.PC += 4
@@ -1097,6 +1157,9 @@ func emu_FEQ_S(m *RV, ins uint) error {
 }
 
 func emu_FLT_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, uint64(flt_s(uint32(m.F[rs1]), uint32(m.F[rs2]), m.CSR)))
 	m.PC += 4
@@ -1104,6 +1167,9 @@ func emu_FLT_S(m *RV, ins uint) error {
 }
 
 func emu_FLE_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, uint64(fle_s(uint32(m.F[rs1]), uint32(m.F[rs2]), m.CSR)))
 	m.PC += 4
@@ -1111,6 +1177,9 @@ func emu_FLE_S(m *RV, ins uint) error {
 }
 
 func emu_FCLASS_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, uint64(fclass_s(uint32(m.F[rs1]))))
 	m.PC += 4
@@ -1118,6 +1187,9 @@ func emu_FCLASS_S(m *RV, ins uint) error {
 }
 
 func emu_FCVT_S_W(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_s_w(int32(m.rdX(rs1)), rm, m.CSR)
 	if err != nil {
@@ -1129,6 +1201,9 @@ func emu_FCVT_S_W(m *RV, ins uint) error {
 }
 
 func emu_FCVT_S_WU(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_s_wu(uint32(m.rdX(rs1)), rm, m.CSR)
 	if err != nil {
@@ -1140,6 +1215,9 @@ func emu_FCVT_S_WU(m *RV, ins uint) error {
 }
 
 func emu_FMV_W_X(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, _, rd := decodeR(ins)
 	m.F[rd] = uint64(uint32(m.rdX(rs1))) | upper32
 	m.PC += 4
@@ -1150,6 +1228,9 @@ func emu_FMV_W_X(m *RV, ins uint) error {
 // rv32d
 
 func emu_FLD(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	imm, rs1, rd := decodeIa(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
 	x, err := m.Mem.Rd64(adr)
@@ -1162,6 +1243,9 @@ func emu_FLD(m *RV, ins uint) error {
 }
 
 func emu_FSD(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	imm, rs2, rs1 := decodeS(ins)
 	adr := uint(int(m.rdX(rs1)) + imm)
 	err := m.Mem.Wr64(adr, m.F[rs2])
@@ -1173,6 +1257,9 @@ func emu_FSD(m *RV, ins uint) error {
 }
 
 func emu_FMADD_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_d(m.F[rs1], m.F[rs2], m.F[rs3], rm, m.CSR)
 	if err != nil {
@@ -1184,6 +1271,9 @@ func emu_FMADD_D(m *RV, ins uint) error {
 }
 
 func emu_FMSUB_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_d(m.F[rs1], m.F[rs2], neg64(m.F[rs3]), rm, m.CSR)
 	if err != nil {
@@ -1195,6 +1285,9 @@ func emu_FMSUB_D(m *RV, ins uint) error {
 }
 
 func emu_FNMSUB_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_d(neg64(m.F[rs1]), m.F[rs2], m.F[rs3], rm, m.CSR)
 	if err != nil {
@@ -1206,6 +1299,9 @@ func emu_FNMSUB_D(m *RV, ins uint) error {
 }
 
 func emu_FNMADD_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs3, rs2, rs1, rm, rd := decodeR4(ins)
 	x, err := fmadd_d(neg64(m.F[rs1]), m.F[rs2], neg64(m.F[rs3]), rm, m.CSR)
 	if err != nil {
@@ -1217,6 +1313,9 @@ func emu_FNMADD_D(m *RV, ins uint) error {
 }
 
 func emu_FADD_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fadd_d(m.F[rs1], m.F[rs2], rm, m.CSR)
 	if err != nil {
@@ -1228,6 +1327,9 @@ func emu_FADD_D(m *RV, ins uint) error {
 }
 
 func emu_FSUB_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fsub_d(m.F[rs1], m.F[rs2], rm, m.CSR)
 	if err != nil {
@@ -1239,6 +1341,9 @@ func emu_FSUB_D(m *RV, ins uint) error {
 }
 
 func emu_FMUL_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fmul_d(m.F[rs1], m.F[rs2], rm, m.CSR)
 	if err != nil {
@@ -1250,6 +1355,9 @@ func emu_FMUL_D(m *RV, ins uint) error {
 }
 
 func emu_FDIV_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, rm, rd := decodeR(ins)
 	x, err := fdiv_d(m.F[rs1], m.F[rs2], rm, m.CSR)
 	if err != nil {
@@ -1261,6 +1369,9 @@ func emu_FDIV_D(m *RV, ins uint) error {
 }
 
 func emu_FSQRT_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fsqrt_d(m.F[rs1], rm, m.CSR)
 	if err != nil {
@@ -1272,6 +1383,9 @@ func emu_FSQRT_D(m *RV, ins uint) error {
 }
 
 func emu_FSGNJ_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	sign := m.F[rs2] & f64SignMask
 	m.F[rd] = sign | (m.F[rs1] & mask62to0)
@@ -1280,6 +1394,9 @@ func emu_FSGNJ_D(m *RV, ins uint) error {
 }
 
 func emu_FSGNJN_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	sign := ^m.F[rs2] & f64SignMask
 	m.F[rd] = sign | (m.F[rs1] & mask62to0)
@@ -1288,6 +1405,9 @@ func emu_FSGNJN_D(m *RV, ins uint) error {
 }
 
 func emu_FSGNJX_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	sign := (m.F[rs1] ^ m.F[rs2]) & f64SignMask
 	m.F[rd] = sign | (m.F[rs1] & mask62to0)
@@ -1296,6 +1416,9 @@ func emu_FSGNJX_D(m *RV, ins uint) error {
 }
 
 func emu_FMIN_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	m.F[rd] = fmin_d(m.F[rs1], m.F[rs2], m.CSR)
 	m.PC += 4
@@ -1303,6 +1426,9 @@ func emu_FMIN_D(m *RV, ins uint) error {
 }
 
 func emu_FMAX_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	m.F[rd] = fmax_d(m.F[rs1], m.F[rs2], m.CSR)
 	m.PC += 4
@@ -1310,6 +1436,9 @@ func emu_FMAX_D(m *RV, ins uint) error {
 }
 
 func emu_FCVT_S_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_s_d(m.F[rs1], rm, m.CSR)
 	if err != nil {
@@ -1321,6 +1450,9 @@ func emu_FCVT_S_D(m *RV, ins uint) error {
 }
 
 func emu_FCVT_D_S(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, _, rd := decodeR(ins)
 	m.F[rd] = fcvt_d_s(uint32(m.F[rs1]), m.CSR)
 	m.PC += 4
@@ -1328,6 +1460,9 @@ func emu_FCVT_D_S(m *RV, ins uint) error {
 }
 
 func emu_FEQ_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, uint64(feq_d(m.F[rs1], m.F[rs2], m.CSR)))
 	m.PC += 4
@@ -1335,6 +1470,9 @@ func emu_FEQ_D(m *RV, ins uint) error {
 }
 
 func emu_FLT_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, uint64(flt_d(m.F[rs1], m.F[rs2], m.CSR)))
 	m.PC += 4
@@ -1342,6 +1480,9 @@ func emu_FLT_D(m *RV, ins uint) error {
 }
 
 func emu_FLE_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	rs2, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, uint64(fle_d(m.F[rs1], m.F[rs2], m.CSR)))
 	m.PC += 4
@@ -1349,6 +1490,9 @@ func emu_FLE_D(m *RV, ins uint) error {
 }
 
 func emu_FCLASS_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, _, rd := decodeR(ins)
 	m.wrX(rd, uint64(fclass_d(m.F[rs1])))
 	m.PC += 4
@@ -1356,6 +1500,9 @@ func emu_FCLASS_D(m *RV, ins uint) error {
 }
 
 func emu_FCVT_W_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_w_d(m.F[rs1], rm, m.CSR)
 	if err != nil {
@@ -1367,6 +1514,9 @@ func emu_FCVT_W_D(m *RV, ins uint) error {
 }
 
 func emu_FCVT_WU_D(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_wu_d(m.F[rs1], rm, m.CSR)
 	if err != nil {
@@ -1378,6 +1528,9 @@ func emu_FCVT_WU_D(m *RV, ins uint) error {
 }
 
 func emu_FCVT_D_W(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_d_w(int32(m.rdX(rs1)), rm, m.CSR)
 	if err != nil {
@@ -1389,6 +1542,9 @@ func emu_FCVT_D_W(m *RV, ins uint) error {
 }
 
 func emu_FCVT_D_WU(m *RV, ins uint) error {
+	if m.CSR.IsFloatOff() {
+		return m.errIllegal(ins)
+	}
 	_, rs1, rm, rd := decodeR(ins)
 	x, err := fcvt_d_wu(uint32(m.rdX(rs1)), rm, m.CSR)
 	if err != nil {
@@ -2320,17 +2476,16 @@ func minUint64(a, b uint64) uint64 {
 
 // RV is a RISC-V CPU.
 type RV struct {
-	X        [32]uint64  // integer registers
-	F        [32]uint64  // float registers
-	PC       uint64      // program counter
-	isa      *ISA        // ISA implemented for the CPU
-	Mem      *mem.Memory // memory of the target system
-	CSR      *csr.State  // CSR state
-	amo      sync.Mutex  // lock for atomic operations
-	insCount uint        // number of instructions run
-	lastPC   uint64      // stuck PC detection
-	xlen     uint        // bit length of integer registers
-	nreg     uint        // number of integer registers
+	X      [32]uint64  // integer registers
+	F      [32]uint64  // float registers
+	PC     uint64      // program counter
+	isa    *ISA        // ISA implemented for the CPU
+	Mem    *mem.Memory // memory of the target system
+	CSR    *csr.State  // CSR state
+	amo    sync.Mutex  // lock for atomic operations
+	lastPC uint64      // stuck PC detection
+	xlen   uint        // bit length of integer registers
+	nreg   uint        // number of integer registers
 }
 
 // Reset the CPU.
@@ -2338,7 +2493,6 @@ func (m *RV) Reset() {
 	m.PC = m.Mem.Entry
 	m.wrX(RegSp, uint64(uint(1<<32)-16))
 	m.CSR.Reset()
-	m.insCount = 0
 	m.lastPC = 0
 }
 
@@ -2388,7 +2542,7 @@ func (m *RV) errHandler(err error) error {
 
 	// handle the error
 	switch e.Type {
-	case ErrIllegal:
+	case ErrIllegal, ErrCSR:
 		m.PC = m.CSR.Exception(m.PC, uint(csr.ExInsIllegal), e.ins, false)
 		return nil
 	case ErrMemory:
@@ -2429,7 +2583,10 @@ func (m *RV) Run() error {
 	if err != nil {
 		return m.errHandler(err)
 	}
-	m.insCount++
+
+	// Update the CSR registers
+	m.CSR.IncInstructions()
+	m.CSR.IncClockCycles(2)
 
 	// check for breaks points
 	err = m.Mem.GetBreak()

@@ -384,9 +384,10 @@ func (m *RV) errMemory(err error) error {
 }
 
 // errCSR returns the error for CSR access exception.
-func (m *RV) errCSR(err error) error {
+func (m *RV) errCSR(err error, ins uint) error {
 	return &Error{
 		Type: ErrCSR,
+		ins:  ins,
 		alen: m.xlen,
 		pc:   m.PC,
 		err:  err,
