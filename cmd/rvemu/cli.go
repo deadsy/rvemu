@@ -181,8 +181,18 @@ var helpGo = []cli.Help{
 	{"<adr>", "address (hex) - default is PC"},
 }
 
+func goLoop(c *cli.CLI) bool {
+	m := c.User.(*emuApp).cpu
+	err := m.Run()
+	if err != nil {
+		c.User.Put(fmt.Sprintf("%s\r\n", err))
+		return true
+	}
+	return false
+}
+
 var cmdGo = cli.Leaf{
-	Descr: "run the emulation (no tracing)",
+	Descr: "run the emulation (ctrl-d to stop)",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*emuApp).cpu
 		adr, err := util.AddrArg(uint(m.PC), maxAdr, args)
@@ -191,18 +201,24 @@ var cmdGo = cli.Leaf{
 			return
 		}
 		m.PC = uint64(adr)
-		for true {
-			err := m.Run()
-			if err != nil {
-				c.User.Put(fmt.Sprintf("%s\n", err))
-				break
-			}
-		}
+		c.Loop(func() bool { return goLoop(c) }, cli.KeycodeCtrlD)
 	},
 }
 
+func traceLoop(c *cli.CLI) bool {
+	m := c.User.(*emuApp).cpu
+	s := m.Disassemble(uint(m.PC))
+	err := m.Run()
+	c.User.Put(fmt.Sprintf("%s\r\n", s))
+	if err != nil {
+		c.User.Put(fmt.Sprintf("%s\r\n", err))
+		return true
+	}
+	return false
+}
+
 var cmdTrace = cli.Leaf{
-	Descr: "run the emulation (with tracing)",
+	Descr: "run the emulation with tracing (ctrl-d to stop)",
 	F: func(c *cli.CLI, args []string) {
 		m := c.User.(*emuApp).cpu
 		adr, err := util.AddrArg(uint(m.PC), maxAdr, args)
@@ -211,15 +227,7 @@ var cmdTrace = cli.Leaf{
 			return
 		}
 		m.PC = uint64(adr)
-		for true {
-			s := m.Disassemble(uint(m.PC))
-			err := m.Run()
-			c.User.Put(fmt.Sprintf("%s\n", s))
-			if err != nil {
-				c.User.Put(fmt.Sprintf("%s\n", err))
-				break
-			}
-		}
+		c.Loop(func() bool { return traceLoop(c) }, cli.KeycodeCtrlD)
 	},
 }
 

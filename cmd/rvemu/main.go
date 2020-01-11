@@ -81,7 +81,7 @@ func newEmu64() (*emuApp, error) {
 
 // Put outputs a string to the user application.
 func (u *emuApp) Put(s string) {
-	fmt.Printf("%s", s)
+	os.Stdout.WriteString(s)
 }
 
 //-----------------------------------------------------------------------------
