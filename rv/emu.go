@@ -2504,6 +2504,7 @@ type RV struct {
 	amo    sync.Mutex  // lock for atomic operations
 	lastPC uint64      // stuck PC detection
 	xlen   uint        // bit length of integer registers
+	err    *errBuffer  // buffer of handled/un-handled emulation errors
 }
 
 // Reset the CPU.
@@ -2511,6 +2512,7 @@ func (m *RV) Reset() {
 	m.PC = m.Mem.Entry
 	m.wrX(RegSp, uint64(uint(1<<32)-16))
 	m.CSR.Reset()
+	m.err.reset()
 	m.lastPC = 0
 }
 
@@ -2521,6 +2523,7 @@ func NewRV64(isa *ISA, mem *mem.Memory, csr *csr.State) *RV {
 		isa:  isa,
 		Mem:  mem,
 		CSR:  csr,
+		err:  newErrBuffer(32),
 	}
 	m.Reset()
 	return &m
@@ -2533,6 +2536,7 @@ func NewRV32(isa *ISA, mem *mem.Memory, csr *csr.State) *RV {
 		isa:  isa,
 		Mem:  mem,
 		CSR:  csr,
+		err:  newErrBuffer(32),
 	}
 	m.Reset()
 	return &m
@@ -2542,6 +2546,9 @@ func NewRV32(isa *ISA, mem *mem.Memory, csr *csr.State) *RV {
 
 func (m *RV) errHandler(err error) error {
 	e := err.(*Error)
+
+	// record the error
+	m.err.write(e)
 
 	// handle the error
 	switch e.Type {

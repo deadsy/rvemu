@@ -407,10 +407,21 @@ var cmdHost = cli.Leaf{
 
 //-----------------------------------------------------------------------------
 
+var cmdErrors = cli.Leaf{
+	Descr: "display emulation errors",
+	F: func(c *cli.CLI, args []string) {
+		cpu := c.User.(*emuApp).cpu
+		c.User.Put(fmt.Sprintf("%s\n", cpu.DisplayErrorBuffer()))
+	},
+}
+
+//-----------------------------------------------------------------------------
+
 // root menu
 var menuRoot = cli.Menu{
 	{"csr", cmdCSR},
 	{"da", cmdDisassemble, helpDisassemble},
+	{"errors", cmdErrors},
 	{"exit", cmdExit},
 	{"go", cmdGo, helpGo},
 	{"help", cmdHelp},
