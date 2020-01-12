@@ -25,8 +25,7 @@ import (
 //-----------------------------------------------------------------------------
 
 const historyPath = ".rvemu_history"
-const stackSize = 8 << 10
-const heapSize = 256 << 10
+const heapSize = 64 << 10
 
 //-----------------------------------------------------------------------------
 
@@ -121,9 +120,8 @@ func main() {
 	}
 	fmt.Fprintf(os.Stderr, "%s\n", status)
 
-	// add a heap and stack
+	// add a heap
 	app.mem.Add(mem.NewSection("heap", 0x80000000, heapSize, mem.AttrRW))
-	app.mem.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
 
 	// Callback on the "tohost" write (compliance tests).
 	sym := app.mem.SymbolByName("tohost")

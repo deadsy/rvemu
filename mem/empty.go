@@ -47,47 +47,65 @@ func (m *empty) In(adr, size uint) bool {
 
 // RdIns reads a 32-bit instruction from memory.
 func (m *empty) RdIns(adr uint) (uint, error) {
-	return 0, rdInsError(adr, m.attr, m.name)
+	err := rdInsError(adr, m.attr, m.name)
+	err.(*Error).Type |= ErrEmpty
+	return 0, err
 }
 
 // Rd64 reads a 64-bit data value from memory.
 func (m *empty) Rd64(adr uint) (uint64, error) {
-	return 0, rdError(adr, m.attr, m.name, 8)
+	err := rdError(adr, m.attr, m.name, 8)
+	err.(*Error).Type |= ErrEmpty
+	return 0, err
 }
 
 // Rd32 reads a 32-bit data value from memory.
 func (m *empty) Rd32(adr uint) (uint32, error) {
-	return 0, rdError(adr, m.attr, m.name, 4)
+	err := rdError(adr, m.attr, m.name, 4)
+	err.(*Error).Type |= ErrEmpty
+	return 0, err
 }
 
 // Rd16 reads a 16-bit data value from memory.
 func (m *empty) Rd16(adr uint) (uint16, error) {
-	return 0, rdError(adr, m.attr, m.name, 2)
+	err := rdError(adr, m.attr, m.name, 2)
+	err.(*Error).Type |= ErrEmpty
+	return 0, err
 }
 
 // Rd8 reads an 8-bit data value from memory.
 func (m *empty) Rd8(adr uint) (uint8, error) {
-	return 0, rdError(adr, m.attr, m.name, 1)
+	err := rdError(adr, m.attr, m.name, 1)
+	err.(*Error).Type |= ErrEmpty
+	return 0, err
 }
 
 // Wr64 writes a 64-bit data value to memory.
 func (m *empty) Wr64(adr uint, val uint64) error {
-	return wrError(adr, m.attr, m.name, 8)
+	err := wrError(adr, m.attr, m.name, 8)
+	err.(*Error).Type |= ErrEmpty
+	return err
 }
 
 // Wr32 writes a 32-bit data value to memory.
 func (m *empty) Wr32(adr uint, val uint32) error {
-	return wrError(adr, m.attr, m.name, 4)
+	err := wrError(adr, m.attr, m.name, 4)
+	err.(*Error).Type |= ErrEmpty
+	return err
 }
 
 // Wr16 writes a 16-bit data value to memory.
 func (m *empty) Wr16(adr uint, val uint16) error {
-	return wrError(adr, m.attr, m.name, 2)
+	err := wrError(adr, m.attr, m.name, 2)
+	err.(*Error).Type |= ErrEmpty
+	return err
 }
 
 // Wr8 writes an 8-bit data value to memory.
 func (m *empty) Wr8(adr uint, val uint8) error {
-	return wrError(adr, m.attr, m.name, 1)
+	err := wrError(adr, m.attr, m.name, 1)
+	err.(*Error).Type |= ErrEmpty
+	return err
 }
 
 //-----------------------------------------------------------------------------

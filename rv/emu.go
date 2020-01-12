@@ -2510,7 +2510,6 @@ type RV struct {
 // Reset the CPU.
 func (m *RV) Reset() {
 	m.PC = m.Mem.Entry
-	m.wrX(RegSp, uint64(uint(1<<32)-16))
 	m.CSR.Reset()
 	m.err.reset()
 	m.lastPC = 0
@@ -2557,7 +2556,7 @@ func (m *RV) errHandler(err error) error {
 		return nil
 	case ErrMemory:
 		em := e.err.(*mem.Error)
-		if em.Type&mem.ErrBreak == 0 {
+		if em.Type&(mem.ErrBreak|mem.ErrEmpty) == 0 {
 			m.PC = m.CSR.Exception(m.PC, uint(em.Ex), em.Addr, false)
 			return nil
 		}

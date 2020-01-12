@@ -33,6 +33,7 @@ const (
 	ErrExec              // can't read instructions from this memory
 	ErrPage              // error with page table translation
 	ErrBreak             // break on memory access
+	ErrEmpty             // no memory at this physical address
 )
 
 func (e *Error) Error() string {
@@ -54,6 +55,9 @@ func (e *Error) Error() string {
 	}
 	if e.Type&ErrBreak != 0 {
 		s = append(s, "break")
+	}
+	if e.Type&ErrEmpty != 0 {
+		s = append(s, "empty")
 	}
 	errStr := strings.Join(s, ",")
 	return fmt.Sprintf("%s %s @ %08x (%s)", e.Ex, errStr, e.Addr, e.Name)
