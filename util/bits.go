@@ -34,3 +34,13 @@ func SetBits(x, val, msb, lsb uint) uint {
 }
 
 //-----------------------------------------------------------------------------
+
+// BoolToInt converts a boolean to an int (1 or 0).
+func BoolToInt(x bool) int {
+	if x {
+		return 1
+	}
+	return 0
+}
+
+//-----------------------------------------------------------------------------

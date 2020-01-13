@@ -28,8 +28,7 @@ import (
 
 //-----------------------------------------------------------------------------
 
-const stackSize = 8 << 10
-const heapSize = 256 << 10
+const heapSize = 64 << 10
 const insLimit = 20000
 
 //-----------------------------------------------------------------------------
@@ -88,7 +87,8 @@ func (tc *testCase) Fixups(m *rv.RV) {
 		"rv32ui-p-fence_i":
 		m.Mem.SetAttr(".text.init", mem.AttrRWX)
 	case "rv32mi/ma_addr.elf",
-		"rv32i/I-MISALIGN_LDST-01.elf":
+		"rv32i/I-MISALIGN_LDST-01.elf",
+		"rv32mi-p-ma_addr":
 		m.Mem.SetAttr(".data", mem.AttrRWM)
 	}
 }
@@ -199,8 +199,7 @@ func (tc *testCase) Test() error {
 		return err
 	}
 
-	// add a stack and heap
-	cpu.Mem.Add(mem.NewSection("stack", (1<<32)-stackSize, stackSize, mem.AttrRW))
+	// add a heap
 	cpu.Mem.Add(mem.NewSection("heap", 0x80000000, heapSize, mem.AttrRW))
 
 	// Callback on the "tohost" write (compliance tests).

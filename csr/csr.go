@@ -308,6 +308,7 @@ func mxl(xlen uint) uint {
 
 func initMISA(s *State, ext uint) {
 	s.misa = (mxl(s.xlen) << (s.mxlen - 2)) | ext
+	s.ialign = []uint{32, 16}[util.BoolToInt(s.misa&IsaExtC != 0)]
 }
 
 func rdMISA(s *State) uint {
@@ -315,7 +316,13 @@ func rdMISA(s *State) uint {
 }
 
 func wrMISA(s *State, val uint) {
-	s.misa = val
+	// From the Spec:
+	// Writing misa may increase IALIGN, e.g., by disabling the “C” extension. If an instruction that
+	// would write misa increases IALIGN, and the subsequent instruction’s address is not IALIGN-bit
+	// aligned, the write to misa is suppressed, leaving misa unchanged.
+	// TODO I don't easily know the PC alignment in CSR, so I'm ignoring MISA writes for now.
+	// s.misa = val
+	// s.ialign = []uint{32,16}[util.BoolToInt(misa&IsaExtC != 0)]
 }
 
 func fmtMXL(x uint) string {
@@ -1409,12 +1416,11 @@ type State struct {
 // NewState returns a CSR state object.
 func NewState(xlen, ext uint) *State {
 	s := &State{
-		mode:   ModeM, // start in machine mode
-		xlen:   xlen,
-		mxlen:  xlen,
-		uxlen:  xlen,
-		sxlen:  xlen,
-		ialign: 16, // TODO
+		mode:  ModeM, // start in machine mode
+		xlen:  xlen,
+		mxlen: xlen,
+		uxlen: xlen,
+		sxlen: xlen,
 	}
 	initMISA(s, ext)
 	s.mstatus.init(s.mxlen)
@@ -1458,24 +1464,6 @@ func (s *State) Wr(reg uint, val uint64) error {
 		return nil
 	}
 	return &Error{reg, ErrTodo}
-}
-
-// Set sets bits in a CSR.
-func (s *State) Set(reg uint, bits uint64) error {
-	val, err := s.Rd(reg)
-	if err != nil {
-		return err
-	}
-	return s.Wr(reg, val|bits)
-}
-
-// Clr clears bits in a CSR.
-func (s *State) Clr(reg uint, bits uint64) error {
-	val, err := s.Rd(reg)
-	if err != nil {
-		return err
-	}
-	return s.Wr(reg, val & ^bits)
 }
 
 //-----------------------------------------------------------------------------
