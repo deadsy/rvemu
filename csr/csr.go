@@ -316,10 +316,15 @@ func rdMISA(s *State) uint {
 }
 
 func wrMISA(s *State, val uint) {
+
 	// From the Spec:
-	// Writing misa may increase IALIGN, e.g., by disabling the “C” extension. If an instruction that
+	// 1. Writing misa may increase IALIGN, e.g., by disabling the “C” extension. If an instruction that
 	// would write misa increases IALIGN, and the subsequent instruction’s address is not IALIGN-bit
 	// aligned, the write to misa is suppressed, leaving misa unchanged.
+
+	// 2. If a write to misa causes MXLEN to change, the position of
+	// MXL moves to the most-significant two bits of misa at the new width.
+
 	// TODO I don't easily know the PC alignment in CSR, so I'm ignoring MISA writes for now.
 	// s.misa = val
 	// s.ialign = []uint{32,16}[util.BoolToInt(misa&IsaExtC != 0)]
@@ -639,6 +644,19 @@ func (m *mStatus) init(mxlen uint) {
 
 func (m *mStatus) wr(x uint, mode Mode) {
 	x &= ^m.wpriMask
+
+	// UXL is WARL
+	if x&uxlMask == 0 {
+		// preserve the existing value
+		x |= m.val & uxlMask
+	}
+
+	// SXL is WARL
+	if x&sxlMask == 0 {
+		// preserve the existing value
+		x |= m.val & sxlMask
+	}
+
 	switch mode {
 	case ModeU:
 		m.val = (m.val & ^m.uMask) | (x & m.uMask)

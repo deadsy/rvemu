@@ -165,7 +165,7 @@ func emu_LW(m *RV, ins uint) error {
 	if err != nil {
 		return m.errMemory(err)
 	}
-	m.wrX(rd, uint64(int(val)))
+	m.wrX(rd, uint64(int32(val)))
 	m.PC += 4
 	return nil
 }
@@ -1576,7 +1576,7 @@ func emu_C_LW(m *RV, ins uint) error {
 	if err != nil {
 		return m.errMemory(err)
 	}
-	m.wrX(rd, uint64(int(val)))
+	m.wrX(rd, uint64(int32(val)))
 	m.PC += 2
 	return nil
 }
@@ -1742,7 +1742,7 @@ func emu_C_LWSP(m *RV, ins uint) error {
 	if err != nil {
 		return m.errMemory(err)
 	}
-	m.wrX(rd, uint64(int(val)))
+	m.wrX(rd, uint64(int32(val)))
 	m.PC += 2
 	return nil
 }
