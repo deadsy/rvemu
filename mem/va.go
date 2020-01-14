@@ -125,7 +125,7 @@ func (m *Memory) va2pa(va uint, attr Attribute, debug bool) (uint, []string, err
 	case csr.SV39:
 		return m.sv39(sv39va(va), mode, attr, debug)
 	case csr.SV48:
-		return 0, nil, nil
+		return m.sv48(sv48va(va), mode, attr, debug)
 	case csr.SV57:
 		return 0, nil, nil
 	case csr.SV64:

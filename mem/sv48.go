@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
 /*
 
-SV39 Virtual Memory Address Translation
+SV48 Virtual Memory Address Translation
 
-39-bit VA maps to 56-bit PA
+48-bit VA maps to 56-bit PA
 
 */
 //-----------------------------------------------------------------------------
@@ -20,11 +20,12 @@ import (
 //-----------------------------------------------------------------------------
 // page table entry
 
-type sv39pte uint
+type sv48pte uint
 
-func (pte sv39pte) String() string {
+func (pte sv48pte) String() string {
 	fs := util.FieldSet{
-		{"ppn2", 53, 28, util.FmtHex},
+		{"ppn3", 53, 37, util.FmtHex},
+		{"ppn2", 36, 28, util.FmtHex},
 		{"ppn1", 27, 19, util.FmtHex},
 		{"ppn0", 18, 10, util.FmtHex},
 		{"rsw", 9, 8, util.FmtHex},
@@ -40,19 +41,20 @@ func (pte sv39pte) String() string {
 	return fs.Display(uint(pte))
 }
 
-func (pte sv39pte) ppn(a, b int) uint {
-	hi := [3]uint{18, 27, 53}[a]
-	lo := [3]uint{10, 19, 28}[b]
+func (pte sv48pte) ppn(a, b int) uint {
+	hi := [4]uint{18, 27, 36, 53}[a]
+	lo := [4]uint{10, 19, 28, 37}[b]
 	return util.GetBits(uint(pte), hi, lo)
 }
 
 //-----------------------------------------------------------------------------
 // virtual address
 
-type sv39va uint
+type sv48va uint
 
-func (va sv39va) String() string {
+func (va sv48va) String() string {
 	fs := util.FieldSet{
+		{"vpn3", 47, 39, util.FmtHex},
 		{"vpn2", 38, 30, util.FmtHex},
 		{"vpn1", 29, 21, util.FmtHex},
 		{"vpn0", 20, 12, util.FmtHex},
@@ -61,24 +63,24 @@ func (va sv39va) String() string {
 	return fs.Display(uint(va))
 }
 
-func (va sv39va) vpn(a, b int) uint {
-	hi := [3]uint{20, 29, 38}[a]
-	lo := [3]uint{12, 21, 30}[b]
+func (va sv48va) vpn(a, b int) uint {
+	hi := [4]uint{20, 29, 38, 47}[a]
+	lo := [4]uint{12, 21, 30, 39}[b]
 	return util.GetBits(uint(va), hi, lo)
 }
 
-func (va sv39va) ofs() uint {
+func (va sv48va) ofs() uint {
 	return uint(va) & riscvPageMask
 }
 
-func (va sv39va) pageError(attr Attribute) error {
+func (va sv48va) pageError(attr Attribute) error {
 	return pageError(uint(va), attr)
 }
 
 //-----------------------------------------------------------------------------
 
-func (m *Memory) sv39(va sv39va, mode csr.Mode, attr Attribute, debug bool) (uint, []string, error) {
-	const levels = 3
+func (m *Memory) sv48(va sv48va, mode csr.Mode, attr Attribute, debug bool) (uint, []string, error) {
+	const levels = 4
 	var pteAddr uint
 	var pte uint
 	dbg := []string{}
@@ -88,12 +90,12 @@ func (m *Memory) sv39(va sv39va, mode csr.Mode, attr Attribute, debug bool) (uin
 		dbg = append(dbg, fmt.Sprintf("satp %s", csr.DisplaySATP(m.csr)))
 	}
 
-	// 1. Let baseAddr be satp.ppn × PAGESIZE, and let i = LEVELS − 1. (For SV39, PAGESIZE=4096 and LEVELS=3)
+	// 1. Let baseAddr be satp.ppn × PAGESIZE, and let i = LEVELS − 1. (For SV48, PAGESIZE=4096 and LEVELS=4)
 	baseAddr := m.csr.GetPPN() << riscvPageShift
 	i := levels - 1
 
 	for true {
-		// 2. Let pte be the value of the PTE at address a+va.vpn[i]×PTESIZE. (For SV39, PTESIZE=8)
+		// 2. Let pte be the value of the PTE at address a+va.vpn[i]×PTESIZE. (For SV48, PTESIZE=8)
 		// If accessing pte violates a PMA or PMP check, raise an access exception corresponding to
 		// the original access type.
 		pteAddr = baseAddr + (va.vpn(i, i) << 3)
@@ -104,7 +106,7 @@ func (m *Memory) sv39(va sv39va, mode csr.Mode, attr Attribute, debug bool) (uin
 		pte = uint(x)
 
 		if debug {
-			dbg = append(dbg, fmt.Sprintf("pte%d [%014x] %s", i, pteAddr, sv39pte(pte)))
+			dbg = append(dbg, fmt.Sprintf("pte%d [%014x] %s", i, pteAddr, sv48pte(pte)))
 		}
 
 		// 3. If pte.v = 0, or if pte.r = 0 and pte.w = 1, stop and raise a page-fault exception corresponding
@@ -124,7 +126,7 @@ func (m *Memory) sv39(va sv39va, mode csr.Mode, attr Attribute, debug bool) (uin
 		if i < 0 {
 			return 0, dbg, va.pageError(attr)
 		}
-		baseAddr = sv39pte(pte).ppn(levels-1, 0) << riscvPageShift
+		baseAddr = sv48pte(pte).ppn(levels-1, 0) << riscvPageShift
 	}
 
 	// 5. A leaf PTE has been found. Determine if the requested memory access is allowed by the
@@ -168,7 +170,7 @@ func (m *Memory) sv39(va sv39va, mode csr.Mode, attr Attribute, debug bool) (uin
 
 	// 6. If i > 0 and pte.ppn[i − 1 : 0] != 0, this is a misaligned superpage; stop and raise a page-fault
 	// exception corresponding to the original access type.
-	if i > 0 && sv39pte(pte).ppn(i-1, 0) != 0 {
+	if i > 0 && sv48pte(pte).ppn(i-1, 0) != 0 {
 		return 0, dbg, va.pageError(attr)
 	}
 
@@ -204,8 +206,10 @@ func (m *Memory) sv39(va sv39va, mode csr.Mode, attr Attribute, debug bool) (uin
 	// • pa.pgoff = va.pgoff.
 	// • If i > 0, then this is a superpage translation and pa.ppn[i − 1 : 0] = va.vpn[i − 1 : 0].
 	// • pa.ppn[LEVELS − 1 : i] = pte.ppn[LEVELS − 1 : i].
-	pa := sv39pte(pte).ppn(levels-1, i)
-	if i == 2 {
+	pa := sv48pte(pte).ppn(levels-1, i)
+	if i == 3 {
+		pa = (pa << 27) + va.vpn(2, 0)
+	} else if i == 2 {
 		pa = (pa << 18) + va.vpn(1, 0)
 	} else if i == 1 {
 		pa = (pa << 9) + va.vpn(0, 0)
