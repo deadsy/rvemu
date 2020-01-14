@@ -88,7 +88,8 @@ func (tc *testCase) Fixups(m *rv.RV) {
 		m.Mem.SetAttr(".text.init", mem.AttrRWX)
 	case "rv32mi/ma_addr.elf",
 		"rv32i/I-MISALIGN_LDST-01.elf",
-		"rv32mi-p-ma_addr":
+		"rv32mi-p-ma_addr",
+		"rv64mi-p-ma_addr":
 		m.Mem.SetAttr(".data", mem.AttrRWM)
 	}
 }

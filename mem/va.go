@@ -24,7 +24,67 @@ import (
 
 //-----------------------------------------------------------------------------
 
+// Pagesize is 4KiB
 const riscvPageShift = 12
+const riscvPageMask = (1 << riscvPageShift) - 1
+
+//-----------------------------------------------------------------------------
+// Common PTE functions (the first 9 bits are the same for all PTEs)
+
+func pteIsValid(pte uint) bool {
+	// v == 1 and WR != 10
+	return (pte&1) == 1 && ((pte>>1)&3) != 2
+}
+
+func pteIsPointer(pte uint) bool {
+	// XWRV == 0001
+	return pte&15 == 1
+}
+
+// pteGetUser gets the PTE user flag.
+func pteGetUser(pte uint) bool {
+	return (pte & (1 << 4 /*U*/)) != 0
+}
+
+// pteGetAccess gets the PTE access flag.
+func pteGetAccess(pte uint) bool {
+	return pte&(1<<6 /*A*/) != 0
+}
+
+// pteGetDirty gets the PTE dirty flag.
+func pteGetDirty(pte uint) bool {
+	return pte&(1<<7 /*D*/) != 0
+}
+
+// pteCanRead returns true if the PTE indicates read permission for the page.
+func pteCanRead(pte uint) bool {
+	return (pte & (1 << 1 /*R*/)) != 0
+}
+
+// pteCanWrite returns true if the PTE indicates write permission for the page.
+func pteCanWrite(pte uint) bool {
+	return (pte & (1 << 2 /*W*/)) != 0
+}
+
+// pteCanExec returns true if the PTE indicates execute permission for the page.
+func pteCanExec(pte uint) bool {
+	return (pte & (1 << 3 /*X*/)) != 0
+}
+
+// pteSetRead sets the PTE read bit.
+func pteSetRead(pte uint) uint {
+	return pte | (1 << 1 /*R*/)
+}
+
+// pteSetAccess sets the PTE access bit.
+func pteSetAccess(pte uint) uint {
+	return pte | (1 << 6 /*A*/)
+}
+
+// pteSetDirty sets the PTE dirty bit.
+func pteSetDirty(pte uint) uint {
+	return pte | (1 << 7 /*D*/)
+}
 
 //-----------------------------------------------------------------------------
 
@@ -63,7 +123,7 @@ func (m *Memory) va2pa(va uint, attr Attribute, debug bool) (uint, []string, err
 	case csr.SV32:
 		return m.sv32(sv32va(va), mode, attr, debug)
 	case csr.SV39:
-		return 0, nil, nil
+		return m.sv39(sv39va(va), mode, attr, debug)
 	case csr.SV48:
 		return 0, nil, nil
 	case csr.SV57:
