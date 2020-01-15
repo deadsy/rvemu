@@ -77,6 +77,7 @@ func (va sv32va) pageError(attr Attribute) error {
 //-----------------------------------------------------------------------------
 
 func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute, debug bool) (uint, []string, error) {
+	const levels = 2
 	var pteAddr uint
 	var pte uint
 	dbg := []string{}
@@ -88,10 +89,10 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute, debug bool) (uin
 
 	// 1. Let baseAddr be satp.ppn × PAGESIZE, and let i = LEVELS − 1. (For Sv32, PAGESIZE=4096 and LEVELS=2.)
 	baseAddr := m.csr.GetPPN() << riscvPageShift
-	i := 1
+	i := levels - 1
 
 	for true {
-		// 2. Let pte be the value of the PTE at address a+va.vpn[i]×PTESIZE. (For Sv32, PTESIZE=4.)
+		// 2. Let pte be the value of the PTE at address a+va.vpn[i]×PTESIZE. (For SV32, PTESIZE=4.)
 		// If accessing pte violates a PMA or PMP check, raise an access exception corresponding to
 		// the original access type.
 		pteAddr = baseAddr + (va.vpn(i, i) << 2)
@@ -122,7 +123,7 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute, debug bool) (uin
 		if i < 0 {
 			return 0, dbg, va.pageError(attr)
 		}
-		baseAddr = sv32pte(pte).ppn(1, 0) << riscvPageShift
+		baseAddr = sv32pte(pte).ppn(levels-1, 0) << riscvPageShift
 	}
 
 	// 5. A leaf PTE has been found. Determine if the requested memory access is allowed by the
@@ -202,7 +203,7 @@ func (m *Memory) sv32(va sv32va, mode csr.Mode, attr Attribute, debug bool) (uin
 	// • pa.pgoff = va.pgoff.
 	// • If i > 0, then this is a superpage translation and pa.ppn[i − 1 : 0] = va.vpn[i − 1 : 0].
 	// • pa.ppn[LEVELS − 1 : i] = pte.ppn[LEVELS − 1 : i].
-	pa := sv32pte(pte).ppn(1, i)
+	pa := sv32pte(pte).ppn(levels-1, i)
 	if i == 1 {
 		pa = (pa << 10) + va.vpn(0, 0)
 	}
