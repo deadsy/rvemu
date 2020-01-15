@@ -9,6 +9,7 @@ Memory Attributes
 package mem
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -55,6 +56,23 @@ func (a Attribute) String() string {
 		s[3] = "m"
 	}
 	return strings.Join(s, "")
+}
+
+//-----------------------------------------------------------------------------
+
+// AttrArg converts an attribute argument string to an attribute bitmap value.
+func AttrArg(arg string) (Attribute, error) {
+	attrMap := map[rune]Attribute{'r': AttrR, 'w': AttrW, 'x': AttrX, 'm': AttrM}
+	var attr Attribute
+	arg = strings.ToLower(arg)
+	for _, c := range arg {
+		bit, ok := attrMap[c]
+		if !ok {
+			return 0, fmt.Errorf("attribute \"%c\" is not valid", c)
+		}
+		attr |= bit
+	}
+	return attr, nil
 }
 
 //-----------------------------------------------------------------------------

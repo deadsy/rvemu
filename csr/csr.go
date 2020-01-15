@@ -70,6 +70,16 @@ func (m Mode) String() string {
 	return [4]string{"user", "supervisor", "?", "machine"}[m]
 }
 
+// ModeArg converts a mode argument string to a mode value.
+func ModeArg(arg string) (Mode, error) {
+	arg = strings.ToLower(arg)
+	mode, ok := map[string]Mode{"u": ModeU, "s": ModeS, "m": ModeM}[arg]
+	if !ok {
+		return 0, fmt.Errorf("mode \"%s\" is not valid", arg)
+	}
+	return mode, nil
+}
+
 // GetMode returns the current processor mode.
 func (s *State) GetMode() Mode {
 	return s.mode
