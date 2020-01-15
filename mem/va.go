@@ -15,7 +15,6 @@ SV64: 64-bit VA maps to ?-bit PA
 package mem
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -102,7 +101,7 @@ func (m *Memory) bare(va uint, mode csr.Mode, attr Attribute, debug bool) (uint,
 //-----------------------------------------------------------------------------
 
 // va2pa translates a virtual address to a physical address.
-func (m *Memory) va2pa(va uint, attr Attribute, debug bool) (uint, []string, error) {
+func (m *Memory) va2pa(va uint, attr Attribute) (uint, error) {
 
 	// If mstatus.MPRV == 1 then mode = mstatus.MPP
 	var mode csr.Mode
@@ -112,33 +111,60 @@ func (m *Memory) va2pa(va uint, attr Attribute, debug bool) (uint, []string, err
 		mode = m.csr.GetMode()
 	}
 
+	var pa uint
+	var err error
+
+	// get the vm
+	vm := m.csr.GetVM()
 	if mode == csr.ModeM {
 		// machine mode va == pa
-		return m.bare(va, mode, attr, debug)
+		vm = csr.Bare
 	}
 
-	switch m.csr.GetVM() {
+	// run the va to pa mapping
+	switch vm {
 	case csr.Bare:
-		return m.bare(va, mode, attr, debug)
+		pa, _, err = m.bare(va, mode, attr, false)
 	case csr.SV32:
-		return m.sv32(sv32va(va), mode, attr, debug)
+		pa, _, err = m.sv32(sv32va(va), mode, attr, false)
 	case csr.SV39:
-		return m.sv39(sv39va(va), mode, attr, debug)
+		pa, _, err = m.sv39(sv39va(va), mode, attr, false)
 	case csr.SV48:
-		return m.sv48(sv48va(va), mode, attr, debug)
-	case csr.SV57:
-		return 0, nil, nil
-	case csr.SV64:
-		return 0, nil, nil
+		pa, _, err = m.sv48(sv48va(va), mode, attr, false)
+	default:
+		err = fmt.Errorf("%s not implmented", vm)
 	}
-	return 0, nil, errors.New("unknown vm mode")
+
+	return pa, err
 }
 
 //-----------------------------------------------------------------------------
 
 // PageTableWalk returns a string annotating the va->pa page table walk.
-func (m *Memory) PageTableWalk(va uint, attr Attribute) string {
-	_, s, err := m.va2pa(va, attr, true)
+func (m *Memory) PageTableWalk(va uint, mode csr.Mode, attr Attribute) string {
+
+	// get the vm
+	vm := m.csr.GetVM()
+	if mode == csr.ModeM {
+		vm = csr.Bare
+	}
+
+	var s []string
+	var err error
+
+	// run the va to pa mapping
+	switch vm {
+	case csr.Bare:
+		_, s, err = m.bare(va, mode, attr, true)
+	case csr.SV32:
+		_, s, err = m.sv32(sv32va(va), mode, attr, true)
+	case csr.SV39:
+		_, s, err = m.sv39(sv39va(va), mode, attr, true)
+	case csr.SV48:
+		_, s, err = m.sv48(sv48va(va), mode, attr, true)
+	default:
+		return fmt.Sprintf("%s not implemented", vm)
+	}
 	if err != nil {
 		s = append(s, err.Error())
 	}

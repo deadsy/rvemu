@@ -12,6 +12,7 @@ import (
 	"fmt"
 
 	cli "github.com/deadsy/go-cli"
+	"github.com/deadsy/riscv/csr"
 	"github.com/deadsy/riscv/mem"
 	"github.com/deadsy/riscv/util"
 )
@@ -378,20 +379,47 @@ var memBreakPointMenu = cli.Menu{
 //-----------------------------------------------------------------------------
 
 var helpPageTable = []cli.Help{
-	{"<va>", "address (hex) - default is PC"},
+	{"<va> <mode> <attr>", "address (hex) - default is PC"},
+	{"", "mode (u/s/m) - cpu mode - default is s(upervisor)"},
+	{"", "attr (rwxm) - access attribute - default is r(ead)"},
 }
 
 var cmdPageTable = cli.Leaf{
 	Descr: "display a page table walk",
 	F: func(c *cli.CLI, args []string) {
+		var err error
+
 		cpu := c.User.(*emuApp).cpu
-		adr, err := util.AddrArg(uint(cpu.PC), maxAdr, args)
-		if err != nil {
-			c.User.Put(fmt.Sprintf("%s\n", err))
-			return
-		}
 		m := c.User.(*emuApp).mem
-		c.User.Put(fmt.Sprintf("%s\n", m.PageTableWalk(adr, mem.AttrR)))
+		addr := uint(cpu.PC)
+		mode := csr.ModeS
+		attr := mem.AttrR
+
+		if len(args) >= 1 {
+			addr, err = m.AddrArg(args[0])
+			if err != nil {
+				c.User.Put(fmt.Sprintf("%s\n", err))
+				return
+			}
+		}
+
+		if len(args) >= 2 {
+			mode, err = csr.ModeArg(args[1])
+			if err != nil {
+				c.User.Put(fmt.Sprintf("%s\n", err))
+				return
+			}
+		}
+
+		if len(args) >= 3 {
+			attr, err = mem.AttrArg(args[2])
+			if err != nil {
+				c.User.Put(fmt.Sprintf("%s\n", err))
+				return
+			}
+		}
+
+		c.User.Put(fmt.Sprintf("%s\n", m.PageTableWalk(addr, mode, attr)))
 	},
 }
 

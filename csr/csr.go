@@ -62,8 +62,8 @@ type Mode uint
 // Modes
 const (
 	ModeU Mode = 0 // user
-	ModeS      = 1 // supervisor
-	ModeM      = 3 // machine
+	ModeS Mode = 1 // supervisor
+	ModeM Mode = 3 // machine
 )
 
 func (m Mode) String() string {
