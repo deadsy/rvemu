@@ -84,7 +84,8 @@ func (tc *testCase) Fixups(m *rv.RV) {
 		"rv32i/I-AUIPC-01.elf",
 		"rv32Zifencei/I-FENCE.I-01.elf",
 		"rv32ui/fence_i.elf",
-		"rv32ui-p-fence_i":
+		"rv32ui-p-fence_i",
+		"rv64ui-p-fence_i":
 		m.Mem.SetAttr(".text.init", mem.AttrRWX)
 	case "rv32mi/ma_addr.elf",
 		"rv32i/I-MISALIGN_LDST-01.elf",
