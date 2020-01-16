@@ -86,7 +86,8 @@ func (m *Memory) sv48(va sv48va, mode csr.Mode, attr Attribute, debug bool) (uin
 	dbg := []string{}
 
 	if debug {
-		dbg = append(dbg, fmt.Sprintf("va   %08x %s", uint(va), va))
+		dbg = append(dbg, fmt.Sprintf("%s %s", mode, attr))
+		dbg = append(dbg, fmt.Sprintf("va %08x %s", uint(va), va))
 		dbg = append(dbg, fmt.Sprintf("satp %s", csr.DisplaySATP(m.csr)))
 	}
 
@@ -217,7 +218,7 @@ func (m *Memory) sv48(va sv48va, mode csr.Mode, attr Attribute, debug bool) (uin
 	pa = (pa << riscvPageShift) + va.ofs()
 
 	if debug {
-		dbg = append(dbg, fmt.Sprintf("pa   %014x", pa))
+		dbg = append(dbg, fmt.Sprintf("pa %014x", pa))
 	}
 
 	return pa, dbg, nil
