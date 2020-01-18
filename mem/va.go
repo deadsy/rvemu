@@ -104,8 +104,10 @@ func (m *Memory) bare(va uint, mode csr.Mode, attr Attribute, debug bool) (uint,
 func (m *Memory) va2pa(va uint, attr Attribute) (uint, error) {
 
 	// If mstatus.MPRV == 1 then mode = mstatus.MPP
+	// Instruction address-translation and protection are unaffected by the setting of MPRV.
 	var mode csr.Mode
-	if m.csr.GetMPRV() {
+	if m.csr.GetMPRV() && attr != AttrX {
+		// use the previous privilege
 		mode = m.csr.GetMPP()
 	} else {
 		mode = m.csr.GetMode()

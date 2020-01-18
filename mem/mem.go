@@ -139,7 +139,7 @@ func (m *Memory) Rd8Phys(pa uint) (uint8, error) {
 
 // RdIns reads a 32-bit instruction from memory.
 func (m *Memory) RdIns(va uint) (uint, error) {
-	pa, err := m.va2pa(va, AttrRX)
+	pa, err := m.va2pa(va, AttrX)
 	if err != nil {
 		return 0, err
 	}
