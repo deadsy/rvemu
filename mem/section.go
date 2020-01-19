@@ -84,34 +84,38 @@ func (m *Section) Rd8(adr uint) (uint8, error) {
 
 // Wr64 writes a 64-bit data value to memory.
 func (m *Section) Wr64(adr uint, val uint64) error {
-	if m.attr&AttrW != 0 {
+	err := wrError(adr, m.attr, m.name, 8)
+	if err == nil {
 		binary.LittleEndian.PutUint64(m.mem[adr-m.start:], val)
 	}
-	return wrError(adr, m.attr, m.name, 8)
+	return err
 }
 
 // Wr32 writes a 32-bit data value to memory.
 func (m *Section) Wr32(adr uint, val uint32) error {
-	if m.attr&AttrW != 0 {
+	err := wrError(adr, m.attr, m.name, 4)
+	if err == nil {
 		binary.LittleEndian.PutUint32(m.mem[adr-m.start:], val)
 	}
-	return wrError(adr, m.attr, m.name, 4)
+	return err
 }
 
 // Wr16 writes a 16-bit data value to memory.
 func (m *Section) Wr16(adr uint, val uint16) error {
-	if m.attr&AttrW != 0 {
+	err := wrError(adr, m.attr, m.name, 2)
+	if err == nil {
 		binary.LittleEndian.PutUint16(m.mem[adr-m.start:], val)
 	}
-	return wrError(adr, m.attr, m.name, 2)
+	return err
 }
 
 // Wr8 writes an 8-bit data value to memory.
 func (m *Section) Wr8(adr uint, val uint8) error {
-	if m.attr&AttrW != 0 {
+	err := wrError(adr, m.attr, m.name, 1)
+	if err == nil {
 		m.mem[adr-m.start] = val
 	}
-	return wrError(adr, m.attr, m.name, 1)
+	return err
 }
 
 //-----------------------------------------------------------------------------

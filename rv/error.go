@@ -186,7 +186,7 @@ func (m *RV) DisplayErrorBuffer() string {
 	s := []string{}
 	rd := eb.rd
 	for rd != eb.wr {
-		s = append(s, eb.buf[eb.rd].Error())
+		s = append(s, eb.buf[rd].Error())
 		rd = (rd + 1) % eb.size
 	}
 	return strings.Join(s, "\n")
