@@ -266,8 +266,8 @@ func (m *Memory) Wr8(va uint, val uint8) error {
 
 // RdBuf reads a buffer of data from memory.
 func (m *Memory) RdBuf(addr, n, width uint, vm bool) []uint {
-	x := make([]uint, n)
-	for i := range x {
+	buf := make([]uint, n)
+	for i := range buf {
 		pa := addr + (uint(i) * (width >> 3))
 		if vm {
 			pa, _ = m.va2pa(pa, AttrR)
@@ -275,19 +275,21 @@ func (m *Memory) RdBuf(addr, n, width uint, vm bool) []uint {
 		switch width {
 		case 8:
 			val, _ := m.Rd8Phys(pa)
-			x[i] = uint(val)
+			buf[i] = uint(val)
 		case 16:
 			val, _ := m.Rd16Phys(pa)
-			x[i] = uint(val)
+			buf[i] = uint(val)
 		case 32:
 			val, _ := m.Rd32Phys(pa)
-			x[i] = uint(val)
+			buf[i] = uint(val)
 		case 64:
 			val, _ := m.Rd64Phys(pa)
-			x[i] = uint(val)
+			buf[i] = uint(val)
+		default:
+			panic("bad width")
 		}
 	}
-	return x
+	return buf
 }
 
 //-----------------------------------------------------------------------------

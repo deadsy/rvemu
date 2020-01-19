@@ -9,7 +9,6 @@ Display strings for memory.
 package mem
 
 import (
-	"encoding/binary"
 	"fmt"
 	"sort"
 	"strings"
@@ -69,30 +68,36 @@ func (m *Memory) Symbols() string {
 
 //-----------------------------------------------------------------------------
 
+const bytesPerLine = 32 // must be a power of 2
+
 // Display returns a string for a contiguous region of memory.
 func (m *Memory) Display(adr, size, width uint, vm bool) string {
-
-	fmtx := ""
-	if m.alen == 32 {
-		fmtx = "%08x %s %s"
-	} else {
-		fmtx = "%016x %s %s"
-	}
-
 	s := []string{}
 
-	// round down address to 16 byte boundary
-	adr &= ^uint(15)
+	fmtLine := fmt.Sprintf("%%0%dx %%s %%s", [2]int{16, 8}[util.BoolToInt(m.alen == 32)])
+	fmtData := fmt.Sprintf("%%0%dx", width>>2)
 
-	// round up n to an integral multiple of 16 bytes
-	size = (size + 15) & ^uint(15)
+	// round down address to width alignment
+	adr &= ^uint((width >> 3) - 1)
+	// round up size to an integral multiple of bytesPerLine bytes
+	size = (size + bytesPerLine - 1) & ^uint(bytesPerLine-1)
 
 	// read and print the data
-	for i := 0; i < int(size>>4); i++ {
+	for i := 0; i < int(size/bytesPerLine); i++ {
 
-		// read 16 bytes per line
-		var data [16]uint8
-		var ascii [16]string
+		// read bytesPerLine bytes
+		buf := m.RdBuf(adr, bytesPerLine/(width>>3), width, vm)
+
+		// create the data string
+		xStr := make([]string, len(buf))
+		for j := range xStr {
+			xStr[j] = fmt.Sprintf(fmtData, buf[j])
+		}
+		dataStr := strings.Join(xStr[:], " ")
+
+		// create the ascii string
+		var data [bytesPerLine]uint8
+		var ascii [bytesPerLine]string
 		for j := range data {
 			if vm {
 				data[j], _ = m.Rd8(adr + uint(j))
@@ -105,43 +110,10 @@ func (m *Memory) Display(adr, size, width uint, vm bool) string {
 				ascii[j] = "."
 			}
 		}
-
-		// create the data string
-		dataStr := ""
-		switch width {
-		case 8:
-			var xStr [16]string
-			for j := range xStr {
-				xStr[j] = fmt.Sprintf("%02x", data[j])
-			}
-			dataStr = strings.Join(xStr[:], " ")
-		case 16:
-			var xStr [8]string
-			for j := range xStr {
-				val := binary.LittleEndian.Uint16(data[2*j:])
-				xStr[j] = fmt.Sprintf("%04x", val)
-			}
-			dataStr = strings.Join(xStr[:], " ")
-		case 32:
-			var xStr [4]string
-			for j := range xStr {
-				val := binary.LittleEndian.Uint32(data[4*j:])
-				xStr[j] = fmt.Sprintf("%08x", val)
-			}
-			dataStr = strings.Join(xStr[:], " ")
-		case 64:
-			var xStr [2]string
-			for j := range xStr {
-				val := binary.LittleEndian.Uint64(data[8*j:])
-				xStr[j] = fmt.Sprintf("%016x", val)
-			}
-			dataStr = strings.Join(xStr[:], " ")
-		}
-
 		asciiStr := strings.Join(ascii[:], "")
-		s = append(s, fmt.Sprintf(fmtx, adr, dataStr, asciiStr))
 
-		adr += 16
+		s = append(s, fmt.Sprintf(fmtLine, adr, dataStr, asciiStr))
+		adr += bytesPerLine
 		adr &= (1 << m.alen) - 1
 	}
 	return strings.Join(s, "\n")
