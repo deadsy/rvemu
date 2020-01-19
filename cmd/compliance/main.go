@@ -88,7 +88,6 @@ func (tc *testCase) Fixups(m *rv.RV) {
 		"rv64ui-p-fence_i":
 		m.Mem.SetAttr(".text.init", mem.AttrRWX)
 	case "rv32mi/ma_addr.elf",
-		"rv32i/I-MISALIGN_LDST-01.elf",
 		"rv32mi-p-ma_addr",
 		"rv64mi-p-ma_addr":
 		m.Mem.SetAttr(".data", mem.AttrRWM)
@@ -258,7 +257,7 @@ func (tc *testCase) Test() error {
 		return err
 	}
 	// compare the result and signature
-	err = compareSlice(result, sig)
+	err = compareSlice(sig, result)
 	if err != nil {
 		return err
 	}

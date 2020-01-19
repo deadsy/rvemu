@@ -68,7 +68,7 @@ func (m *Memory) Symbols() string {
 
 //-----------------------------------------------------------------------------
 
-const bytesPerLine = 32 // must be a power of 2
+const bytesPerLine = 16 // must be a power of 2
 
 // Display returns a string for a contiguous region of memory.
 func (m *Memory) Display(adr, size, width uint, vm bool) string {

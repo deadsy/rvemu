@@ -10,5 +10,4 @@ clean:
 	for dir in $(DIRS); do \
 		$(MAKE) -C ./$$dir $@; \
 	done
-	-rm .rvemu_history
 	-rm log.txt
