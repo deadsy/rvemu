@@ -8,7 +8,12 @@ RISC-V ISA Definition
 
 package rv
 
-import "github.com/deadsy/riscv/csr"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/deadsy/riscv/csr"
+)
 
 //-----------------------------------------------------------------------------
 
@@ -420,6 +425,23 @@ type insMeta struct {
 	dt        decodeType // decode type
 }
 
+// decodeConstant returns go code for decoding constants for this instruction.
+func (im *insMeta) decodeConstant() string {
+	s := []string{}
+	name := strings.ReplaceAll(im.name, ".", "_")
+	name = strings.ToUpper(name)
+	s = append(s, fmt.Sprintf("opcode%s = 0x", name))
+	if im.n == 16 {
+		s = append(s, fmt.Sprintf("%04x", im.val))
+	} else {
+		s = append(s, fmt.Sprintf("%08x", im.val))
+	}
+	s = append(s, fmt.Sprintf(" // %s", im.name))
+	return strings.Join(s, "")
+}
+
+//-----------------------------------------------------------------------------
+
 // ISA is an instruction set
 type ISA struct {
 	ext   uint       // ISA extension bits matching misa CSR
@@ -478,6 +500,20 @@ func (isa *ISA) lookup(ins uint) *insMeta {
 // GetExtensions returns the ISA extension bits.
 func (isa *ISA) GetExtensions() uint {
 	return isa.ext
+}
+
+// DecodeConstants returns the decode constants for the ISA
+func (isa *ISA) DecodeConstants() string {
+	s := []string{}
+	s = append(s, "const(")
+	for _, im := range isa.ins16 {
+		s = append(s, im.decodeConstant())
+	}
+	for _, im := range isa.ins32 {
+		s = append(s, im.decodeConstant())
+	}
+	s = append(s, ")")
+	return strings.Join(s, "\n")
 }
 
 //-----------------------------------------------------------------------------

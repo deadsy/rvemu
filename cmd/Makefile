@@ -1,5 +1,6 @@
 
 DIRS = compliance \
+       decode \
        rvemu \
 
 all:
