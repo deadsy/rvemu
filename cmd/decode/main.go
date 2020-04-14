@@ -21,9 +21,9 @@ import (
 //-----------------------------------------------------------------------------
 
 func decode() error {
-	// 32-bit ISA
+	// 64-bit ISA
 	isa := rv.NewISA(0)
-	err := isa.Add(rv.ISArv32g)
+	err := isa.Add(rv.ISArv64g)
 	if err != nil {
 		return err
 	}
